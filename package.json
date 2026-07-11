@@ -1,0 +1,79 @@
+{
+  "name": "mediyyu",
+  "version": "0.4.16",
+  "description": "Mediyyu audio visualizer desktop app",
+  "main": "main.js",
+  "scripts": {
+    "start": "node scripts/start.js",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3",
+    "png-to-ico": "^3.0.2",
+    "sharp": "^0.35.3"
+  },
+  "build": {
+    "appId": "com.thedarknightshow.mediyyu",
+    "productName": "Mediyyu",
+    "publish": {
+      "provider": "github",
+      "owner": "Darkyyyyy",
+      "repo": "Mediyyu"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "Visualizer.html",
+      "fonts/**/*",
+      "assets/**/*",
+      "node_modules/**/*"
+    ],
+    "asarUnpack": [
+      "node_modules/ffmpeg-static/**/*"
+    ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "mp3",
+          "wav",
+          "ogg",
+          "m4a",
+          "flac",
+          "aac"
+        ],
+        "name": "Audio File",
+        "description": "Audio file",
+        "role": "Viewer",
+        "icon": "build/fileicon.ico"
+      }
+    ],
+    "win": {
+      "icon": "build/icon-transparent.ico",
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.music",
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    }
+  },
+  "dependencies": {
+    "@xhayper/discord-rpc": "^1.3.4",
+    "electron-updater": "^6.8.9",
+    "ffmpeg-static": "^5.3.0"
+  }
+}
