@@ -30,3 +30,8 @@ npm run build:win
 ```
 
 produces an NSIS installer and a portable exe in `dist/`.
+
+## credits
+
+- thank you very much ori for making the icon!!!
+- [phandasm](https://github.com/phandasm) for making that waveform algorithm of an obs plugin!
