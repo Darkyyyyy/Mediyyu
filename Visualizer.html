@@ -173,6 +173,26 @@
     animation: lyrSpin .8s linear infinite;
   }
   @keyframes lyrSpin { to { transform: rotate(360deg); } }
+  .lyrics-loading.clickable {
+    pointer-events: auto; cursor: pointer;
+    color: rgba(255,255,255,.7); text-decoration: underline dotted rgba(255,255,255,.4);
+  }
+  .lyrics-loading.clickable:hover { color: #fff; }
+  .lyrics-sugg-menu {
+    position: absolute; left: 50%; transform: translateX(-50%); bottom: 148px;
+    width: min(80%, 460px); max-height: 224px; overflow-y: auto;
+    background: rgba(18,19,22,.96); border: 1px solid rgba(255,255,255,.14); border-radius: 11px;
+    padding: 6px; z-index: 24;
+  }
+  .lyrics-sugg-menu.hidden { display: none; }
+  .lyrics-sugg-menu button {
+    display: block; width: 100%; text-align: left; border: 0; background: none; cursor: pointer;
+    color: rgba(255,255,255,.85); font-family: var(--ui); font-size: 12px;
+    padding: 7px 10px; border-radius: 7px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .lyrics-sugg-menu button:hover { background: rgba(255,255,255,.1); }
+  .lyrics-sugg-menu button .sugg-side { color: var(--dim); font-size: 11px; }
 
   .wincontrols {
     position: absolute;
@@ -474,7 +494,7 @@
   body.mini .pl-tab, body.mini .pl-drawer, body.mini .nowplaying,
   body.mini .wincontrols, body.mini #dragbar,
   body.mini .recbadge, body.mini .compiling, body.mini .more-menu, body.mini .debug-overlay,
-  body.mini .update-pill, body.mini .lyrics-box, body.mini .lyrics-loading { display: none !important; }
+  body.mini .update-pill, body.mini .lyrics-box, body.mini .lyrics-loading, body.mini .lyrics-sugg-menu { display: none !important; }
   .transport-seekrow { display: flex; align-items: center; gap: 5px; }
   .transport-row { display: flex; align-items: center; gap: 14px; }
   #seek { flex: 1 1 auto; }
@@ -844,6 +864,7 @@
   </div>
   <div class="lyrics-loading" id="lyricsLoading"><span class="lyr-spin"></span>loading lyrics</div>
   <div class="lyrics-loading" id="lyricsNotFound">no lyrics found</div>
+  <div class="lyrics-sugg-menu hidden" id="lyricsSuggMenu"></div>
 
   <div class="nowplaying hidden" id="nowPlaying">
     <div class="np-cover empty" id="npCover">
@@ -3791,11 +3812,24 @@
   }
 
   let lyricsNfT = 0;
+  let lyricsSuggs = null;
+  let lyricsCurKey = '';
+  let lyricsPicks = {};
+  try { lyricsPicks = JSON.parse(localStorage.getItem('bbv_lyricsPicks') || '{}'); } catch (e) {}
+  function saveLyricsPick(id) {
+    if (!lyricsCurKey) return;
+    lyricsPicks[lyricsCurKey] = id;
+    const keys = Object.keys(lyricsPicks);
+    if (keys.length > 300) delete lyricsPicks[keys[0]];
+    try { localStorage.setItem('bbv_lyricsPicks', JSON.stringify(lyricsPicks)); } catch (e) {}
+  }
   async function loadLyricsFor(file, tags) {
     const token = ++lyricsToken;
     lyricsLines = null; lyricsIdx = -2;
+    lyricsSuggs = null; lyricsCurKey = '';
     clearTimeout(lyricsNfT);
-    $('lyricsNotFound').classList.remove('show');
+    $('lyricsNotFound').classList.remove('show', 'clickable');
+    $('lyricsSuggMenu').classList.add('hidden');
     if (!S.lyricsOn) return;
     const loadEl = $('lyricsLoading');
     const spinT = setTimeout(() => { if (token === lyricsToken) loadEl.classList.add('show'); }, 250);
@@ -3813,6 +3847,14 @@
       if (window.winControls) {
         const dur = await waitDuration();
         if (token !== lyricsToken) return;
+        lyricsCurKey = file.name + '|' + Math.round(dur || 0);
+        const pickId = lyricsPicks[lyricsCurKey];
+        if (pickId != null) {
+          const pr = await window.winControls.lyricsFetchById(pickId);
+          if (token !== lyricsToken) return;
+          const parsed = pr && pr.synced ? parseLRC(pr.synced) : null;
+          if (parsed) { lyricsLines = parsed; return; }
+        }
         let artist = (tags && tags.artist) || '';
         let title = (tags && tags.title) || '';
         if (!title) {
@@ -3833,6 +3875,7 @@
         });
         if (token !== lyricsToken) return;
         if (r && r.synced) lyricsLines = parseLRC(r.synced);
+        if (!lyricsLines && r && r.suggestions && r.suggestions.length) lyricsSuggs = r.suggestions;
       }
     } finally {
       clearTimeout(spinT);
@@ -3840,12 +3883,51 @@
         loadEl.classList.remove('show');
         if (!lyricsLines) {
           const nf = $('lyricsNotFound');
-          nf.classList.add('show');
-          lyricsNfT = setTimeout(() => nf.classList.remove('show'), 2600);
+          if (lyricsSuggs && lyricsSuggs.length) {
+            nf.textContent = `no exact lyrics match — ${lyricsSuggs.length} suggestion${lyricsSuggs.length > 1 ? 's' : ''}`;
+            nf.classList.add('show', 'clickable');
+          } else {
+            nf.textContent = 'no lyrics found';
+            nf.classList.add('show');
+            lyricsNfT = setTimeout(() => nf.classList.remove('show'), 2600);
+          }
         }
       }
     }
   }
+
+  $('lyricsNotFound').addEventListener('click', () => {
+    if (!lyricsSuggs || !lyricsSuggs.length) return;
+    const menu = $('lyricsSuggMenu');
+    if (!menu.classList.contains('hidden')) { menu.classList.add('hidden'); return; }
+    menu.innerHTML = '';
+    for (const s of lyricsSuggs) {
+      const b = document.createElement('button');
+      const durTxt = s.duration ? `${Math.floor(s.duration / 60)}:${String(Math.round(s.duration % 60)).padStart(2, '0')}` : '';
+      b.textContent = `${s.trackName} — ${s.artistName}`;
+      if (durTxt) {
+        const side = document.createElement('span');
+        side.className = 'sugg-side';
+        side.textContent = ' · ' + durTxt;
+        b.appendChild(side);
+      }
+      b.addEventListener('click', () => {
+        const parsed = parseLRC(s.synced);
+        menu.classList.add('hidden');
+        if (parsed) {
+          lyricsLines = parsed;
+          lyricsIdx = -2;
+          saveLyricsPick(s.id);
+          $('lyricsNotFound').classList.remove('show', 'clickable');
+          toast('lyrics applied');
+        } else {
+          toast('could not use those lyrics', { error: true });
+        }
+      });
+      menu.appendChild(b);
+    }
+    menu.classList.remove('hidden');
+  });
 
   function updateLyricsOverlay() {
     const box = $('lyricsBox');

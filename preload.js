@@ -34,6 +34,7 @@ contextBridge.exposeInMainWorld('winControls', {
   discordLookupCover: (artist, album) => ipcRenderer.invoke('discord:lookupCover', { artist, album }),
   lyricsFindLocal: (p) => ipcRenderer.invoke('lyrics:findLocal', p),
   lyricsFetch: (meta) => ipcRenderer.invoke('lyrics:fetch', meta),
+  lyricsFetchById: (id) => ipcRenderer.invoke('lyrics:fetchById', id),
   onUpdateAvailable: (cb) => ipcRenderer.on('update:available', (e, info) => cb(info)),
   onUpdateProgress: (cb) => ipcRenderer.on('update:progress', (e, percent) => cb(percent)),
   onUpdateDownloaded: (cb) => ipcRenderer.on('update:downloaded', () => cb()),
