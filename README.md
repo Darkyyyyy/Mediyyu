@@ -16,6 +16,18 @@ a music player + audio visualizer for windows, built with electron.
 - **auto-update** — checks github releases on launch; a pill shows up when a new version is out (nothing installs without a click).
 - **synced lyrics** — karaoke overlay from a same-name `.lrc` or `.vtt` file, lyrics embedded in the tags, or [LRCLIB](https://lrclib.net) (free, no key). toggle with `L`.
 
+## download
+
+- __**Windows :**__
+Installer version: [Mediyyu-Setup-0.4.17.exe](https://github.com/Darkyyyyy/Mediyyu/releases/download/v0.4.17/Mediyyu-Setup-0.4.17.exe)
+Portable version: [Mediyyu-0.4.17.exe](https://github.com/Darkyyyyy/Mediyyu/releases/download/v0.4.17/Mediyyu-0.4.17.exe)
+
+- __**Linux :**__
+*should be there enventually*
+
+- __**MacOS :**__
+*same i guess???*
+
 ## dev
 
 ```bash
