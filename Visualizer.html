@@ -1394,10 +1394,10 @@
     glassTint: '#ffffff', glassAlpha: 5, glassBlur: true,
     lockResize: false, exportFps: 60, exportQuality: 'balanced', exportRes: 'window',
     displayMode: 'windowed', fullscreenRes: 'native',
-    discordEnabled: false, discordClientId: '1519049738224406711', discordImageKey: 'noting',
+    discordEnabled: true, discordClientId: '1519049738224406711', discordImageKey: 'noting',
     gain: 100, eq0: 0, eq1: 0, eq2: 0, eq3: 0, eq4: 0, eq5: 0, eq6: 0, eq7: 0, eq8: 0, eq9: 0,
     shuffle: false, repeat: 'off', playbackRate: 1, drunkMode: '', normalize: false, crossfade: false, crossfadeDur: 4,
-    notifyTrack: false, notifyEnd: false,
+    notifyTrack: true, notifyEnd: true,
     specFftSize: 4096, specWindow: 'blackman', specSineExp: 3,
     specLogScale: true, specMirror: false, specChannel: 'mono',
     specTsmooth: 'ema', specInertia: 0.6, specFastPeaks: false, specGravity: 0,
@@ -1408,6 +1408,7 @@
   let S = Object.assign({}, DEFAULTS);
   try { S = Object.assign(S, JSON.parse(localStorage.getItem('bbv_settings') || '{}')); } catch (e) {}
   S.repeat = 'off';
+  if (!S.migrOnDefaults) { S.migrOnDefaults = true; S.discordEnabled = true; S.notifyTrack = true; S.notifyEnd = true; }
   const save = () => { try { localStorage.setItem('bbv_settings', JSON.stringify(S)); } catch (e) {} };
 
   const EQ_FREQS = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
