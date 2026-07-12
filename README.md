@@ -2,7 +2,7 @@
 
 a music player + audio visualizer for windows, built with electron.
 
-![version](https://img.shields.io/badge/version-0.4.16-blue)
+![version](https://img.shields.io/badge/version-0.4.17-blue)
 
 ## features
 
