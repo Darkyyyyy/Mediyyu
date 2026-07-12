@@ -249,7 +249,8 @@ autoUpdater.autoInstallOnAppQuit = false;
 const sendUpdate = (channel, payload) => {
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, payload);
 };
-autoUpdater.on('update-available', (info) => sendUpdate('update:available', { version: info.version }));
+const isPortable = !!process.env.PORTABLE_EXECUTABLE_DIR;
+autoUpdater.on('update-available', (info) => sendUpdate('update:available', { version: info.version, portable: isPortable }));
 autoUpdater.on('download-progress', (p) => sendUpdate('update:progress', Math.round(p.percent)));
 autoUpdater.on('update-downloaded', () => sendUpdate('update:downloaded'));
 autoUpdater.on('error', (err) => {
@@ -263,6 +264,7 @@ if (app.isPackaged) {
 }
 ipcMain.on('update:download', () => { autoUpdater.downloadUpdate().catch(() => {}); });
 ipcMain.on('update:install', () => { autoUpdater.quitAndInstall(); });
+ipcMain.on('update:openReleases', () => { shell.openExternal('https://github.com/Darkyyyyy/Mediyyu/releases/latest'); });
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

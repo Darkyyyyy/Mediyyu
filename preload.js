@@ -40,4 +40,5 @@ contextBridge.exposeInMainWorld('winControls', {
   onUpdateError: (cb) => ipcRenderer.on('update:error', (e, msg) => cb(msg)),
   updateDownload: () => ipcRenderer.send('update:download'),
   updateInstall: () => ipcRenderer.send('update:install'),
+  updateOpenReleases: () => ipcRenderer.send('update:openReleases'),
 });
