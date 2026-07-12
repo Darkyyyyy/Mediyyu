@@ -19,13 +19,17 @@
   body {
     font-family: var(--ui);
     color: #fff;
-    background: rgba(12,13,16,.92);
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,.14);
+    background: transparent;
     user-select: none;
     cursor: default;
   }
-  body.solid { background: #0c0d10; }
+  .bgpane {
+    position: absolute; inset: 0;
+    background: rgba(12,13,16,.92);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.14);
+  }
+  body.solid .bgpane { background: #0c0d10; }
   .bar {
     position: absolute; top: 0; left: 0; right: 0; height: 40px;
     display: flex; align-items: center; gap: 4px; padding: 0 8px 0 14px;
@@ -77,6 +81,7 @@
 </style>
 </head>
 <body>
+  <div class="bgpane"></div>
   <div class="bar">
     <div class="title" id="trackTitle">mediyyu lyrics</div>
     <button id="fontMinus" title="smaller text">a-</button>

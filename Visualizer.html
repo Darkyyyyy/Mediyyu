@@ -1406,8 +1406,14 @@
       <input type="range" id="xfadeDur" min="1" max="10" step="1" value="4" />
       <span class="menu-side" id="xfadeDurVal">4s</span>
     </div>
-    <button class="menu-item" id="lyricsItem"><span>lyrics</span><span class="menu-side" id="lyricsCheck"></span></button>
-    <button class="menu-item" id="lyricsWinItem"><span>lyrics window</span><span class="menu-side" id="lyricsWinCheck"></span></button>
+    <div class="menu-item has-sub" id="lyricsSubItem">
+      <span>lyrics</span><span class="menu-side" id="lyricsCheck"></span>
+      <div class="submenu" id="lyricsSubMenu" style="width: 156px;">
+        <button id="lyricsItem">enabled</button>
+        <button id="lyricsWinItem">window</button>
+        <button id="lyricsSourceItem">change source&hellip;</button>
+      </div>
+    </div>
     <div class="menu-sep"></div>
     <button class="menu-item" id="miniItem"><span>mini mode</span></button>
   </div>
@@ -3857,24 +3863,7 @@
           const parsed = pr && pr.synced ? parseLRC(pr.synced) : null;
           if (parsed) { lyricsLines = parsed; return; }
         }
-        let artist = (tags && tags.artist) || '';
-        let title = (tags && tags.title) || '';
-        if (!title) {
-          const base = file.name.replace(/\.[^.]+$/, '');
-          const parts = !artist ? base.split(/\s+-\s+/) : null;
-          if (parts && parts.length >= 2) {
-            artist = parts[0].trim();
-            title = parts.slice(1).join(' - ').trim();
-          } else {
-            title = base;
-          }
-        }
-        const r = await window.winControls.lyricsFetch({
-          artist,
-          title,
-          album: (tags && tags.album) || '',
-          duration: dur,
-        });
+        const r = await window.winControls.lyricsFetch({ ...lyricsMeta(file, tags), duration: dur });
         if (token !== lyricsToken) return;
         if (r && r.synced) lyricsLines = parseLRC(r.synced);
         if (!lyricsLines && r && r.suggestions && r.suggestions.length) lyricsSuggs = r.suggestions;
@@ -3898,10 +3887,24 @@
     }
   }
 
-  $('lyricsNotFound').addEventListener('click', () => {
-    if (!lyricsSuggs || !lyricsSuggs.length) return;
+  function lyricsMeta(file, tags) {
+    let artist = (tags && tags.artist) || '';
+    let title = (tags && tags.title) || '';
+    if (!title) {
+      const base = file.name.replace(/\.[^.]+$/, '');
+      const parts = !artist ? base.split(/\s+-\s+/) : null;
+      if (parts && parts.length >= 2) {
+        artist = parts[0].trim();
+        title = parts.slice(1).join(' - ').trim();
+      } else {
+        title = base;
+      }
+    }
+    return { artist, title, album: (tags && tags.album) || '' };
+  }
+
+  function openSuggMenu() {
     const menu = $('lyricsSuggMenu');
-    if (!menu.classList.contains('hidden')) { menu.classList.add('hidden'); return; }
     menu.innerHTML = '';
     for (const s of lyricsSuggs) {
       const b = document.createElement('button');
@@ -3929,6 +3932,34 @@
       menu.appendChild(b);
     }
     menu.classList.remove('hidden');
+  }
+
+  $('lyricsNotFound').addEventListener('click', () => {
+    if (!lyricsSuggs || !lyricsSuggs.length) return;
+    const menu = $('lyricsSuggMenu');
+    if (!menu.classList.contains('hidden')) { menu.classList.add('hidden'); return; }
+    openSuggMenu();
+  });
+
+  $('lyricsSourceItem').addEventListener('click', async () => {
+    closeMoreMenu();
+    const file = playlist[curIndex];
+    if (!file || !window.winControls) { toast('no track playing', { error: true }); return; }
+    if (!S.lyricsOn) toggleLyrics();
+    const token = lyricsToken;
+    const loadEl = $('lyricsLoading');
+    loadEl.classList.add('show');
+    try {
+      const dur = await waitDuration();
+      const r = await window.winControls.lyricsFetch({ ...lyricsMeta(file, lastTags), duration: dur, suggestOnly: true });
+      if (token !== lyricsToken) return;
+      lyricsCurKey = file.name + '|' + Math.round(dur || 0);
+      lyricsSuggs = (r && r.suggestions) || [];
+      if (!lyricsSuggs.length) { toast('no alternative lyrics found', { error: true }); return; }
+      openSuggMenu();
+    } finally {
+      if (token === lyricsToken) loadEl.classList.remove('show');
+    }
   });
 
   function updateLyricsOverlay() {
@@ -3988,7 +4019,7 @@
       lyricsWinOpen = open;
       lyrwinSentLines = undefined;
       lyrwinNextT = 0;
-      $('lyricsWinCheck').textContent = open ? '✓' : '';
+      syncMoreMenu();
     });
     window.winControls.onLyricsWinSeek((t) => {
       if (ready && isFinite(audio.duration)) audio.currentTime = Math.max(0, Math.min(audio.duration, t));
@@ -4045,11 +4076,13 @@
     $('normCheck').textContent = S.normalize ? '✓' : '';
     $('xfadeCheck').textContent = S.crossfade ? '✓' : '';
     $('lyricsCheck').textContent = S.lyricsOn ? '✓' : '';
+    $('lyricsItem').classList.toggle('on', S.lyricsOn);
+    $('lyricsWinItem').classList.toggle('on', lyricsWinOpen);
     $('xfadeDur').value = S.crossfadeDur;
     $('xfadeDurVal').textContent = S.crossfadeDur + 's';
     $('xfadeDurRow').classList.toggle('disabled', !S.crossfade);
   }
-  function closeMoreMenu() { $('moreMenu').classList.add('hidden'); closeSpeedSub(); }
+  function closeMoreMenu() { $('moreMenu').classList.add('hidden'); closeSpeedSub(); closeLyrSub(); }
   $('moreBtn').addEventListener('click', (e) => {
     e.stopPropagation();
     const menu = $('moreMenu');
@@ -4081,7 +4114,36 @@
     const d1 = sign(p, a, b), d2 = sign(p, b, c), d3 = sign(p, c, a);
     return !(((d1 < 0) || (d2 < 0) || (d3 < 0)) && ((d1 > 0) || (d2 > 0) || (d3 > 0)));
   }
-  speedItem.addEventListener('mouseenter', openSpeedSub);
+  const lyricsSubItem = $('lyricsSubItem'), lyricsSubMenu = $('lyricsSubMenu');
+  let lyrSubApex = null, lyrSubCloseT = null;
+  function openLyrSub(e) {
+    clearTimeout(lyrSubCloseT); lyrSubCloseT = null;
+    if (e) lyrSubApex = { x: e.clientX, y: e.clientY };
+    lyricsSubMenu.classList.add('open');
+  }
+  function closeLyrSub() {
+    clearTimeout(lyrSubCloseT); lyrSubCloseT = null;
+    lyricsSubMenu.classList.remove('open');
+  }
+  lyricsSubItem.addEventListener('mouseenter', (e) => { closeSpeedSub(); openLyrSub(e); });
+  window.addEventListener('mousemove', (e) => {
+    if (!lyricsSubMenu.classList.contains('open')) return;
+    const x = e.clientX, y = e.clientY;
+    const itemR = lyricsSubItem.getBoundingClientRect();
+    const subR = lyricsSubMenu.getBoundingClientRect();
+    if (inRect(itemR, x, y)) { lyrSubApex = { x, y }; clearTimeout(lyrSubCloseT); lyrSubCloseT = null; return; }
+    if (inRect(subR, x, y, 2)) { clearTimeout(lyrSubCloseT); lyrSubCloseT = null; return; }
+    const apex = lyrSubApex || { x: itemR.right - 8, y: (itemR.top + itemR.bottom) / 2 };
+    const inCone = inTriangle({ x, y }, apex, { x: subR.left, y: subR.top - 10 }, { x: subR.left, y: subR.bottom + 10 });
+    if (inCone) {
+      clearTimeout(lyrSubCloseT);
+      lyrSubCloseT = setTimeout(closeLyrSub, 500);
+    } else {
+      closeLyrSub();
+    }
+  });
+
+  speedItem.addEventListener('mouseenter', (e) => { closeLyrSub(); openSpeedSub(e); });
   window.addEventListener('mousemove', (e) => {
     if (!speedMenu.classList.contains('open')) return;
     const x = e.clientX, y = e.clientY;

@@ -535,7 +535,7 @@ ipcMain.handle('lyrics:findLocal', async (e, audioPath) => {
   } catch { return null; }
 });
 const lrclibUA = () => `Mediyyu v${app.getVersion()} (https://github.com/Darkyyyyy/Mediyyu)`;
-ipcMain.handle('lyrics:fetch', async (e, { artist, title, album, duration }) => {
+ipcMain.handle('lyrics:fetch', async (e, { artist, title, album, duration, suggestOnly }) => {
   try {
     const q = (o) => Object.entries(o).filter(([, v]) => v != null && v !== '').map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
     const controller = new AbortController();
@@ -558,18 +558,23 @@ ipcMain.handle('lyrics:fetch', async (e, { artist, title, album, duration }) => 
       } catch {}
     };
     let exact = null;
-    const r = await fetch('https://lrclib.net/api/get?' + q({ artist_name: artist, track_name: title, album_name: album, duration: duration ? Math.round(duration) : null }), opts);
-    if (r.ok) {
-      const j = await r.json();
-      if (j.syncedLyrics || j.plainLyrics) exact = { synced: j.syncedLyrics || '', plain: j.plainLyrics || '' };
+    if (!suggestOnly) {
+      const r = await fetch('https://lrclib.net/api/get?' + q({ artist_name: artist, track_name: title, album_name: album, duration: duration ? Math.round(duration) : null }), opts);
+      if (r.ok) {
+        const j = await r.json();
+        if (j.syncedLyrics || j.plainLyrics) exact = { synced: j.syncedLyrics || '', plain: j.plainLyrics || '' };
+      }
     }
-    if (!exact || !exact.synced) {
+    if (suggestOnly || !exact || !exact.synced) {
       await search({ artist_name: artist, track_name: title });
-      const close = duration ? suggestions.filter(x => x.duration && Math.abs(x.duration - duration) <= 7) : [];
-      if (close.length) {
-        close.sort((a, b) => Math.abs(a.duration - duration) - Math.abs(b.duration - duration));
-        exact = { synced: close[0].synced, plain: '' };
-      } else {
+      if (!suggestOnly) {
+        const close = duration ? suggestions.filter(x => x.duration && Math.abs(x.duration - duration) <= 7) : [];
+        if (close.length) {
+          close.sort((a, b) => Math.abs(a.duration - duration) - Math.abs(b.duration - duration));
+          exact = { synced: close[0].synced, plain: '' };
+        }
+      }
+      if (suggestOnly || !exact) {
         if (artist && title) await search({ q: artist + ' ' + title });
         if (title && suggestions.length < 8) await search({ q: title });
       }
@@ -578,7 +583,7 @@ ipcMain.handle('lyrics:fetch', async (e, { artist, title, album, duration }) => 
     return {
       synced: exact ? exact.synced : '',
       plain: exact ? exact.plain : '',
-      suggestions: exact && exact.synced ? [] : suggestions.slice(0, 8),
+      suggestions: !suggestOnly && exact && exact.synced ? [] : suggestions.slice(0, 8),
     };
   } catch { return null; }
 });
