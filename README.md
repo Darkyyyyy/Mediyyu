@@ -18,14 +18,14 @@ a music player + audio visualizer for windows, built with electron.
 
 ## download
 
-- __**Windows :**__
+__**Windows :**__
 Installer version: [Mediyyu-Setup-0.4.17.exe](https://github.com/Darkyyyyy/Mediyyu/releases/download/v0.4.17/Mediyyu-Setup-0.4.17.exe)
 Portable version: [Mediyyu-0.4.17.exe](https://github.com/Darkyyyyy/Mediyyu/releases/download/v0.4.17/Mediyyu-0.4.17.exe)
 
-- __**Linux :**__
+__**Linux :**__
 *should be there enventually*
 
-- __**MacOS :**__
+__**MacOS :**__
 *same i guess???*
 
 ## dev
