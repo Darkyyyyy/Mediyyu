@@ -1407,6 +1407,7 @@
       <span class="menu-side" id="xfadeDurVal">4s</span>
     </div>
     <button class="menu-item" id="lyricsItem"><span>lyrics</span><span class="menu-side" id="lyricsCheck"></span></button>
+    <button class="menu-item" id="lyricsWinItem"><span>lyrics window</span><span class="menu-side" id="lyricsWinCheck"></span></button>
     <div class="menu-sep"></div>
     <button class="menu-item" id="miniItem"><span>mini mode</span></button>
   </div>
@@ -2528,6 +2529,7 @@
     const nowTs = performance.now();
     updateDebugOverlay(nowTs);
     updateLyricsOverlay();
+    syncLyricsWin(nowTs);
     paintSliders();
     if (ready && playing) readBands(nowTs); else idleBands();
     updatePeaks();
@@ -3973,6 +3975,40 @@
     if (S.lyricsOn && playlist[curIndex]) loadLyricsFor(playlist[curIndex], lastTags);
   }
   $('lyricsItem').addEventListener('click', toggleLyrics);
+
+  let lyricsWinOpen = false;
+  let lyrwinSentLines;
+  let lyrwinNextT = 0;
+  $('lyricsWinItem').addEventListener('click', () => {
+    closeMoreMenu();
+    if (window.winControls) window.winControls.lyricsWinToggle();
+  });
+  if (window.winControls && window.winControls.onLyricsWinState) {
+    window.winControls.onLyricsWinState((open) => {
+      lyricsWinOpen = open;
+      lyrwinSentLines = undefined;
+      lyrwinNextT = 0;
+      $('lyricsWinCheck').textContent = open ? '✓' : '';
+    });
+    window.winControls.onLyricsWinSeek((t) => {
+      if (ready && isFinite(audio.duration)) audio.currentTime = Math.max(0, Math.min(audio.duration, t));
+    });
+  }
+  function syncLyricsWin(now) {
+    if (!lyricsWinOpen || !window.winControls) return;
+    if (lyrwinSentLines !== lyricsLines) {
+      lyrwinSentLines = lyricsLines;
+      window.winControls.lyricsWinSync({
+        lines: lyricsLines || [],
+        title: $('npTitle').textContent,
+        artist: $('npArtist').classList.contains('hidden') ? '' : $('npArtist').textContent,
+      });
+    }
+    if (now >= lyrwinNextT) {
+      lyrwinNextT = now + 200;
+      window.winControls.lyricsWinSync({ t: ready ? audio.currentTime : 0, playing, rate: audio.playbackRate });
+    }
+  }
 
   function setVolIcon(muted) {
     $('volBtn').innerHTML = muted

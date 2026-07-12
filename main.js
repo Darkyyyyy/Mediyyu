@@ -151,7 +151,10 @@ function createWindow() {
     },
   });
   mainWindow = win;
-  win.on('closed', () => { if (mainWindow === win) mainWindow = null; });
+  win.on('closed', () => {
+    if (mainWindow === win) mainWindow = null;
+    if (lyricsWin && !lyricsWin.isDestroyed()) lyricsWin.close();
+  });
 
   let closeAnimated = false;
   win.on('close', (e) => {
@@ -207,6 +210,44 @@ function createWindow() {
   globalShortcut.register('MediaNextTrack', () => win.webContents.send('media:next'));
   globalShortcut.register('MediaPreviousTrack', () => win.webContents.send('media:prev'));
 }
+
+let lyricsWin = null;
+function createLyricsWindow() {
+  if (lyricsWin && !lyricsWin.isDestroyed()) { lyricsWin.focus(); return; }
+  lyricsWin = new BrowserWindow({
+    width: 400, height: 560, minWidth: 260, minHeight: 220,
+    frame: false, transparent: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+  lyricsWin.loadFile('lyrics.html');
+  lyricsWin.on('closed', () => {
+    lyricsWin = null;
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('lyrwin:state', false);
+  });
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('lyrwin:state', true);
+}
+ipcMain.on('lyrwin:toggle', () => {
+  if (lyricsWin && !lyricsWin.isDestroyed()) lyricsWin.close();
+  else createLyricsWindow();
+});
+ipcMain.on('lyrwin:sync', (e, payload) => {
+  if (lyricsWin && !lyricsWin.isDestroyed()) lyricsWin.webContents.send('lyrwin:sync', payload);
+});
+ipcMain.on('lyrwin:seek', (e, t) => {
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('lyrwin:seek', t);
+});
+ipcMain.on('lyrwin:setTop', (e, flag) => {
+  const w = BrowserWindow.fromWebContents(e.sender);
+  if (w) w.setAlwaysOnTop(!!flag);
+});
+ipcMain.on('lyrwin:close', (e) => {
+  const w = BrowserWindow.fromWebContents(e.sender);
+  if (w) w.close();
+});
 
 let discordClient = null;
 let discordClientId = null;

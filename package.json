@@ -27,6 +27,7 @@
       "main.js",
       "preload.js",
       "Visualizer.html",
+      "lyrics.html",
       "fonts/**/*",
       "assets/**/*",
       "node_modules/**/*"

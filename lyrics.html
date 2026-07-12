@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Mediyyu — lyrics</title>
+<style>
+  @font-face {
+    font-family: 'Renogare';
+    src: url('fonts/Renogare-Regular.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  :root {
+    --ui: 'Renogare', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --fs: 20px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: var(--ui);
+    color: #fff;
+    background: rgba(12,13,16,.92);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.14);
+    user-select: none;
+    cursor: default;
+  }
+  body.solid { background: #0c0d10; }
+  .bar {
+    position: absolute; top: 0; left: 0; right: 0; height: 40px;
+    display: flex; align-items: center; gap: 4px; padding: 0 8px 0 14px;
+    -webkit-app-region: drag;
+    z-index: 2;
+  }
+  .bar .title {
+    flex: 1; min-width: 0; font-size: 12px; color: rgba(255,255,255,.6);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .bar button {
+    -webkit-app-region: no-drag;
+    width: 26px; height: 26px; border: 0; border-radius: 7px;
+    background: rgba(255,255,255,.07); color: rgba(255,255,255,.75);
+    font-family: var(--ui); font-size: 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .bar button:hover { background: rgba(255,255,255,.16); color: #fff; }
+  .bar button.on { background: rgba(255,255,255,.85); color: #111; }
+  .bar #closeBtn:hover { background: #e81123; color: #fff; }
+  .stage {
+    position: absolute; inset: 40px 0 0 0; overflow: hidden;
+    mask-image: linear-gradient(180deg, transparent 0, #000 14%, #000 86%, transparent 100%);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 14%, #000 86%, transparent 100%);
+  }
+  .lines {
+    position: absolute; left: 0; right: 0; top: 0;
+    padding: 0 22px;
+    transition: transform .35s cubic-bezier(.25,.7,.3,1);
+    text-align: center;
+  }
+  .line {
+    padding: 7px 0;
+    font-size: var(--fs);
+    line-height: 1.4;
+    color: rgba(255,255,255,.34);
+    cursor: pointer;
+    transition: color .3s ease, opacity .3s ease;
+  }
+  .line:hover { color: rgba(255,255,255,.6); }
+  .line.cur { color: #fff; font-weight: 700; }
+  .line.gap { font-size: calc(var(--fs) * .6); letter-spacing: 4px; color: rgba(255,255,255,.22); cursor: default; }
+  .empty {
+    position: absolute; inset: 40px 0 0 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: rgba(255,255,255,.35);
+  }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <div class="title" id="trackTitle">mediyyu lyrics</div>
+    <button id="fontMinus" title="smaller text">a-</button>
+    <button id="fontPlus" title="bigger text">a+</button>
+    <button id="topBtn" title="always on top">📌</button>
+    <button id="bgBtn" title="solid background">▩</button>
+    <button id="closeBtn" title="close">✕</button>
+  </div>
+  <div class="stage">
+    <div class="lines" id="lines"></div>
+  </div>
+  <div class="empty" id="empty">no lyrics for this track</div>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  let prefs = { fs: 20, top: false, solid: false };
+  try { prefs = Object.assign(prefs, JSON.parse(localStorage.getItem('bbv_lyrwin') || '{}')); } catch (e) {}
+  const savePrefs = () => { try { localStorage.setItem('bbv_lyrwin', JSON.stringify(prefs)); } catch (e) {} };
+
+  const applyPrefs = () => {
+    document.documentElement.style.setProperty('--fs', prefs.fs + 'px');
+    document.body.classList.toggle('solid', prefs.solid);
+    $('topBtn').classList.toggle('on', prefs.top);
+    $('bgBtn').classList.toggle('on', prefs.solid);
+    if (window.winControls) window.winControls.lyricsWinSetTop(prefs.top);
+  };
+
+  $('fontMinus').addEventListener('click', () => { prefs.fs = Math.max(12, prefs.fs - 2); applyPrefs(); savePrefs(); });
+  $('fontPlus').addEventListener('click', () => { prefs.fs = Math.min(40, prefs.fs + 2); applyPrefs(); savePrefs(); });
+  $('topBtn').addEventListener('click', () => { prefs.top = !prefs.top; applyPrefs(); savePrefs(); });
+  $('bgBtn').addEventListener('click', () => { prefs.solid = !prefs.solid; applyPrefs(); savePrefs(); });
+  $('closeBtn').addEventListener('click', () => { if (window.winControls) window.winControls.lyricsWinClose(); });
+
+  let lines = [];
+  let sync = { t: 0, playing: false, rate: 1, at: performance.now() };
+  let curIdx = -2;
+
+  function rebuild() {
+    const box = $('lines');
+    box.innerHTML = '';
+    for (let i = 0; i < lines.length; i++) {
+      const el = document.createElement('div');
+      const gap = !lines[i].text;
+      el.className = 'line' + (gap ? ' gap' : '');
+      el.textContent = gap ? '· · ·' : lines[i].text;
+      if (!gap) {
+        const t = lines[i].t;
+        el.addEventListener('click', () => { if (window.winControls) window.winControls.lyricsWinSeek(t); });
+      }
+      box.appendChild(el);
+    }
+    $('empty').classList.toggle('hidden', lines.length > 0);
+    curIdx = -2;
+  }
+
+  function now() {
+    return sync.t + (sync.playing ? ((performance.now() - sync.at) / 1000) * (sync.rate || 1) : 0);
+  }
+
+  function tick() {
+    if (lines.length) {
+      const t = now() + 0.05;
+      let lo = 0, hi = lines.length - 1, idx = -1;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        if (lines[mid].t <= t) { idx = mid; lo = mid + 1; } else hi = mid - 1;
+      }
+      if (idx !== curIdx) {
+        curIdx = idx;
+        const kids = $('lines').children;
+        for (let i = 0; i < kids.length; i++) kids[i].classList.toggle('cur', i === idx);
+        const stage = document.querySelector('.stage');
+        const target = idx >= 0 ? kids[idx] : kids[0];
+        if (target) {
+          const offset = target.offsetTop + target.offsetHeight / 2;
+          $('lines').style.transform = `translateY(${Math.round(stage.clientHeight / 2 - offset)}px)`;
+        }
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+
+  if (window.winControls && window.winControls.onLyricsWinSync) {
+    window.winControls.onLyricsWinSync((p) => {
+      if (p.lines !== undefined) {
+        lines = Array.isArray(p.lines) ? p.lines : [];
+        const t = (p.title || '').trim();
+        const a = (p.artist || '').trim();
+        $('trackTitle').textContent = t ? (a ? `${t} — ${a}` : t) : 'mediyyu lyrics';
+        rebuild();
+      }
+      if (p.t !== undefined) {
+        sync = { t: p.t, playing: !!p.playing, rate: p.rate || 1, at: performance.now() };
+      }
+    });
+  }
+
+  window.addEventListener('resize', () => { curIdx = -2; });
+
+  applyPrefs();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
