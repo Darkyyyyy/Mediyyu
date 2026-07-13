@@ -1223,7 +1223,6 @@
 
     <div class="sec" data-tab="audio">
       <div class="row"><label>volume gain</label><input type="range" id="gain" min="0" max="300" value="100" /><span class="val" id="gainVal">100%</span></div>
-      <p class="note">boosts the signal beyond the volume slider's 100%. high values can distort.</p>
       <div class="row" style="margin-top:13px;"><label>equalizer</label></div>
       <div class="eq-bank">
         <div class="eq-band"><span class="eq-val" id="eq0Val">0</span><input type="range" id="eq0" min="-12" max="12" value="0" /><span class="eq-freq">31</span></div>
@@ -1252,7 +1251,6 @@
       <div class="bg-swatches" id="bgSwatches"></div>
       <button class="bgmode" id="bgTransparent">transparent &middot; preview only</button>
       <div class="row" style="margin-top:11px;"><label>custom</label><input type="color" id="bgColor" value="#0a0b0d" /></div>
-      <p class="note" id="bgNote"></p>
       <div class="row" style="margin-top:13px;">
         <label>see-through window</label>
         <div class="seg seg-sm" id="winTransparentSeg">
@@ -1260,7 +1258,6 @@
           <button data-val="on">on</button>
         </div>
       </div>
-      <p class="note">makes the whole window glass &mdash; your real desktop shows behind the bars. only the visualizer + UI stay opaque.</p>
       <div class="sec-divider"></div>
       <div class="row">
         <label>ambient cover art</label>
@@ -1269,7 +1266,6 @@
           <button data-val="on">on</button>
         </div>
       </div>
-      <p class="note">fills the background with the playing track's cover art (or the clip itself for video files), blurred and dimmed behind the bars. the cover drifts slowly with playback progress.</p>
       <div class="row" style="margin-top:11px;"><label>blur</label><input type="range" id="bgCoverBlur" min="0" max="100" value="46" /><span class="val" id="bgCoverBlurVal">46</span></div>
       <div class="row"><label>dim</label><input type="range" id="bgCoverDim" min="0" max="100" value="55" /><span class="val" id="bgCoverDimVal">55</span></div>
     </div>
@@ -1283,7 +1279,6 @@
         <button data-val="borderless">borderless</button>
         <button data-val="fullscreen">fullscreen</button>
       </div>
-      <p class="note">borderless fills the screen without leaving windowed mode (no Alt-Tab disruption). fullscreen is exclusive OS fullscreen.</p>
       <div class="row" style="margin-top:13px;">
         <label>fullscreen resolution</label>
       </div>
@@ -1311,7 +1306,6 @@
           <button data-val="on">on</button>
         </div>
       </div>
-      <p class="note">windowed mode only.</p>
       <div class="row" style="margin-top:13px;">
         <label>interface tint</label>
         <input type="color" id="glassTint" value="#ffffff" />
@@ -1333,7 +1327,6 @@
           <button data-val="on">on</button>
         </div>
       </div>
-      <p class="note">shows the current track as your discord status while mediyyu is open.</p>
       <div class="row" style="margin-top:13px;">
         <label>notify on track change</label>
         <div class="seg seg-sm" id="notifyTrackSeg">
@@ -4869,7 +4862,10 @@
   });
   function applyDisplayMode(mode) {
     S.displayMode = mode;
-    if (window.winControls) window.winControls.setDisplayMode(mode);
+    if (window.winControls) {
+      window.winControls.setDisplayMode(mode);
+      window.winControls.setAlwaysOnTop(mode === 'windowed' && S.alwaysOnTop);
+    }
     document.body.classList.toggle('edge-to-edge', mode !== 'windowed');
     resize();
   }
@@ -5047,16 +5043,6 @@
     document.body.classList.toggle('transparent', isT);
     $('bgTransparent').classList.toggle('on', isT);
     bgEl.querySelectorAll('.swatch').forEach(s => s.classList.toggle('sel', !isT && s.dataset.c.toLowerCase() === S.bg.toLowerCase()));
-    const note = $('bgNote');
-    if (isT) {
-      note.innerHTML = '⚠️ browser-recorded video <b>can’t store real transparency</b> &mdash; it saves on black (that’s why DaVinci shows a black box). use one of the two methods below instead.';
-    } else if (S.bg === '#00e23a' || S.bg === '#ff20d0') {
-      note.innerHTML = '<b>chroma key.</b> record, then key this colour out &mdash; in DaVinci use the <b>Color page → Qualifier</b> or Fusion <b>Delta Keyer</b>. gives hard-edged bars (the soft glow keys away).';
-    } else if (S.bg.toLowerCase() === '#ffffff') {
-      note.textContent = '';
-    } else {
-      note.innerHTML = '<b>best for overlays.</b> export on this dark background, then in DaVinci set the clip’s <b>Composite Mode → Add</b> (or Screen) in the Inspector. the black drops out and the bars + glow shine over your footage &mdash; no alpha needed, glow fully preserved.';
-    }
   }
   function syncShapeOptions() {
     document.querySelectorAll('.sec[data-tab="shape"] .shape-opt').forEach(el => {
