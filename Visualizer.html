@@ -90,6 +90,17 @@
     transform: scale(1.12);
   }
   body.bg-cover-art #coverBg { display: block; }
+  #clipBg {
+    position: absolute;
+    z-index: 0;
+    inset: -6%;
+    width: 112%;
+    height: 112%;
+    object-fit: cover;
+    display: none;
+    filter: blur(46px) brightness(.55);
+  }
+  body.bg-clip #clipBg { display: block; }
   .glass-blur {
     position: absolute; display: none; pointer-events: none;
     filter: blur(16px); transform: scale(1.08);
@@ -857,6 +868,7 @@
 
   <div id="stage">
     <div id="coverBg"></div>
+    <video id="clipBg" muted playsinline></video>
     <canvas id="viz" width="1920" height="1080"></canvas>
   </div>
 
@@ -1241,7 +1253,7 @@
           <button data-val="on">on</button>
         </div>
       </div>
-      <p class="note">fills the background with the playing track's cover art, blurred and dimmed behind the bars.</p>
+      <p class="note">fills the background with the playing track's cover art (or the clip itself for video files), blurred and dimmed behind the bars. the cover drifts slowly with playback progress.</p>
       <div class="row" style="margin-top:11px;"><label>blur</label><input type="range" id="bgCoverBlur" min="0" max="100" value="46" /><span class="val" id="bgCoverBlurVal">46</span></div>
       <div class="row"><label>dim</label><input type="range" id="bgCoverDim" min="0" max="100" value="55" /><span class="val" id="bgCoverDimVal">55</span></div>
     </div>
@@ -1453,7 +1465,7 @@
     <div class="drop-card">
       <img class="drop-icon" src="assets/logo.png" alt="" />
       <h1>drop your audio file</h1>
-      <label class="browse">browse files<input type="file" id="fileInput" accept="audio/*" multiple hidden /></label>
+      <label class="browse">browse files<input type="file" id="fileInput" accept="audio/*,video/mp4,video/webm,video/quicktime" multiple hidden /></label>
     </div>
     <button class="resume-note hidden" id="resumeNote">resume previous session?</button>
   </div>
@@ -2546,6 +2558,17 @@
     }
   }
 
+  let coverPanLast = '';
+  function updateCoverPan() {
+    if (!S.bgCoverArt || curIsVideo || !ready || !isFinite(audio.duration) || !audio.duration) return;
+    const p = Math.min(1, audio.currentTime / audio.duration);
+    const x = ((p * 2 - 1) * 3).toFixed(2);
+    if (coverPanLast !== x) {
+      coverPanLast = x;
+      $('coverBg').style.transform = `translateX(${x}%) scale(1.12)`;
+    }
+  }
+
   let sliderEls = null;
   function paintSliders() {
     if (!sliderEls) sliderEls = [...document.querySelectorAll('input[type=range]')];
@@ -2562,6 +2585,8 @@
     updateLyricsOverlay();
     syncLyricsWin(nowTs);
     paintSliders();
+    updateCoverPan();
+    checkClipDrift();
     if (ready && playing) readBands(nowTs); else idleBands();
     updatePeaks();
 
@@ -2626,8 +2651,10 @@
   requestAnimationFrame(draw);
 
   let playlist = [];
+  let curIsVideo = false;
   let curIndex = -1;
-  function isAudioFile(f) { return f.type.startsWith('audio') || /\.(mp3|wav|ogg|m4a|flac|aac)$/i.test(f.name); }
+  function isAudioFile(f) { return f.type.startsWith('audio') || f.type.startsWith('video') || /\.(mp3|wav|ogg|m4a|flac|aac|mp4|webm|mov|m4v)$/i.test(f.name); }
+  function isVideoFile(f) { return (f.type && f.type.startsWith('video')) || /\.(mp4|webm|mov|m4v)$/i.test(f.name); }
 
   function readSlice(file, start, len) {
     return new Promise((resolve, reject) => {
@@ -3546,6 +3573,16 @@
     audio.src = URL.createObjectURL(file);
     audio.defaultPlaybackRate = S.playbackRate;
     audio.playbackRate = S.playbackRate;
+    curIsVideo = isVideoFile(file);
+    const clip = $('clipBg');
+    if (curIsVideo) {
+      clip.src = audio.src;
+      clip.playbackRate = S.playbackRate;
+    } else if (clip.src) {
+      clip.removeAttribute('src');
+      clip.load();
+    }
+    applyCoverBgStyle();
     if (resumePos > 0) {
       const pos = resumePos;
       resumePos = 0;
@@ -3772,6 +3809,29 @@
   $('playBtn').addEventListener('click', togglePlay);
   audio.addEventListener('play', () => setPlay(true));
   audio.addEventListener('pause', () => setPlay(false));
+  function syncClip() {
+    if (!curIsVideo) return;
+    const clip = $('clipBg');
+    if (audio.paused || !S.bgCoverArt) clip.pause();
+    else {
+      clip.currentTime = Math.abs(clip.currentTime - audio.currentTime) > 0.35 ? audio.currentTime : clip.currentTime;
+      clip.play().catch(() => {});
+    }
+  }
+  audio.addEventListener('play', syncClip);
+  audio.addEventListener('pause', syncClip);
+  audio.addEventListener('seeked', () => { if (curIsVideo) $('clipBg').currentTime = audio.currentTime; });
+  audio.addEventListener('ratechange', () => { if (curIsVideo) $('clipBg').playbackRate = audio.playbackRate; });
+  let clipDriftF = 0;
+  function checkClipDrift() {
+    if (!curIsVideo || !S.bgCoverArt) return;
+    if (++clipDriftF % 120 !== 0) return;
+    const clip = $('clipBg');
+    if (!audio.paused && clip.readyState >= 2) {
+      if (clip.paused) clip.play().catch(() => {});
+      if (Math.abs(clip.currentTime - audio.currentTime) > 0.35) clip.currentTime = audio.currentTime;
+    }
+  }
   if (window.winControls) {
     window.winControls.onMediaPlayPause(() => togglePlay());
     window.winControls.onMediaNext(() => playNext());
@@ -4617,7 +4677,7 @@
     btn.addEventListener('click', () => { S.winTransparent = btn.dataset.val === 'on'; syncUI(); save(); });
   });
   $('bgCoverArtSeg').querySelectorAll('button').forEach(btn => {
-    btn.addEventListener('click', () => { S.bgCoverArt = btn.dataset.val === 'on'; syncUI(); save(); });
+    btn.addEventListener('click', () => { S.bgCoverArt = btn.dataset.val === 'on'; syncUI(); syncClip(); save(); });
   });
   $('bgCoverBlur').addEventListener('input', e => { S.bgCoverBlur = +e.target.value; $('bgCoverBlurVal').textContent = S.bgCoverBlur; applyCoverBgStyle(); save(); });
   $('bgCoverDim').addEventListener('input', e => { S.bgCoverDim = +e.target.value; $('bgCoverDimVal').textContent = S.bgCoverDim; applyCoverBgStyle(); save(); });
@@ -4825,10 +4885,13 @@
     });
   }
   function applyCoverBgStyle() {
-    document.body.classList.toggle('bg-cover-art', S.bgCoverArt);
+    document.body.classList.toggle('bg-cover-art', S.bgCoverArt && !curIsVideo);
+    document.body.classList.toggle('bg-clip', S.bgCoverArt && curIsVideo);
     const blurPx = (S.bgCoverBlur / 100) * 80;
     const brightness = 1 - (S.bgCoverDim / 100) * 0.85;
-    $('coverBg').style.filter = `blur(${blurPx}px) brightness(${brightness.toFixed(2)})`;
+    const filter = `blur(${blurPx}px) brightness(${brightness.toFixed(2)})`;
+    $('coverBg').style.filter = filter;
+    $('clipBg').style.filter = filter;
   }
   function applyGlassTint() {
     const hex = /^#[0-9a-f]{6}$/i.test(S.glassTint) ? S.glassTint : DEFAULTS.glassTint;
