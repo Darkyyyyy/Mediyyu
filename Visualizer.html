@@ -651,6 +651,16 @@
     padding: 14px 16px 10px; font-size: 12.5px; font-weight: 600; letter-spacing: .04em;
     text-transform: uppercase; color: var(--dim); border-bottom: 1px solid rgba(255,255,255,.08);
   }
+  .pl-search {
+    flex: 1; min-width: 0; max-width: 160px; margin-left: auto;
+    border: 1px solid transparent; border-radius: 7px;
+    background: rgba(255,255,255,.06); color: var(--txt);
+    font-family: var(--ui); font-size: 11px; padding: 3px 9px;
+    text-transform: none; letter-spacing: 0; font-weight: 400;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .pl-search:focus { outline: none; border-color: var(--line); background: rgba(255,255,255,.1); }
+  .pl-search::placeholder { color: var(--dim); }
   .pl-done {
     border: 1px solid var(--line); background: rgba(255,255,255,.08); color: #fff; cursor: pointer;
     font-family: var(--ui); font-size: 10.5px; text-transform: lowercase; letter-spacing: 0;
@@ -979,7 +989,7 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
   </button>
   <div class="playlist-drawer" id="plDrawer">
-    <div class="playlist-head"><span>playlist</span><button class="pl-done hidden" id="plDoneBtn">done</button></div>
+    <div class="playlist-head"><span>playlist</span><input class="pl-search" id="plSearch" type="text" placeholder="search" spellcheck="false" /><button class="pl-done hidden" id="plDoneBtn">done</button></div>
     <div class="playlist-list" id="plList"></div>
     <div class="playlist-foot">
       <button class="pl-foot-btn" id="plAddBtn" title="add tracks">+</button>
@@ -3112,20 +3122,30 @@
   const PL_ROW_H = 35;
   const PL_OVERSCAN = 6;
   let plWinFirst = -1, plWinLast = -1;
+  let plFilter = '';
+  let plView = [];
+  function rebuildPlView() {
+    plView = [];
+    for (let i = 0; i < playlist.length; i++) {
+      const f = playlist[i];
+      if (!plFilter || f.name.toLowerCase().includes(plFilter) || (f._title || '').toLowerCase().includes(plFilter)) plView.push(i);
+    }
+  }
   function renderPlaylist() {
     const list = $('plList');
     const keepScroll = list.scrollTop;
     list.innerHTML = '';
-    if (!playlist.length) {
+    rebuildPlView();
+    if (!playlist.length || !plView.length) {
       const empty = document.createElement('div');
       empty.className = 'playlist-empty';
-      empty.textContent = 'list is empty';
+      empty.textContent = playlist.length ? 'no matches' : 'list is empty';
       list.appendChild(empty);
     } else {
       const virt = document.createElement('div');
       virt.className = 'pl-virt';
       virt.id = 'plVirt';
-      virt.style.height = (playlist.length * PL_ROW_H) + 'px';
+      virt.style.height = (plView.length * PL_ROW_H) + 'px';
       list.appendChild(virt);
     }
     const hint = document.createElement('div');
@@ -3137,7 +3157,7 @@
     renderPlaylistWindow(true);
     const total = playlist.reduce((s, f) => s + (f._dur > 0 ? f._dur : 0), 0);
     $('plTotal').textContent = playlist.length
-      ? `${playlist.length} track${playlist.length > 1 ? 's' : ''}${total > 0 ? ' · ' + fmt(total) : ''}`
+      ? (plFilter ? `${plView.length}/${playlist.length} tracks` : `${playlist.length} track${playlist.length > 1 ? 's' : ''}${total > 0 ? ' · ' + fmt(total) : ''}`)
       : '';
   }
   function renderPlaylistWindow(force) {
@@ -3145,19 +3165,20 @@
     if (!virt) return;
     const list = $('plList');
     const first = Math.max(0, Math.floor(list.scrollTop / PL_ROW_H) - PL_OVERSCAN);
-    const last = Math.min(playlist.length - 1, Math.ceil((list.scrollTop + list.clientHeight) / PL_ROW_H) + PL_OVERSCAN);
+    const last = Math.min(plView.length - 1, Math.ceil((list.scrollTop + list.clientHeight) / PL_ROW_H) + PL_OVERSCAN);
     if (!force && first === plWinFirst && last === plWinLast) return;
     plWinFirst = first; plWinLast = last;
     virt.innerHTML = '';
-    for (let i = first; i <= last; i++) {
+    for (let vi = first; vi <= last; vi++) {
+      const i = plView[vi];
       const f = playlist[i];
       if (!f) continue;
       ensureProbed(f);
       const item = document.createElement('div');
       item.className = 'playlist-item' + (i === curIndex ? ' cur' : '');
       item.dataset.idx = i;
-      item.draggable = true;
-      item.style.top = (i * PL_ROW_H) + 'px';
+      item.draggable = !plFilter;
+      item.style.top = (vi * PL_ROW_H) + 'px';
       const idx = document.createElement('span');
       idx.className = 'pl-idx';
       idx.textContent = f._trackNo ? f._trackNo : (i + 1);
@@ -3199,8 +3220,10 @@
   });
   function scrollPlaylistToCurrent() {
     if (!$('plDrawer').classList.contains('open') || curIndex < 0) return;
+    const vi = plView.indexOf(curIndex);
+    if (vi < 0) return;
     const list = $('plList');
-    const top = curIndex * PL_ROW_H;
+    const top = vi * PL_ROW_H;
     if (top < list.scrollTop || top + PL_ROW_H > list.scrollTop + list.clientHeight) {
       list.scrollTop = Math.max(0, top - list.clientHeight / 2 + PL_ROW_H / 2);
     }
@@ -3347,6 +3370,14 @@
   $('plUrlInput').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') addFromUrl();
     else if (e.key === 'Escape') closePlMenus();
+    e.stopPropagation();
+  });
+  $('plSearch').addEventListener('input', () => {
+    plFilter = $('plSearch').value.trim().toLowerCase();
+    renderPlaylist();
+  });
+  $('plSearch').addEventListener('keydown', e => {
+    if (e.key === 'Escape') { $('plSearch').value = ''; plFilter = ''; renderPlaylist(); $('plSearch').blur(); }
     e.stopPropagation();
   });
   $('plRemoveMode').addEventListener('click', () => { closePlMenus(); setPlRemoveMode(true); });
