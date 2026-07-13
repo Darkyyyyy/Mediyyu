@@ -3116,7 +3116,7 @@
     $('miniTitle').textContent = base;
   }
   function updateNavButtons() {
-    $('prevBtn').classList.toggle('disabled', curIndex <= 0);
+    $('prevBtn').classList.toggle('disabled', S.shuffle ? !playHistory.some(f => playlist.includes(f)) : curIndex <= 0);
     $('nextBtn').classList.toggle('disabled', !hasNextTrack());
   }
   const PL_ROW_H = 35;
@@ -3618,6 +3618,12 @@
   function loadCurrent() {
     const file = playlist[curIndex];
     if (!file) return;
+    if (!histNav && lastLoadedFile && lastLoadedFile !== file) {
+      playHistory.push(lastLoadedFile);
+      if (playHistory.length > 200) playHistory.shift();
+    }
+    histNav = false;
+    lastLoadedFile = file;
     shufflePlayed.add(file);
     ensureAudio();
     if (actx.state === 'suspended') actx.resume();
@@ -3695,6 +3701,9 @@
     loadCurrent();
   }
   let playNextQueue = [];
+  let playHistory = [];
+  let histNav = false;
+  let lastLoadedFile = null;
   let shufflePlayed = new Set();
   function shuffleRemaining() {
     const out = [];
@@ -3729,7 +3738,17 @@
     return curIndex < playlist.length - 1 || (S.repeat === 'all' && playlist.length > 1);
   }
   function playNext() { const n = pickNextIndex(); if (n >= 0) transitionTo(n); }
-  function playPrev() { if (curIndex > 0) transitionTo(curIndex - 1); }
+  function playPrev() {
+    if (S.shuffle) {
+      while (playHistory.length) {
+        const f = playHistory.pop();
+        const i = playlist.indexOf(f);
+        if (i >= 0) { histNav = true; transitionTo(i); return; }
+      }
+      return;
+    }
+    if (curIndex > 0) transitionTo(curIndex - 1);
+  }
   $('prevBtn').addEventListener('click', playPrev);
   $('nextBtn').addEventListener('click', playNext);
   function toggleShuffle() {
@@ -3738,6 +3757,7 @@
       shufflePlayed.clear();
       if (playlist[curIndex]) shufflePlayed.add(playlist[curIndex]);
     }
+    updateNavButtons();
     syncUI(); save();
   }
   $('shuffleBtn').addEventListener('click', toggleShuffle);
