@@ -4515,6 +4515,21 @@
       playNext();
     }
   });
+  let errStreak = 0;
+  audio.addEventListener('loadedmetadata', () => { errStreak = 0; });
+  audio.addEventListener('error', () => {
+    if (curIndex < 0 || !playlist.length || !audio.getAttribute('src')) return;
+    const f = playlist[curIndex];
+    toast(`can't play ${f ? f.name : 'this file'} — skipped`, { error: true });
+    setPlay(false);
+    if (++errStreak >= Math.min(playlist.length, 50)) {
+      errStreak = 0;
+      toast('too many unreadable files — stopping.', { error: true, duration: 5000 });
+      return;
+    }
+    const n = pickNextIndex();
+    if (n >= 0) setTimeout(() => transitionTo(n), 400);
+  });
   audio.addEventListener('ended', () => {
     setPlay(false);
     if (recording) { stopRec(); return; }
