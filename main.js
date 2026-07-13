@@ -234,6 +234,10 @@ ipcMain.on('lyrwin:toggle', () => {
   if (lyricsWin && !lyricsWin.isDestroyed()) lyricsWin.close();
   else createLyricsWindow();
 });
+ipcMain.on('lyrwin:set', (e, open) => {
+  if (open) createLyricsWindow();
+  else if (lyricsWin && !lyricsWin.isDestroyed()) lyricsWin.close();
+});
 ipcMain.on('lyrwin:sync', (e, payload) => {
   if (lyricsWin && !lyricsWin.isDestroyed()) lyricsWin.webContents.send('lyrwin:sync', payload);
 });

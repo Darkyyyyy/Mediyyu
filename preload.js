@@ -36,6 +36,7 @@ contextBridge.exposeInMainWorld('winControls', {
   lyricsFetch: (meta) => ipcRenderer.invoke('lyrics:fetch', meta),
   lyricsFetchById: (id) => ipcRenderer.invoke('lyrics:fetchById', id),
   lyricsWinToggle: () => ipcRenderer.send('lyrwin:toggle'),
+  lyricsWinSet: (open) => ipcRenderer.send('lyrwin:set', open),
   lyricsWinSync: (p) => ipcRenderer.send('lyrwin:sync', p),
   lyricsWinSeek: (t) => ipcRenderer.send('lyrwin:seek', t),
   lyricsWinSetTop: (f) => ipcRenderer.send('lyrwin:setTop', f),
