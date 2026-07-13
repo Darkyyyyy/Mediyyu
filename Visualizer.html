@@ -700,12 +700,14 @@
   .playlist-list::-webkit-scrollbar { width: 7px; }
   .playlist-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 7px; }
   .playlist-item {
-    display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 9px;
+    display: flex; align-items: center; gap: 9px; padding: 0 10px; border-radius: 9px;
     cursor: pointer; font-size: 12.5px; color: rgba(255,255,255,.75);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     transition: background .12s ease;
-    position: relative; isolation: isolate;
+    position: absolute; left: 0; right: 0; height: 35px;
+    isolation: isolate;
   }
+  .pl-virt { position: relative; }
   .pl-bg {
     position: absolute; left: 0; top: 0; bottom: 0; width: min(72%, 300px);
     z-index: -1; pointer-events: none;
@@ -3074,8 +3076,12 @@
     $('prevBtn').classList.toggle('disabled', curIndex <= 0);
     $('nextBtn').classList.toggle('disabled', !hasNextTrack());
   }
+  const PL_ROW_H = 35;
+  const PL_OVERSCAN = 6;
+  let plWinFirst = -1, plWinLast = -1;
   function renderPlaylist() {
     const list = $('plList');
+    const keepScroll = list.scrollTop;
     list.innerHTML = '';
     if (!playlist.length) {
       const empty = document.createElement('div');
@@ -3083,52 +3089,85 @@
       empty.textContent = 'list is empty';
       list.appendChild(empty);
     } else {
-      playlist.forEach((f, i) => {
-        const item = document.createElement('div');
-        item.className = 'playlist-item' + (i === curIndex ? ' cur' : '');
-        item.dataset.idx = i;
-        item.draggable = true;
-        const idx = document.createElement('span');
-        idx.className = 'pl-idx';
-        idx.textContent = f._trackNo ? f._trackNo : (i + 1);
-        const name = document.createElement('span');
-        name.className = 'pl-name';
-        name.textContent = f._title || f.name.replace(/\.[^.]+$/, '');
-        const dur = document.createElement('span');
-        dur.className = 'pl-dur';
-        dur.textContent = f._dur > 0 ? fmt(f._dur) : '';
-        const minus = document.createElement('button');
-        minus.className = 'pl-minus';
-        minus.title = 'remove';
-        minus.textContent = '−';
-        if (f._thumb) {
-          const bg = document.createElement('div');
-          bg.className = 'pl-bg';
-          bg.style.backgroundImage = `url("${f._thumb}")`;
-          item.appendChild(bg);
-        }
-        item.append(minus, idx, name, dur);
-        list.appendChild(item);
-      });
+      const virt = document.createElement('div');
+      virt.className = 'pl-virt';
+      virt.id = 'plVirt';
+      virt.style.height = (playlist.length * PL_ROW_H) + 'px';
+      list.appendChild(virt);
     }
     const hint = document.createElement('div');
     hint.className = 'playlist-drophint';
     hint.textContent = 'drop to add';
     list.appendChild(hint);
+    list.scrollTop = keepScroll;
+    plWinFirst = -1; plWinLast = -1;
+    renderPlaylistWindow(true);
     const total = playlist.reduce((s, f) => s + (f._dur > 0 ? f._dur : 0), 0);
     $('plTotal').textContent = playlist.length
       ? `${playlist.length} track${playlist.length > 1 ? 's' : ''}${total > 0 ? ' · ' + fmt(total) : ''}`
       : '';
-    scrollPlaylistToCurrent();
   }
+  function renderPlaylistWindow(force) {
+    const virt = $('plVirt');
+    if (!virt) return;
+    const list = $('plList');
+    const first = Math.max(0, Math.floor(list.scrollTop / PL_ROW_H) - PL_OVERSCAN);
+    const last = Math.min(playlist.length - 1, Math.ceil((list.scrollTop + list.clientHeight) / PL_ROW_H) + PL_OVERSCAN);
+    if (!force && first === plWinFirst && last === plWinLast) return;
+    plWinFirst = first; plWinLast = last;
+    virt.innerHTML = '';
+    for (let i = first; i <= last; i++) {
+      const f = playlist[i];
+      if (!f) continue;
+      ensureProbed(f);
+      const item = document.createElement('div');
+      item.className = 'playlist-item' + (i === curIndex ? ' cur' : '');
+      item.dataset.idx = i;
+      item.draggable = true;
+      item.style.top = (i * PL_ROW_H) + 'px';
+      const idx = document.createElement('span');
+      idx.className = 'pl-idx';
+      idx.textContent = f._trackNo ? f._trackNo : (i + 1);
+      const name = document.createElement('span');
+      name.className = 'pl-name';
+      name.textContent = f._title || f.name.replace(/\.[^.]+$/, '');
+      const dur = document.createElement('span');
+      dur.className = 'pl-dur';
+      dur.textContent = f._dur > 0 ? fmt(f._dur) : '';
+      const minus = document.createElement('button');
+      minus.className = 'pl-minus';
+      minus.title = 'remove';
+      minus.textContent = '−';
+      if (f._thumb) {
+        const bg = document.createElement('div');
+        bg.className = 'pl-bg';
+        bg.style.backgroundImage = `url("${f._thumb}")`;
+        item.appendChild(bg);
+      }
+      item.append(minus, idx, name, dur);
+      virt.appendChild(item);
+    }
+  }
+  let plScrollRaf = 0;
+  $('plList').addEventListener('scroll', () => {
+    if (plScrollRaf) return;
+    plScrollRaf = requestAnimationFrame(() => {
+      plScrollRaf = 0;
+      renderPlaylistWindow(false);
+    });
+  });
   function scrollPlaylistToCurrent() {
-    if (!$('plDrawer').classList.contains('open')) return;
-    const cur = $('plList').querySelector('.playlist-item.cur');
-    if (cur) cur.scrollIntoView({ block: 'nearest' });
+    if (!$('plDrawer').classList.contains('open') || curIndex < 0) return;
+    const list = $('plList');
+    const top = curIndex * PL_ROW_H;
+    if (top < list.scrollTop || top + PL_ROW_H > list.scrollTop + list.clientHeight) {
+      list.scrollTop = Math.max(0, top - list.clientHeight / 2 + PL_ROW_H / 2);
+    }
+    renderPlaylistWindow(false);
   }
   let probeQueue = [], activeProbes = 0;
   const MAX_PROBES = 6;
-  function probeDuration(f) {
+  function ensureProbed(f) {
     if (f._dur !== undefined) return;
     f._dur = 0;
     probeQueue.push(f);
@@ -3524,6 +3563,7 @@
     updateNavButtons();
     updateNowPlaying(file);
     renderPlaylist();
+    scrollPlaylistToCurrent();
     saveSession(true);
     $('drop').classList.add('gone');
     $('transport').classList.remove('hidden');
@@ -3543,7 +3583,6 @@
         const f = files[i];
         if (f._path === undefined && window.winControls) f._path = window.winControls.getPathForFile(f);
         playlist.push(f);
-        probeDuration(f);
       }
       if (wasEmpty && curIndex < 0) { curIndex = 0; loadCurrent(); }
       else if (playlistDone && !started) { started = true; curIndex = firstNewIdx; loadCurrent(); }
@@ -3658,7 +3697,6 @@
       if (idx >= 0) resumePos = sess.pos || 0;
       else idx = 0;
       playlist = files;
-      files.forEach(probeDuration);
       curIndex = idx;
       loadCurrent();
     });
@@ -4656,7 +4694,7 @@
   function sendDiscordActivity() {
     if (!window.winControls || !S.discordEnabled || !S.discordClientId) return;
     const file = playlist[curIndex];
-    if (!file || !playing) { window.winControls.discordClearActivity(); return; }
+    if (!file) { window.winControls.discordClearActivity(); return; }
     const title = ($('npTitle').textContent || file.name.replace(/\.[^.]+$/, '')).slice(0, 128);
     const artist = $('npArtist').classList.contains('hidden') ? '' : $('npArtist').textContent;
     const activity = {
@@ -4664,13 +4702,17 @@
       details: title || 'listening',
       instance: false,
     };
-    if (artist) activity.state = artist.slice(0, 128);
+    if (playing) {
+      if (artist) activity.state = artist.slice(0, 128);
+    } else {
+      activity.state = ((artist ? artist.slice(0, 100) + ' — ' : '') + 'paused').slice(0, 128);
+    }
     const imageKey = discordCoverUrl || S.discordImageKey;
     if (imageKey) {
       activity.largeImageKey = imageKey;
       if (npAlbum) activity.largeImageText = npAlbum.slice(0, 128);
     }
-    if (audio.duration) {
+    if (playing && audio.duration) {
       const now = Date.now();
       activity.startTimestamp = now - audio.currentTime * 1000;
       activity.endTimestamp = now + (audio.duration - audio.currentTime) * 1000;
