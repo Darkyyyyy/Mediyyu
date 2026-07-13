@@ -444,6 +444,7 @@
     padding: 8px 10px; border-radius: 8px; position: relative; box-sizing: border-box;
   }
   .menu-item:hover { background: rgba(255,255,255,.1); }
+  .menu-item.has-sub::after { content: '▸'; color: var(--dim); font-size: 11px; margin-left: -4px; }
   .menu-side { font-size: 11px; color: var(--dim); }
   .menu-sep { height: 1px; margin: 5px 8px; background: rgba(255,255,255,.1); }
   .menu-slider { display: flex; align-items: center; gap: 9px; padding: 4px 10px 8px; }
@@ -478,6 +479,15 @@
   }
   .submenu button:hover { background: rgba(255,255,255,.1); }
   .submenu button.on { background: rgba(255,255,255,.16); color: #fff; }
+  .submenu .seg { display: flex; padding: 3px; gap: 3px; }
+  .submenu .seg button {
+    display: inline-block; width: auto; flex: 1; text-align: center;
+    padding: 5px 2px; font-size: 11px; border-radius: 7px; color: var(--dim);
+  }
+  .submenu .seg button:hover { background: rgba(255,255,255,.1); color: rgba(255,255,255,.9); }
+  .submenu .seg button.on, .submenu .seg button.on:hover {
+    background: rgba(255,255,255,.92); color: #111; font-weight: 600;
+  }
 
   .minibar { display: none; }
   body.mini .minibar {
@@ -1408,9 +1418,12 @@
     </div>
     <div class="menu-item has-sub" id="lyricsSubItem">
       <span>lyrics</span><span class="menu-side" id="lyricsCheck"></span>
-      <div class="submenu" id="lyricsSubMenu" style="width: 156px;">
-        <button id="lyricsItem">enabled</button>
-        <button id="lyricsWinItem">window</button>
+      <div class="submenu" id="lyricsSubMenu" style="width: 212px;">
+        <div class="seg" id="lyricsModeSeg" style="margin-bottom: 6px;">
+          <button data-val="off">off</button>
+          <button data-val="compact">compact</button>
+          <button data-val="separated">separated</button>
+        </div>
         <button id="lyricsSourceItem">change source&hellip;</button>
       </div>
     </div>
@@ -1457,7 +1470,7 @@
     winTransparent: false, alwaysOnTop: false,
     bgCoverArt: false, bgCoverBlur: 46, bgCoverDim: 55,
     waveStyle: 'line', waveSmooth: 40, fallsSpeed: 50, psyPetals: 9, psySpeed: 50, psyTrail: 50,
-    lyricsOn: true,
+    lyricsMode: 'compact',
     volume: 100,
     bg: '#0a0b0d',
     glassTint: '#ffffff', glassAlpha: 5, glassBlur: true,
@@ -1478,6 +1491,8 @@
   try { S = Object.assign(S, JSON.parse(localStorage.getItem('bbv_settings') || '{}')); } catch (e) {}
   S.repeat = 'off';
   if (!S.migrOnDefaults) { S.migrOnDefaults = true; S.discordEnabled = true; S.notifyTrack = true; S.notifyEnd = true; }
+  if (!S.lyricsMode) S.lyricsMode = S.lyricsOn === false ? 'off' : 'compact';
+  delete S.lyricsOn;
   const save = () => { try { localStorage.setItem('bbv_settings', JSON.stringify(S)); } catch (e) {} };
 
   const EQ_FREQS = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
@@ -3838,7 +3853,7 @@
     clearTimeout(lyricsNfT);
     $('lyricsNotFound').classList.remove('show', 'clickable');
     $('lyricsSuggMenu').classList.add('hidden');
-    if (!S.lyricsOn) return;
+    if (S.lyricsMode === 'off') return;
     const loadEl = $('lyricsLoading');
     const spinT = setTimeout(() => { if (token === lyricsToken) loadEl.classList.add('show'); }, 250);
     try {
@@ -3945,7 +3960,7 @@
     closeMoreMenu();
     const file = playlist[curIndex];
     if (!file || !window.winControls) { toast('no track playing', { error: true }); return; }
-    if (!S.lyricsOn) toggleLyrics();
+    if (S.lyricsMode === 'off') setLyricsMode('compact');
     const token = lyricsToken;
     const loadEl = $('lyricsLoading');
     loadEl.classList.add('show');
@@ -3964,7 +3979,7 @@
 
   function updateLyricsOverlay() {
     const box = $('lyricsBox');
-    if (!S.lyricsOn || !lyricsLines || !ready) { box.classList.add('off'); return; }
+    if (S.lyricsMode !== 'compact' || !lyricsLines || !ready) { box.classList.add('off'); return; }
     const t = audio.currentTime + 0.05;
     let lo = 0, hi = lyricsLines.length - 1, idx = -1;
     while (lo <= hi) {
@@ -3999,31 +4014,36 @@
     nextEl.classList.add('fadein');
   }
 
-  function toggleLyrics() {
-    S.lyricsOn = !S.lyricsOn;
-    syncMoreMenu(); save();
-    toast(S.lyricsOn ? 'lyrics on' : 'lyrics off');
-    if (S.lyricsOn && playlist[curIndex]) loadLyricsFor(playlist[curIndex], lastTags);
-  }
-  $('lyricsItem').addEventListener('click', toggleLyrics);
-
   let lyricsWinOpen = false;
   let lyrwinSentLines;
   let lyrwinNextT = 0;
-  $('lyricsWinItem').addEventListener('click', () => {
-    closeMoreMenu();
-    if (window.winControls) window.winControls.lyricsWinToggle();
+  function setLyricsMode(mode) {
+    if (mode === S.lyricsMode) return;
+    const prev = S.lyricsMode;
+    S.lyricsMode = mode;
+    if (window.winControls) window.winControls.lyricsWinSet(mode === 'separated');
+    if (mode !== 'off' && prev === 'off' && playlist[curIndex]) loadLyricsFor(playlist[curIndex], lastTags);
+    syncMoreMenu(); save();
+  }
+  function toggleLyrics() {
+    setLyricsMode(S.lyricsMode === 'off' ? 'compact' : 'off');
+    toast(S.lyricsMode === 'off' ? 'lyrics off' : 'lyrics on');
+  }
+  $('lyricsModeSeg').querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => setLyricsMode(btn.dataset.val));
   });
   if (window.winControls && window.winControls.onLyricsWinState) {
     window.winControls.onLyricsWinState((open) => {
       lyricsWinOpen = open;
       lyrwinSentLines = undefined;
       lyrwinNextT = 0;
+      if (!open && S.lyricsMode === 'separated') { S.lyricsMode = 'compact'; save(); }
       syncMoreMenu();
     });
     window.winControls.onLyricsWinSeek((t) => {
       if (ready && isFinite(audio.duration)) audio.currentTime = Math.max(0, Math.min(audio.duration, t));
     });
+    if (S.lyricsMode === 'separated') window.winControls.lyricsWinSet(true);
   }
   function syncLyricsWin(now) {
     if (!lyricsWinOpen || !window.winControls) return;
@@ -4075,9 +4095,8 @@
     $('speedCur').innerHTML = S.drunkMode ? 'drunk' : S.playbackRate + '&times;';
     $('normCheck').textContent = S.normalize ? '✓' : '';
     $('xfadeCheck').textContent = S.crossfade ? '✓' : '';
-    $('lyricsCheck').textContent = S.lyricsOn ? '✓' : '';
-    $('lyricsItem').classList.toggle('on', S.lyricsOn);
-    $('lyricsWinItem').classList.toggle('on', lyricsWinOpen);
+    $('lyricsCheck').textContent = S.lyricsMode;
+    $('lyricsModeSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.val === S.lyricsMode));
     $('xfadeDur').value = S.crossfadeDur;
     $('xfadeDurVal').textContent = S.crossfadeDur + 's';
     $('xfadeDurRow').classList.toggle('disabled', !S.crossfade);
