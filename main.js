@@ -11,8 +11,8 @@ const ffmpegPath = app.isPackaged
   ? require('ffmpeg-static').replace('app.asar', 'app.asar.unpacked')
   : require('ffmpeg-static');
 
-const AUDIO_EXT_RE = /\.(mp3|wav|ogg|m4a|flac|aac)$/i;
-const AUDIO_MIME = { mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', m4a: 'audio/mp4', flac: 'audio/flac', aac: 'audio/aac' };
+const AUDIO_EXT_RE = /\.(mp3|wav|ogg|m4a|flac|aac|mp4|webm|mov|m4v)$/i;
+const AUDIO_MIME = { mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', m4a: 'audio/mp4', flac: 'audio/flac', aac: 'audio/aac', mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', m4v: 'video/mp4' };
 function findAudioArg(argv) {
   return argv.find(a => AUDIO_EXT_RE.test(a) && fs.existsSync(a));
 }
