@@ -32,6 +32,23 @@ if (process.env.MEDIYYU_TEST_PROFILE) {
   app.setPath('userData', path.join(os.tmpdir(), 'mediyyu-test-profile'));
 }
 
+const LOG_MAX = 512 * 1024;
+function logError(source, msg) {
+  try {
+    const file = path.join(app.getPath('userData'), 'error.log');
+    try { if (fs.existsSync(file) && fs.statSync(file).size > LOG_MAX) fs.renameSync(file, file + '.old'); } catch {}
+    fs.appendFileSync(file, `[${new Date().toISOString()}] [${source}] ${msg}\n`);
+  } catch {}
+}
+process.on('uncaughtException', (err) => {
+  console.error('[uncaught]', err);
+  logError('main', (err && err.stack) || String(err));
+});
+process.on('unhandledRejection', (reason) => {
+  logError('main', 'unhandled rejection: ' + ((reason && reason.stack) || String(reason)));
+});
+ipcMain.on('log:error', (e, msg) => logError('renderer', String(msg).slice(0, 4000)));
+
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 if (!gotSingleInstanceLock) {
   app.quit();

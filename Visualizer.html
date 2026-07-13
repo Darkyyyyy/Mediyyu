@@ -1492,6 +1492,13 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
+  window.addEventListener('error', e => {
+    if (window.winControls) window.winControls.logError((e.message || 'error') + ' @ ' + (e.filename || '?') + ':' + (e.lineno || 0));
+  });
+  window.addEventListener('unhandledrejection', e => {
+    const r = e.reason;
+    if (window.winControls) window.winControls.logError('unhandled rejection: ' + ((r && (r.stack || r.message)) || String(r)));
+  });
   const fmt = s => { s = Math.max(0, s | 0); return (s / 60 | 0) + ':' + ('0' + (s % 60)).slice(-2); };
   const canvas = $('viz'), ctx = canvas.getContext('2d');
   const stageEl = $('stage');
