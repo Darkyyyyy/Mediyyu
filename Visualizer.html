@@ -704,6 +704,14 @@
     cursor: pointer; font-size: 12.5px; color: rgba(255,255,255,.75);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     transition: background .12s ease;
+    position: relative; isolation: isolate;
+  }
+  .pl-bg {
+    position: absolute; left: 0; top: 0; bottom: 0; width: min(72%, 300px);
+    z-index: -1; pointer-events: none;
+    background-size: cover; background-position: center;
+    -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,.6) 0, rgba(0,0,0,.45) 35%, transparent 100%);
+    mask-image: linear-gradient(to right, rgba(0,0,0,.6) 0, rgba(0,0,0,.45) 35%, transparent 100%);
   }
   .playlist-item:hover { background: rgba(255,255,255,.06); }
   .playlist-item.cur { background: rgba(255,255,255,.13); color: #fff; font-weight: 600; }
@@ -3093,6 +3101,12 @@
         minus.className = 'pl-minus';
         minus.title = 'remove';
         minus.textContent = '−';
+        if (f._thumb) {
+          const bg = document.createElement('div');
+          bg.className = 'pl-bg';
+          bg.style.backgroundImage = `url("${f._thumb}")`;
+          item.appendChild(bg);
+        }
         item.append(minus, idx, name, dur);
         list.appendChild(item);
       });
@@ -3127,13 +3141,35 @@
       processFile(f).finally(() => { activeProbes--; pumpProbes(); scheduleRenderPlaylist(); });
     }
   }
+  function makeThumb(coverUrl) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const s = 160;
+          const c = document.createElement('canvas');
+          c.width = s; c.height = s;
+          const g = c.getContext('2d');
+          const r = Math.max(s / img.width, s / img.height);
+          const w = img.width * r, h = img.height * r;
+          g.drawImage(img, (s - w) / 2, (s - h) / 2, w, h);
+          resolve(c.toDataURL('image/jpeg', 0.7));
+        } catch (e) { resolve(''); }
+      };
+      img.onerror = () => resolve('');
+      img.src = coverUrl;
+    });
+  }
   async function processFile(f) {
     try {
       const tags = await readTags(f);
       if (tags) {
         if (f._title === undefined) f._title = tags.title || '';
         if (f._trackNo === undefined) { const tn = tags.track ? String(tags.track).match(/^\d+/) : null; f._trackNo = tn ? +tn[0] : 0; }
-        if (tags.cover) { try { URL.revokeObjectURL(tags.cover); } catch (e) {} }
+        if (tags.cover) {
+          if (f._thumb === undefined) f._thumb = await makeThumb(tags.cover);
+          try { URL.revokeObjectURL(tags.cover); } catch (e) {}
+        }
       }
     } catch (e) {}
     await new Promise(res => {
