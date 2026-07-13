@@ -265,7 +265,7 @@ async function discordDisconnect() {
 
 async function discordConnect(clientId) {
   if (!clientId) { await discordDisconnect(); return; }
-  if (discordClient && discordClientId === clientId) return;
+  if (discordClient && discordClientId === clientId && discordClient.isConnected) return;
   await discordDisconnect();
   discordClientId = clientId;
   const client = new DiscordRPCClient({ clientId });
