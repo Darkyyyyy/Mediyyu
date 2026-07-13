@@ -3094,6 +3094,7 @@
       }
     }
     sendDiscordActivity();
+    updateMediaSession(myFile, tags);
     lastTags = tags;
     loadLyricsFor(myFile, tags);
     if (S.notifyTrack) {
@@ -3912,6 +3913,7 @@
     $('playBtn').innerHTML = icon;
     $('miniPlay').innerHTML = icon;
     if (window.winControls) window.winControls.thumbarPlaying(p);
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = p ? 'playing' : 'paused';
     sendDiscordActivity();
   }
   function togglePlay() {
@@ -3945,10 +3947,52 @@
       if (Math.abs(clip.currentTime - audio.currentTime) > 0.35) clip.currentTime = audio.currentTime;
     }
   }
+  function updateMediaSession(file, tags) {
+    if (!('mediaSession' in navigator)) return;
+    try {
+      const art = [];
+      const src = (tags && tags.cover) || (file && file._thumb) || '';
+      if (src) art.push({ src, sizes: '512x512', type: 'image/jpeg' });
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: (tags && tags.title) || (file ? file.name.replace(/\.[^.]+$/, '') : ''),
+        artist: (tags && tags.artist) || '',
+        album: (tags && tags.album) || '',
+        artwork: art,
+      });
+    } catch (e) {}
+  }
+  function updatePositionState() {
+    if (!('mediaSession' in navigator) || !navigator.mediaSession.setPositionState) return;
+    try {
+      if (audio.duration && isFinite(audio.duration)) {
+        navigator.mediaSession.setPositionState({
+          duration: audio.duration,
+          playbackRate: audio.playbackRate || 1,
+          position: Math.min(audio.currentTime, audio.duration),
+        });
+      }
+    } catch (e) {}
+  }
+  if ('mediaSession' in navigator) {
+    const ms = navigator.mediaSession;
+    try {
+      ms.setActionHandler('play', () => {
+        if (!audio.src) return;
+        if (actx && actx.state === 'suspended') actx.resume();
+        audio.play().then(() => setPlay(true)).catch(() => {});
+      });
+      ms.setActionHandler('pause', () => { audio.pause(); setPlay(false); });
+      ms.setActionHandler('previoustrack', () => playPrev());
+      ms.setActionHandler('nexttrack', () => playNext());
+      ms.setActionHandler('seekto', d => {
+        if (audio.duration && d.seekTime != null) audio.currentTime = Math.max(0, Math.min(audio.duration, d.seekTime));
+      });
+    } catch (e) {}
+    audio.addEventListener('loadedmetadata', updatePositionState);
+    audio.addEventListener('seeked', updatePositionState);
+    audio.addEventListener('ratechange', updatePositionState);
+  }
   if (window.winControls) {
-    window.winControls.onMediaPlayPause(() => togglePlay());
-    window.winControls.onMediaNext(() => playNext());
-    window.winControls.onMediaPrev(() => playPrev());
     window.winControls.onOpenFile(({ name, mime, data, path }) => {
       const f = new File([data], name, { type: mime });
       f._path = path || '';

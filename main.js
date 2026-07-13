@@ -1,7 +1,8 @@
-const { app, BrowserWindow, ipcMain, screen, dialog, globalShortcut, nativeImage, shell, Notification } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, dialog, nativeImage, shell, Notification } = require('electron');
 const { Client: DiscordRPCClient } = require('@xhayper/discord-rpc');
 app.setName('Mediyyu');
 app.setAppUserModelId('Mediyyu');
+app.commandLine.appendSwitch('enable-features', 'HardwareMediaKeyHandling,MediaSessionService');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -205,10 +206,6 @@ function createWindow() {
       height: normal.height,
     });
   });
-
-  globalShortcut.register('MediaPlayPause', () => win.webContents.send('media:playpause'));
-  globalShortcut.register('MediaNextTrack', () => win.webContents.send('media:next'));
-  globalShortcut.register('MediaPreviousTrack', () => win.webContents.send('media:prev'));
 }
 
 let lyricsWin = null;
@@ -316,7 +313,6 @@ app.on('window-all-closed', () => {
 });
 
 app.on('will-quit', () => {
-  globalShortcut.unregisterAll();
   discordDisconnect();
 });
 
