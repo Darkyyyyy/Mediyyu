@@ -731,6 +731,11 @@
   .pl-idx { font-family: var(--mono); font-size: 10.5px; color: var(--dim); flex: 0 0 auto; width: 16px; text-align: right; }
   .pl-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .pl-dur { font-family: var(--mono); font-size: 10.5px; color: var(--dim); flex: 0 0 auto; }
+  .pl-q {
+    flex: 0 0 auto; font-size: 9px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+    color: #9ecbff; border: 1px solid rgba(130,180,255,.45); background: rgba(130,180,255,.12);
+    border-radius: 6px; padding: 1px 6px; line-height: 1.4;
+  }
   .playlist-item.dragging { opacity: .35; }
   .playlist-item.ins-above { box-shadow: 0 -2px 0 0 rgba(255,255,255,.75); }
   .playlist-item.ins-below { box-shadow: 0 2px 0 0 rgba(255,255,255,.75); }
@@ -913,6 +918,7 @@
   <div class="toasts" id="toasts"></div>
 
   <div class="more-menu hidden" id="trackMenu" style="width: 190px; z-index: 70;">
+    <button class="menu-item" id="tmNext"><span>play next</span></button>
     <button class="menu-item" id="tmRemove"><span>remove from playlist</span></button>
     <button class="menu-item" id="tmFolder"><span>show in folder</span></button>
     <button class="menu-item" id="tmProps"><span>properties&hellip;</span></button>
@@ -3171,7 +3177,15 @@
         bg.style.backgroundImage = `url("${f._thumb}")`;
         item.appendChild(bg);
       }
-      item.append(minus, idx, name, dur);
+      const qi = playNextQueue.indexOf(f);
+      if (qi >= 0) {
+        const q = document.createElement('span');
+        q.className = 'pl-q';
+        q.textContent = playNextQueue.length > 1 ? 'next ' + (qi + 1) : 'next';
+        item.append(minus, idx, name, q, dur);
+      } else {
+        item.append(minus, idx, name, dur);
+      }
       virt.appendChild(item);
     }
   }
@@ -3353,6 +3367,7 @@
     e.preventDefault();
     ctxIdx = Number(item.dataset.idx);
     const f = playlist[ctxIdx];
+    $('tmNext').querySelector('span').textContent = f && playNextQueue.includes(f) ? 'remove from queue' : 'play next';
     $('tmFolder').classList.toggle('disabled', !(f && f._path && window.winControls));
     const menu = $('trackMenu');
     menu.classList.remove('hidden');
@@ -3363,6 +3378,16 @@
   });
   window.addEventListener('mousedown', e => {
     if (!e.target.closest('#trackMenu')) closeTrackMenu();
+  });
+  $('tmNext').addEventListener('click', () => {
+    closeTrackMenu();
+    const f = playlist[ctxIdx];
+    if (!f) return;
+    const qi = playNextQueue.indexOf(f);
+    if (qi >= 0) { playNextQueue.splice(qi, 1); toast('removed from queue'); }
+    else { playNextQueue.push(f); toast(playNextQueue.length > 1 ? `queued (#${playNextQueue.length})` : 'will play next'); }
+    renderPlaylistWindow(true);
+    updateNavButtons();
   });
   $('tmRemove').addEventListener('click', () => { closeTrackMenu(); removeFromPlaylist(ctxIdx); });
   $('tmFolder').addEventListener('click', () => {
@@ -3638,6 +3663,7 @@
     curIndex = idx;
     loadCurrent();
   }
+  let playNextQueue = [];
   let shufflePlayed = new Set();
   function shuffleRemaining() {
     const out = [];
@@ -3645,6 +3671,11 @@
     return out;
   }
   function pickNextIndex() {
+    while (playNextQueue.length) {
+      const f = playNextQueue.shift();
+      const i = playlist.indexOf(f);
+      if (i >= 0) return i;
+    }
     if (S.shuffle && playlist.length > 1) {
       const remaining = shuffleRemaining();
       if (remaining.length) return remaining[Math.floor(Math.random() * remaining.length)];
@@ -3659,6 +3690,7 @@
     return (S.repeat === 'all' && playlist.length > 0) ? 0 : -1;
   }
   function hasNextTrack() {
+    if (playNextQueue.some(f => playlist.includes(f))) return true;
     if (S.shuffle) {
       if (playlist.length <= 1) return false;
       return S.repeat === 'all' || shuffleRemaining().length > 0;
