@@ -3966,6 +3966,10 @@
           if (lyricsSuggs && lyricsSuggs.length) {
             nf.textContent = `no exact lyrics match — ${lyricsSuggs.length} suggestion${lyricsSuggs.length > 1 ? 's' : ''}`;
             nf.classList.add('show', 'clickable');
+            lyricsNfT = setTimeout(function hideNf() {
+              if (!$('lyricsSuggMenu').classList.contains('hidden')) { lyricsNfT = setTimeout(hideNf, 3000); return; }
+              nf.classList.remove('show', 'clickable');
+            }, 8000);
           } else {
             nf.textContent = 'no lyrics found';
             nf.classList.add('show');
