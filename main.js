@@ -600,6 +600,24 @@ ipcMain.handle('lyrics:fetchById', async (e, id) => {
   } catch { return null; }
 });
 
+ipcMain.handle('files:scanDir', async (e, dirPath) => {
+  const out = [];
+  const walk = (dir, depth) => {
+    if (depth > 8 || out.length >= 2000) return;
+    let entries;
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const ent of entries) {
+      if (out.length >= 2000) break;
+      const p = path.join(dir, ent.name);
+      if (ent.isDirectory()) walk(p, depth + 1);
+      else if (AUDIO_EXT_RE.test(ent.name)) out.push(p);
+    }
+  };
+  try {
+    if (dirPath && typeof dirPath === 'string' && fs.statSync(dirPath).isDirectory()) walk(dirPath, 0);
+  } catch {}
+  return out;
+});
 ipcMain.handle('session:readFiles', async (e, paths) => {
   const out = [];
   for (const p of Array.isArray(paths) ? paths : []) {
