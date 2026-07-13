@@ -24,6 +24,7 @@ contextBridge.exposeInMainWorld('winControls', {
   notify: (title, body) => ipcRenderer.send('notify:show', { title, body }),
   getPathForFile: (file) => { try { return webUtils.getPathForFile(file) || ''; } catch { return ''; } },
   readSessionFiles: (paths) => ipcRenderer.invoke('session:readFiles', paths),
+  scanDirForAudio: (p) => ipcRenderer.invoke('files:scanDir', p),
   fetchAudioUrl: (url) => ipcRenderer.invoke('url:fetchAudio', url),
   showInFolder: (p) => ipcRenderer.send('file:showInFolder', p),
   writeFileTags: (payload) => ipcRenderer.invoke('file:writeTags', payload),

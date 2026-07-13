@@ -3865,13 +3865,43 @@
       if (plAutoOpened) { plAutoOpened = false; setPlaylistOpen(false); }
     }
   });
+  async function addDroppedFolders(dirFiles) {
+    if (!window.winControls) return;
+    let paths = [];
+    for (const d of dirFiles) {
+      const p = window.winControls.getPathForFile(d);
+      if (p) {
+        const found = await window.winControls.scanDirForAudio(p);
+        if (found && found.length) paths = paths.concat(found);
+      }
+    }
+    if (!paths.length) { toast('no audio files found in that folder', { error: true }); return; }
+    toast(`adding ${paths.length} track${paths.length > 1 ? 's' : ''}…`);
+    const restored = await window.winControls.readSessionFiles(paths);
+    const files = restored.map(r => {
+      const f = new File([r.data], r.name, { type: r.mime });
+      f._path = r.path;
+      return f;
+    });
+    appendToPlaylist(files);
+  }
   window.addEventListener('drop', e => {
     e.preventDefault();
     if (plDragIdx >= 0) return;
     dragDepth = 0; document.body.classList.remove('dragging');
     plAutoOpened = false;
-    const files = [...(e.dataTransfer.files || [])].filter(isAudioFile);
+    const files = [], dirs = [];
+    for (const it of e.dataTransfer.items || []) {
+      if (it.kind !== 'file') continue;
+      const entry = it.webkitGetAsEntry ? it.webkitGetAsEntry() : null;
+      const f = it.getAsFile();
+      if (!f) continue;
+      if (entry && entry.isDirectory) dirs.push(f);
+      else if (isAudioFile(f)) files.push(f);
+    }
+    if (!files.length && !dirs.length) files.push(...[...(e.dataTransfer.files || [])].filter(isAudioFile));
     appendToPlaylist(files);
+    if (dirs.length) addDroppedFolders(dirs);
   });
 
   function setPlay(p) {
