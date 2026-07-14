@@ -4014,6 +4014,9 @@
     audio.addEventListener('ratechange', updatePositionState);
   }
   if (window.winControls) {
+    window.winControls.onMediaPlayPause(() => togglePlay());
+    window.winControls.onMediaNext(() => playNext());
+    window.winControls.onMediaPrev(() => playPrev());
     window.winControls.onOpenFile(({ name, mime, data, path }) => {
       const f = new File([data], name, { type: mime });
       f._path = path || '';
