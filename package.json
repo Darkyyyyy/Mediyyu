@@ -1,6 +1,6 @@
 {
   "name": "mediyyu",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Mediyyu audio visualizer desktop app",
   "author": "Wiliam",
   "main": "main.js",
