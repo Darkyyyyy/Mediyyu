@@ -2075,11 +2075,19 @@
       if (p.age > p.life) particles.splice(k, 1);
     }
   }
+  function accentColor() {
+    if (megaMode) return '#37d8ff';
+    if (S.rainbow) return `hsl(${((performance.now() / 4000) % 1) * 360},85%,60%)`;
+    if (S.mode === 'cover' && coverColors) return coverColors.c1;
+    if (S.mode === 'split') return '#ffd23b';
+    return S.color1;
+  }
   function drawParticles() {
     if (!particles.length) return;
+    const col = accentColor();
     ctx.globalCompositeOperation = 'lighter';
-    ctx.strokeStyle = S.color1;
-    ctx.fillStyle = S.color1;
+    ctx.strokeStyle = col;
+    ctx.fillStyle = col;
     ctx.lineCap = 'round';
     for (const p of particles) {
       const a = Math.max(0, 1 - p.age / p.life);
@@ -2607,7 +2615,9 @@
     updatePeaks();
 
     const bassNow = bassEnergy();
-    const transparentCanvas = S.bg === 'transparent' || S.winTransparent || S.bgCoverArt;
+    const realTransparent = S.bg === 'transparent' || S.winTransparent;
+    const overCover = S.bgCoverArt && !realTransparent;
+    const transparentCanvas = realTransparent || overCover;
 
     ctx.save();
     if (S.flipH) { ctx.translate(W, 0); ctx.scale(-1, 1); }
@@ -2633,9 +2643,20 @@
     const { path, maxExtent, floorY } = buildPath();
 
     if (transparentCanvas) {
-      ctx.clearRect(0, 0, W, H);
-      renderScene(ctx, path, maxExtent, floorY, false);
+      if (overCover && S.trails > 0) {
+        ctx.globalCompositeOperation = 'destination-in';
+        ctx.globalAlpha = (S.trails / 100) * 0.92;
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, W, H);
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'source-over';
+      } else {
+        ctx.clearRect(0, 0, W, H);
+      }
+      if (overCover && S.bgPulse > 0) drawBgPulse(bassNow);
+      renderScene(ctx, path, maxExtent, floorY, overCover);
       if (S.reflection && S.layout !== 'radial') drawReflection(path, floorY, true);
+      if (overCover && S.flash > 0) drawFlash(bassNow);
     } else {
       ctx.globalCompositeOperation = 'source-over';
       ctx.filter = 'none';
