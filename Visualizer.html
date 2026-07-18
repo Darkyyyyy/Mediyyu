@@ -78,7 +78,7 @@
     object-fit: fill;
     display: block;
   }
-  #coverBg {
+  #coverBg, #coverBgFade {
     position: absolute;
     z-index: 0;
     inset: -6%;
@@ -88,8 +88,10 @@
     background-repeat: no-repeat;
     filter: blur(46px) brightness(.55);
     transform: scale(1.12);
+    transition: opacity .5s ease;
   }
-  body.bg-cover-art #coverBg { display: block; }
+  #coverBgFade { opacity: 0; }
+  body.bg-cover-art #coverBg, body.bg-cover-art #coverBgFade { display: block; }
   #clipBg {
     position: absolute;
     z-index: 0;
@@ -883,6 +885,7 @@
 
   <div id="stage">
     <div id="coverBg"></div>
+    <div id="coverBgFade"></div>
     <video id="clipBg" muted playsinline></video>
     <canvas id="viz" width="1920" height="1080"></canvas>
   </div>
@@ -2589,8 +2592,42 @@
     const x = ((p * 2 - 1) * 3).toFixed(2);
     if (coverPanLast !== x) {
       coverPanLast = x;
-      $('coverBg').style.transform = `translateX(${x}%) scale(1.12)`;
+      const tf = `translateX(${x}%) scale(1.12)`;
+      $('coverBg').style.transform = tf;
+      $('coverBgFade').style.transform = tf;
     }
+  }
+
+  let coverSwapTimer = 0;
+  function setAmbientCover(url) {
+    const base = $('coverBg');
+    const fade = $('coverBgFade');
+    const next = url ? `url("${url}")` : '';
+    if (base.style.backgroundImage === next) { fade.style.opacity = '0'; return; }
+    clearTimeout(coverSwapTimer);
+    if (!next) {
+      fade.style.opacity = '0';
+      base.style.opacity = '0';
+      coverSwapTimer = setTimeout(() => {
+        base.style.backgroundImage = '';
+        fade.style.backgroundImage = '';
+        base.style.transition = 'none';
+        base.style.opacity = '1';
+        void base.offsetWidth;
+        base.style.transition = '';
+      }, 550);
+      return;
+    }
+    base.style.opacity = '1';
+    fade.style.backgroundImage = next;
+    fade.style.opacity = '1';
+    coverSwapTimer = setTimeout(() => {
+      base.style.backgroundImage = next;
+      fade.style.transition = 'none';
+      fade.style.opacity = '0';
+      void fade.offsetWidth;
+      fade.style.transition = '';
+    }, 550);
   }
 
   let sliderEls = null;
@@ -3079,10 +3116,13 @@
     $('npArtist').textContent = '';
     npAlbum = '';
     discordCoverUrl = null;
-    if (npCoverUrl) { URL.revokeObjectURL(npCoverUrl); npCoverUrl = null; }
+    if (npCoverUrl) {
+      const old = npCoverUrl;
+      npCoverUrl = null;
+      setTimeout(() => { try { URL.revokeObjectURL(old); } catch (e) {} }, 1500);
+    }
     $('npCover').style.backgroundImage = '';
     $('npCover').classList.add('empty');
-    $('coverBg').style.backgroundImage = '';
     coverColors = null;
     checkMegalovania(file.name, '');
     let tags = null;
@@ -3108,12 +3148,13 @@
         npCoverUrl = tags.cover;
         $('npCover').style.backgroundImage = `url("${tags.cover}")`;
         $('npCover').classList.remove('empty');
-        $('coverBg').style.backgroundImage = `url("${tags.cover}")`;
+        setAmbientCover(tags.cover);
         const colors = await extractCoverColors(tags.cover);
         if (playlist[curIndex] !== myFile) return;
         coverColors = colors;
       }
     }
+    if (!tags || !tags.cover) setAmbientCover('');
     sendDiscordActivity();
     updateMediaSession(myFile, tags);
     lastTags = tags;
@@ -5080,6 +5121,7 @@
     const brightness = 1 - (S.bgCoverDim / 100) * 0.85;
     const filter = `blur(${blurPx}px) brightness(${brightness.toFixed(2)})`;
     $('coverBg').style.filter = filter;
+    $('coverBgFade').style.filter = filter;
     $('clipBg').style.filter = filter;
   }
   function applyGlassTint() {
