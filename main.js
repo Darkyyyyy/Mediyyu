@@ -166,6 +166,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      devTools: !app.isPackaged,
     },
   });
   mainWindow = win;
@@ -235,6 +236,7 @@ function createLyricsWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      devTools: !app.isPackaged,
     },
   });
   lyricsWin.loadFile('lyrics.html');
