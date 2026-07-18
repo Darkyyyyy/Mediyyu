@@ -568,11 +568,12 @@ ipcMain.handle('lyrics:fetch', async (e, { artist, title, album, duration, sugge
         }
       }
     };
-    const search = async (params) => {
+    const fetchList = async (params) => {
       try {
         const s = await fetch('https://lrclib.net/api/search?' + q(params), opts);
-        if (s.ok) collect(await s.json());
+        if (s.ok) return await s.json();
       } catch {}
+      return [];
     };
     let exact = null;
     if (!suggestOnly) {
@@ -583,7 +584,12 @@ ipcMain.handle('lyrics:fetch', async (e, { artist, title, album, duration, sugge
       }
     }
     if (suggestOnly || !exact || !exact.synced) {
-      await search({ artist_name: artist, track_name: title });
+      const [byMeta, byQuery, byTitle] = await Promise.all([
+        fetchList({ artist_name: artist, track_name: title }),
+        artist && title ? fetchList({ q: artist + ' ' + title }) : [],
+        title ? fetchList({ q: title }) : [],
+      ]);
+      collect(byMeta);
       if (!suggestOnly) {
         const close = duration ? suggestions.filter(x => x.duration && Math.abs(x.duration - duration) <= 7) : [];
         if (close.length) {
@@ -592,8 +598,8 @@ ipcMain.handle('lyrics:fetch', async (e, { artist, title, album, duration, sugge
         }
       }
       if (suggestOnly || !exact) {
-        if (artist && title) await search({ q: artist + ' ' + title });
-        if (title && suggestions.length < 8) await search({ q: title });
+        collect(byQuery);
+        if (suggestions.length < 8) collect(byTitle);
       }
     }
     clearTimeout(timeout);
