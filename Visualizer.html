@@ -752,6 +752,35 @@
   .playlist-item.ins-above { box-shadow: 0 -2px 0 0 rgba(255,255,255,.75); }
   .playlist-item.ins-below { box-shadow: 0 2px 0 0 rgba(255,255,255,.75); }
   .playlist-empty { padding: 16px; font-size: 12px; color: var(--dim); text-align: center; line-height: 1.5; }
+  .pls-box { width: 420px; }
+  .pls-list { max-height: 260px; overflow-y: auto; margin: 10px 0 12px; display: flex; flex-direction: column; gap: 4px; }
+  .pls-list::-webkit-scrollbar { width: 7px; }
+  .pls-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 7px; }
+  .pls-row {
+    display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 9px;
+    cursor: pointer; background: rgba(255,255,255,.05); transition: background .12s ease;
+  }
+  .pls-row:hover { background: rgba(255,255,255,.11); }
+  .pls-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; }
+  .pls-count { font-family: var(--mono); font-size: 10.5px; color: var(--dim); flex: 0 0 auto; }
+  .pls-del {
+    flex: 0 0 auto; width: 17px; height: 17px; border-radius: 50%; cursor: pointer;
+    border: 1px solid rgba(255,90,90,.5); background: rgba(255,80,80,.14); color: #ff8a8a;
+    font-size: 12px; line-height: 1; padding: 0;
+  }
+  .pls-del:hover { background: rgba(255,80,80,.34); color: #fff; }
+  .pls-empty { padding: 14px; text-align: center; color: var(--dim); font-size: 12px; }
+  .pls-save-row { display: flex; gap: 7px; margin-bottom: 12px; }
+  .pls-save-row input {
+    flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 8px;
+    background: rgba(255,255,255,.05); color: var(--txt); font-family: var(--ui); font-size: 12px; padding: 6px 9px;
+  }
+  .pls-foot { display: flex; gap: 7px; justify-content: flex-end; }
+  .pls-save-row button, .pls-foot button {
+    border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--txt); cursor: pointer;
+    font-family: var(--ui); font-size: 12px; border-radius: 8px; padding: 6px 11px; white-space: nowrap;
+  }
+  .pls-save-row button:hover, .pls-foot button:hover { background: rgba(255,255,255,.16); }
 
   .toasts {
     position: absolute; top: 64px; left: 50%; transform: translateX(-50%); z-index: 60;
@@ -968,6 +997,23 @@
     </div>
   </div>
 
+  <div class="help-overlay hidden" id="plsOverlay">
+    <div class="help-box pls-box">
+      <div class="help-title">playlists</div>
+      <div class="pls-list" id="plsList"></div>
+      <div class="pls-save-row">
+        <input type="text" id="plsName" placeholder="playlist name" spellcheck="false" />
+        <button id="plsSaveBtn">save current</button>
+      </div>
+      <div class="pls-foot">
+        <button id="plsImportBtn">import .m3u&hellip;</button>
+        <button id="plsExportBtn">export .m3u</button>
+        <button id="plsCloseBtn">close</button>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="m3uInput" accept=".m3u,.m3u8" style="display:none" />
+
   <div class="help-overlay hidden" id="helpOverlay">
     <div class="help-box">
       <div class="help-title">keyboard shortcuts</div>
@@ -1002,6 +1048,7 @@
     <div class="pl-menu hidden" id="plAddMenu">
       <button class="menu-item" id="plAddFiles"><span>add files&hellip;</span></button>
       <button class="menu-item" id="plAddUrl"><span>add from url&hellip;</span></button>
+      <button class="menu-item" id="plPlaylists"><span>playlists&hellip;</span></button>
     </div>
     <div class="pl-menu hidden" id="plMinusMenu">
       <button class="menu-item" id="plRemoveMode"><span>remove tracks&hellip;</span></button>
@@ -1311,6 +1358,10 @@
       </div>
       <div class="row" style="margin-top:13px;">
         <label>interface tint</label>
+        <div class="seg seg-sm" id="glassTintAutoSeg">
+          <button data-val="off" class="on">manual</button>
+          <button data-val="on">cover</button>
+        </div>
         <input type="color" id="glassTint" value="#ffffff" />
       </div>
       <p class="note">tints the buttons, panels and other glass UI elements.</p>
@@ -1514,7 +1565,7 @@
     lyricsMode: 'compact',
     volume: 100,
     bg: '#0a0b0d',
-    glassTint: '#ffffff', glassAlpha: 5, glassBlur: true,
+    glassTint: '#ffffff', glassTintAuto: false, glassAlpha: 5, glassBlur: true,
     lockResize: false, exportFps: 60, exportQuality: 'balanced', exportRes: 'window',
     displayMode: 'windowed', fullscreenRes: 'native',
     discordEnabled: true, discordClientId: '1519049738224406711', discordImageKey: 'noting',
@@ -3074,6 +3125,7 @@
   let npAlbum = '';
   let discordCoverUrl = null;
   let coverColors = null;
+  let coverTint = null;
   function extractCoverColors(url) {
     return new Promise((resolve) => {
       const img = new Image();
@@ -3152,6 +3204,11 @@
         const colors = await extractCoverColors(tags.cover);
         if (playlist[curIndex] !== myFile) return;
         coverColors = colors;
+        if (colors) {
+          const soften = v => Math.round(v + (255 - v) * 0.55);
+          coverTint = '#' + [1, 3, 5].map(i => soften(parseInt(colors.c1.slice(i, i + 2), 16)).toString(16).padStart(2, '0')).join('');
+          if (S.glassTintAuto) applyGlassTint();
+        }
       }
     }
     if (!tags || !tags.cover) setAmbientCover('');
@@ -3364,6 +3421,7 @@
     $('nowPlaying').classList.remove('show');
     try { localStorage.removeItem('bbv_session'); } catch (e) {}
     if (window.winControls) window.winControls.discordClearActivity();
+    setAmbientCover('');
     setPlRemoveMode(false);
     renderPlaylist();
   }
@@ -3435,6 +3493,137 @@
     else if (e.key === 'Escape') closePlMenus();
     e.stopPropagation();
   });
+  function savedPlaylists() { try { return JSON.parse(localStorage.getItem('bbv_playlists')) || []; } catch (e) { return []; } }
+  function storeSavedPlaylists(v) { try { localStorage.setItem('bbv_playlists', JSON.stringify(v)); } catch (e) {} }
+  function renderPlsList() {
+    const box = $('plsList');
+    box.innerHTML = '';
+    const all = savedPlaylists();
+    if (!all.length) {
+      const d = document.createElement('div');
+      d.className = 'pls-empty';
+      d.textContent = 'no saved playlists yet — name the current one below.';
+      box.appendChild(d);
+      return;
+    }
+    for (const pl of all) {
+      const row = document.createElement('div');
+      row.className = 'pls-row';
+      row.dataset.name = pl.name;
+      const name = document.createElement('span');
+      name.className = 'pls-name';
+      name.textContent = pl.name;
+      const count = document.createElement('span');
+      count.className = 'pls-count';
+      count.textContent = pl.paths.length + ' track' + (pl.paths.length > 1 ? 's' : '');
+      const del = document.createElement('button');
+      del.className = 'pls-del';
+      del.title = 'delete';
+      del.textContent = '−';
+      row.append(name, count, del);
+      box.appendChild(row);
+    }
+  }
+  function restoredToFiles(restored) {
+    return restored.map(r => {
+      const f = new File([r.data], r.name, { type: r.mime });
+      f._path = r.path;
+      return f;
+    });
+  }
+  $('plPlaylists').addEventListener('click', () => {
+    closePlMenus();
+    renderPlsList();
+    $('plsName').value = '';
+    $('plsOverlay').classList.remove('hidden');
+  });
+  $('plsCloseBtn').addEventListener('click', () => $('plsOverlay').classList.add('hidden'));
+  $('plsOverlay').addEventListener('click', e => { if (e.target === $('plsOverlay')) $('plsOverlay').classList.add('hidden'); });
+  $('plsName').addEventListener('keydown', e => {
+    if (e.key === 'Enter') $('plsSaveBtn').click();
+    else if (e.key === 'Escape') $('plsOverlay').classList.add('hidden');
+    e.stopPropagation();
+  });
+  $('plsList').addEventListener('click', async e => {
+    const row = e.target.closest('.pls-row');
+    if (!row) return;
+    const name = row.dataset.name;
+    if (e.target.closest('.pls-del')) {
+      storeSavedPlaylists(savedPlaylists().filter(p => p.name !== name));
+      renderPlsList();
+      toast('deleted ' + name);
+      return;
+    }
+    const pl = savedPlaylists().find(p => p.name === name);
+    if (!pl || !window.winControls) return;
+    toast('loading ' + name + '…');
+    const restored = await window.winControls.readSessionFiles(pl.paths);
+    if (!restored.length) { toast('none of those files could be found.', { error: true, duration: 5000 }); return; }
+    playlist = restoredToFiles(restored);
+    playNextQueue = [];
+    playHistory = [];
+    shufflePlayed.clear();
+    curIndex = 0;
+    loadCurrent();
+    $('plsOverlay').classList.add('hidden');
+    if (restored.length < pl.paths.length) toast(`loaded ${restored.length}/${pl.paths.length} — some files are missing`, { duration: 5000 });
+    else toast('loaded ' + name);
+  });
+  $('plsSaveBtn').addEventListener('click', () => {
+    if (!playlist.length) { toast('playlist is empty.', { error: true }); return; }
+    const paths = playlist.map(f => f._path).filter(Boolean);
+    if (!paths.length) { toast('these tracks have no file on disk — nothing to save.', { error: true, duration: 5000 }); return; }
+    let name = $('plsName').value.trim();
+    if (!name) name = 'playlist ' + (savedPlaylists().length + 1);
+    const all = savedPlaylists().filter(p => p.name !== name);
+    all.unshift({ name, paths, savedAt: Date.now() });
+    storeSavedPlaylists(all.slice(0, 50));
+    renderPlsList();
+    $('plsName').value = '';
+    toast(paths.length < playlist.length ? `saved ${name} (${paths.length}/${playlist.length} — url tracks skipped)` : 'saved ' + name, { duration: 4000 });
+  });
+  $('plsExportBtn').addEventListener('click', () => {
+    const rows = ['#EXTM3U'];
+    let n = 0;
+    for (const f of playlist) {
+      if (!f._path) continue;
+      rows.push(`#EXTINF:${f._dur > 0 ? Math.round(f._dur) : -1},${f._title || f.name.replace(/\.[^.]+$/, '')}`);
+      rows.push(f._path);
+      n++;
+    }
+    if (!n) { toast('nothing to export.', { error: true }); return; }
+    const blob = new Blob([rows.join('\r\n') + '\r\n'], { type: 'audio/x-mpegurl' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = ($('plsName').value.trim() || 'mediyyu playlist') + '.m3u';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    toast(`exported ${n} track${n > 1 ? 's' : ''}`);
+  });
+  $('plsImportBtn').addEventListener('click', () => $('m3uInput').click());
+  $('m3uInput').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file || !window.winControls) return;
+    const text = await file.text();
+    const m3uPath = window.winControls.getPathForFile(file) || '';
+    const dir = m3uPath.replace(/[\\/][^\\/]*$/, '');
+    const paths = [];
+    for (let line of text.split(/\r?\n/)) {
+      line = line.trim();
+      if (!line || line.startsWith('#') || /^https?:/i.test(line)) continue;
+      if (!/^([a-z]:[\\/]|\\\\|\/)/i.test(line) && dir) line = dir + '\\' + line;
+      paths.push(line);
+    }
+    if (!paths.length) { toast('no tracks found in that file.', { error: true }); return; }
+    toast(`importing ${paths.length}…`);
+    const restored = await window.winControls.readSessionFiles(paths);
+    if (!restored.length) { toast('none of those files could be found.', { error: true, duration: 5000 }); return; }
+    appendToPlaylist(restoredToFiles(restored), true);
+    $('plsOverlay').classList.add('hidden');
+    toast(restored.length < paths.length ? `imported ${restored.length}/${paths.length} — some files are missing` : `imported ${restored.length} track${restored.length > 1 ? 's' : ''}`, { duration: 4000 });
+  });
+
   $('plSearch').addEventListener('input', () => {
     plFilter = $('plSearch').value.trim().toLowerCase();
     renderPlaylist();
@@ -3731,9 +3920,9 @@
     $('transport').classList.remove('hidden');
     audio.play().then(() => setPlay(true)).catch(() => setPlay(false));
   }
-  function appendToPlaylist(files) {
+  function appendToPlaylist(files, keepOrder) {
     if (!files.length) return;
-    files = [...files].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+    files = keepOrder ? [...files] : [...files].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
     const wasEmpty = playlist.length === 0;
     const playlistDone = !wasEmpty && ready && !playing && audio.ended;
     const firstNewIdx = playlist.length;
@@ -4683,7 +4872,8 @@
     const typing = /INPUT|TEXTAREA/.test(document.activeElement.tagName) && document.activeElement.type !== 'range';
     if (e.code === 'Space' && !typing && document.activeElement.tagName !== 'BUTTON') { e.preventDefault(); togglePlay(); }
     else if (e.key === 'Escape') {
-      if (!$('helpOverlay').classList.contains('hidden')) $('helpOverlay').classList.add('hidden');
+      if (!$('plsOverlay').classList.contains('hidden')) $('plsOverlay').classList.add('hidden');
+      else if (!$('helpOverlay').classList.contains('hidden')) $('helpOverlay').classList.add('hidden');
       else if (miniOn) setMiniMode(false);
     }
     else if (e.key === '?' && !typing) { e.preventDefault(); $('helpOverlay').classList.toggle('hidden'); }
@@ -4814,6 +5004,9 @@
   $('color2').addEventListener('input', e => { S.color2 = e.target.value; save(); });
   $('bgColor').addEventListener('input', e => { S.bg = e.target.value; syncBgSel(); save(); });
   $('glassTint').addEventListener('input', e => { S.glassTint = e.target.value; applyGlassTint(); save(); });
+  $('glassTintAutoSeg').querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => { S.glassTintAuto = btn.dataset.val === 'on'; syncUI(); save(); });
+  });
   $('glassAlpha').addEventListener('input', e => {
     S.glassAlpha = +e.target.value;
     $('glassAlphaVal').textContent = S.glassAlpha;
@@ -5125,7 +5318,8 @@
     $('clipBg').style.filter = filter;
   }
   function applyGlassTint() {
-    const hex = /^#[0-9a-f]{6}$/i.test(S.glassTint) ? S.glassTint : DEFAULTS.glassTint;
+    let hex = /^#[0-9a-f]{6}$/i.test(S.glassTint) ? S.glassTint : DEFAULTS.glassTint;
+    if (S.glassTintAuto && coverTint) hex = coverTint;
     const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
     const lighten = (v) => Math.min(255, v + 16);
     document.documentElement.style.setProperty('--glass-rgb', `${r}, ${g}, ${b}`);
@@ -5134,6 +5328,8 @@
   }
   function syncUI() {
     $('glassTint').value = /^#[0-9a-f]{6}$/i.test(S.glassTint) ? S.glassTint : DEFAULTS.glassTint;
+    $('glassTint').style.display = S.glassTintAuto ? 'none' : '';
+    $('glassTintAutoSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.glassTintAuto));
     $('glassAlpha').value = S.glassAlpha; $('glassAlphaVal').textContent = S.glassAlpha;
     applyGlassTint();
     $('volume').value = S.volume;
