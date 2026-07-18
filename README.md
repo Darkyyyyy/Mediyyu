@@ -2,7 +2,7 @@
 
 a music player + audio visualizer for windows, built with electron.
 
-![version](https://img.shields.io/badge/version-1.0.3--b-blue)
+![version](https://img.shields.io/badge/version-1.0.4-blue)
 
 ## features
 
@@ -20,9 +20,9 @@ a music player + audio visualizer for windows, built with electron.
 
 ### Windows :
 
-Installer version: [Mediyyu-Setup-1.0.3-b.exe](https://github.com/Darkyyyyy/Mediyyu/releases/download/v1.0.3-b/Mediyyu-Setup-1.0.3-b.exe)
+Installer version: [Mediyyu-Setup-1.0.4.exe](https://github.com/Darkyyyyy/Mediyyu/releases/download/v1.0.4/Mediyyu-Setup-1.0.4.exe)
 
-Portable version: [Mediyyu-1.0.3-b.exe](https://github.com/Darkyyyyy/Mediyyu/releases/download/v1.0.3-b/Mediyyu-1.0.3-b.exe)
+Portable version: [Mediyyu-1.0.4.exe](https://github.com/Darkyyyyy/Mediyyu/releases/download/v1.0.4/Mediyyu-1.0.4.exe)
 
 
 ### Linux :
