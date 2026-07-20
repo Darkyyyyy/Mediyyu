@@ -2,7 +2,7 @@
 
 a music player + audio visualizer for windows, built with electron.
 
-![version](https://img.shields.io/badge/version-1.0.4-blue)
+![version](https://img.shields.io/badge/version-1.1.0-blue)
 
 ## features
 
@@ -11,7 +11,7 @@ a music player + audio visualizer for windows, built with electron.
 - **playback** — playlists with drag & drop reorder, shuffle, repeat modes, crossfade, 10-band EQ with presets, normalization, playback speed.
 - **looks** — cover-art color themes, blurred cover ambiance background, glass UI with custom tint, trails, particles, reflections, mini mode.
 - **export** — record the visualizer to MP4 (quality/fps/resolution options).
-- **integrations** — media keys, windows taskbar buttons, discord rich presence, file associations, system notifications.
+- **integrations** — media keys, windows taskbar buttons, discord rich presence, last.fm scrobbling, file associations, system notifications.
 - **track info editor** — read & write tags (mp3/flac/ogg/m4a/wav) in place, including cover art.
 - **auto-update** — checks github releases on launch; a pill shows up when a new version is out (nothing installs without a click).
 - **synced lyrics** — karaoke overlay from a same-name `.lrc` or `.vtt` file, lyrics embedded in the tags, or [LRCLIB](https://lrclib.net) (free, no key). toggle with `L`.
@@ -20,9 +20,9 @@ a music player + audio visualizer for windows, built with electron.
 
 ### Windows :
 
-Installer version: [Mediyyu-Setup-1.0.4.exe](https://github.com/Darkyyyyy/Mediyyu/releases/download/v1.0.4/Mediyyu-Setup-1.0.4.exe)
+Installer version: [Mediyyu-Setup-1.1.0.exe](https://github.com/Darkyyyyy/Mediyyu/releases/download/v1.1.0/Mediyyu-Setup-1.1.0.exe)
 
-Portable version: [Mediyyu-1.0.4.exe](https://github.com/Darkyyyyy/Mediyyu/releases/download/v1.0.4/Mediyyu-1.0.4.exe)
+Portable version: [Mediyyu-1.1.0.exe](https://github.com/Darkyyyyy/Mediyyu/releases/download/v1.1.0/Mediyyu-1.1.0.exe)
 
 
 ### Linux :
