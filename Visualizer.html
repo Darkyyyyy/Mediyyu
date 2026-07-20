@@ -192,12 +192,13 @@
   }
   .lyrics-loading.clickable:hover { color: #fff; }
   .lyrics-sugg-menu {
-    position: absolute; left: 50%; transform: translateX(-50%); bottom: 148px;
+    position: absolute; left: 50%; bottom: 148px;
     width: min(80%, 460px); max-height: 224px; overflow-y: auto;
     background: rgba(18,19,22,.96); border: 1px solid rgba(255,255,255,.14); border-radius: 11px;
     padding: 6px; z-index: 24;
+    opacity: 1; transform: translateX(-50%) scale(1); transition: opacity .14s ease, transform .14s ease;
   }
-  .lyrics-sugg-menu.hidden { display: none; }
+  .lyrics-sugg-menu.hidden { opacity: 0; transform: translateX(-50%) scale(.96); pointer-events: none; }
   .lyrics-sugg-menu button {
     display: block; width: 100%; text-align: left; border: 0; background: none; cursor: pointer;
     color: rgba(255,255,255,.85); font-family: var(--ui); font-size: 12px;
@@ -325,6 +326,13 @@
   .shape-opt:last-child { margin-bottom: 0; }
   .shape-opt .row:last-child { margin-bottom: 0; }
   .row label { font-size: 13px; color: rgba(255,255,255,.8); }
+  .lastfm-connect-row { justify-content: flex-start; gap: 10px; }
+  .lastfm-connect-row button {
+    border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--txt); cursor: pointer;
+    font-family: var(--ui); font-size: 11.5px; border-radius: 7px; padding: 5px 11px;
+  }
+  .lastfm-connect-row button:hover { background: rgba(255,255,255,.16); }
+  .lastfm-status { font-size: 11.5px; color: var(--dim); }
   .val { font-family: var(--mono); font-size: 11.5px; color: var(--dim); min-width: 34px; text-align: right; }
   .row select {
     border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.06); color: var(--txt);
@@ -449,8 +457,9 @@
     background-color: rgba(18,19,22,.92);
     border: 1px solid rgba(255,255,255,.12); border-radius: 13px;
     box-shadow: 0 10px 34px rgba(0,0,0,.5);
+    opacity: 1; transform: scale(1); transition: opacity .14s ease, transform .14s ease;
   }
-  .more-menu.hidden { display: none; }
+  .more-menu.hidden { opacity: 0; transform: scale(.96); pointer-events: none; }
   .menu-item {
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
     width: 100%; border: 0; background: none; cursor: pointer;
@@ -466,12 +475,13 @@
   .menu-slider.disabled { opacity: .35; pointer-events: none; }
   #drunkHead { display: flex; align-items: center; justify-content: space-between; }
   .drunk-opts {
-    display: none; position: absolute; left: calc(100% + 4px); bottom: -6px; width: 118px; padding: 6px;
+    position: absolute; left: calc(100% + 4px); bottom: -6px; width: 118px; padding: 6px;
     background-color: rgba(18,19,22,.94);
     border: 1px solid rgba(255,255,255,.12); border-radius: 11px;
     box-shadow: 0 10px 34px rgba(0,0,0,.5);
+    opacity: 0; transform: scale(.96); pointer-events: none; transition: opacity .14s ease, transform .14s ease;
   }
-  .drunk-opts.open { display: block; }
+  .drunk-opts.open { opacity: 1; transform: scale(1); pointer-events: auto; }
   .drunk-opts button {
     display: block; width: 100%; text-align: left; border: 0; background: none; cursor: pointer;
     font-family: var(--ui); font-size: 12.5px; color: rgba(255,255,255,.88);
@@ -480,12 +490,13 @@
   .drunk-opts button:hover { background: rgba(255,255,255,.1); }
   .drunk-opts button.on { background: rgba(255,255,255,.16); color: #fff; }
   .submenu {
-    display: none; position: absolute; left: calc(100% + 4px); bottom: -6px; width: 118px; padding: 6px;
+    position: absolute; left: calc(100% + 4px); bottom: -6px; width: 118px; padding: 6px;
     background-color: rgba(18,19,22,.94);
     border: 1px solid rgba(255,255,255,.12); border-radius: 11px;
     box-shadow: 0 10px 34px rgba(0,0,0,.5);
+    opacity: 0; transform: scale(.96); pointer-events: none; transition: opacity .14s ease, transform .14s ease;
   }
-  .submenu.open { display: block; }
+  .submenu.open { opacity: 1; transform: scale(1); pointer-events: auto; }
   .submenu button {
     display: block; width: 100%; text-align: left; border: 0; background: none; cursor: pointer;
     font-family: var(--ui); font-size: 12.5px; color: rgba(255,255,255,.88);
@@ -549,15 +560,22 @@
   }
   .seek::-webkit-slider-thumb { -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%; background: #fff; }
   .seek::-moz-range-thumb { width: 13px; height: 13px; border: 0; border-radius: 50%; background: #fff; }
-  .seek.vol { width: 70px; }
-  .vol-wrap { position: relative; display: flex; align-items: center; gap: 8px; }
-  .vol-tip {
-    position: absolute; bottom: 34px; left: 50%; transform: translateX(-50%); display: none;
-    background: rgba(18,19,22,.95); border: 1px solid rgba(255,255,255,.14); border-radius: 7px;
-    padding: 3px 8px; font-family: var(--mono); font-size: 10.5px; color: rgba(255,255,255,.9);
-    pointer-events: none; white-space: nowrap;
+  .vol-wrap { position: relative; display: flex; align-items: center; }
+  .vol-popup {
+    position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+    margin-bottom: 10px; width: 40px; height: 128px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 12px 0;
+    background-color: rgba(18,19,22,.95); border: 1px solid rgba(255,255,255,.14); border-radius: 14px;
+    box-shadow: 0 10px 34px rgba(0,0,0,.45);
+    opacity: 0; pointer-events: none; transition: opacity .15s ease;
   }
-  .vol-tip.show { display: block; }
+  .vol-popup.show { opacity: 1; pointer-events: auto; }
+  .vol-popup-pct { font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,.75); }
+  #volume.seek.vol {
+    writing-mode: vertical-lr; direction: rtl;
+    width: 4px; height: 84px;
+    background: linear-gradient(to top, rgba(255,255,255,.5) 0%, rgba(255,255,255,.5) var(--fill, 0%), rgba(255,255,255,.2) var(--fill, 0%));
+  }
 
   .recbadge {
     position: absolute; top: 22px; left: 50%; transform: translateX(-50%);
@@ -702,16 +720,18 @@
     background-color: rgba(18,19,22,.95);
     border: 1px solid rgba(255,255,255,.12); border-radius: 12px;
     box-shadow: 0 10px 34px rgba(0,0,0,.5);
+    opacity: 1; transform: scale(1) translateY(0); transition: opacity .14s ease, transform .14s ease;
   }
-  .pl-menu.hidden { display: none; }
+  .pl-menu.hidden { opacity: 0; transform: scale(.96) translateY(4px); pointer-events: none; }
   .pl-url {
     position: absolute; left: 10px; right: 10px; bottom: 48px; z-index: 5;
     display: flex; gap: 7px; padding: 8px;
     background-color: rgba(18,19,22,.95);
     border: 1px solid rgba(255,255,255,.12); border-radius: 12px;
     box-shadow: 0 10px 34px rgba(0,0,0,.5);
+    opacity: 1; transform: scale(1) translateY(0); transition: opacity .14s ease, transform .14s ease;
   }
-  .pl-url.hidden { display: none; }
+  .pl-url.hidden { opacity: 0; transform: scale(.96) translateY(4px); pointer-events: none; }
   .pl-url input {
     flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 8px;
     background: rgba(255,255,255,.05); color: var(--txt); font-family: var(--ui); font-size: 12px; padding: 6px 9px;
@@ -872,11 +892,14 @@
     position: absolute; inset: 0; z-index: 55;
     display: flex; align-items: center; justify-content: center;
     background: rgba(0,0,0,.55);
+    opacity: 1; transition: opacity .16s ease;
   }
-  .help-overlay.hidden { display: none; }
+  .help-overlay.hidden { opacity: 0; pointer-events: none; }
+  .help-overlay.hidden .help-box { transform: scale(.96) translateY(4px); }
   .help-box {
     background: rgba(18,19,22,.96); border: 1px solid rgba(255,255,255,.14); border-radius: 15px;
     padding: 20px 26px; box-shadow: 0 14px 50px rgba(0,0,0,.5); min-width: 300px;
+    transform: scale(1) translateY(0); transition: transform .16s ease;
   }
   .help-title { font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--dim); margin-bottom: 13px; }
   .help-grid { display: grid; grid-template-columns: auto 1fr; gap: 7px 18px; font-size: 12.5px; color: rgba(255,255,255,.85); }
@@ -1502,6 +1525,14 @@
         </div>
       </div>
       <div class="row" style="margin-top:13px;">
+        <label>last.fm scrobbling</label>
+        <div class="seg seg-sm" id="lastfmSeg">
+          <button data-val="off" class="on">off</button>
+          <button data-val="on">on</button>
+        </div>
+      </div>
+      <div class="row lastfm-connect-row" id="lastfmConnectRow" style="margin-top:8px;"></div>
+      <div class="row" style="margin-top:13px;">
         <label>notify on track change</label>
         <div class="seg seg-sm" id="notifyTrackSeg">
           <button data-val="off" class="on">off</button>
@@ -1590,11 +1621,13 @@
       <button class="play playmini" id="favBtn" title="favorite (h)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.87-10.2-9.6C.3 8.3 1.7 5 5 5c2 0 3.5 1.1 4.2 2.4.2.4.6.4.8 0C10.7 6.1 12.2 5 14.2 5c3.3 0 4.7 3.3 3.2 6.4C19.5 16.13 12 21 12 21z"/></svg></button>
       <span class="tname" id="tName">track</span>
       <div class="vol-wrap" id="volWrap">
-        <button class="play playmini" id="volBtn" title="mute">
+        <button class="play playmini" id="volBtn" title="volume">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 9v6h4l5 5V4l-5 5H5z"/><path d="M16.5 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
-        <input type="range" class="seek vol" id="volume" min="0" max="100" value="100" />
-        <div class="vol-tip" id="volTip">100%</div>
+        <div class="vol-popup" id="volPopup">
+          <span class="vol-popup-pct" id="volPopupPct">100%</span>
+          <input type="range" class="seek vol" id="volume" min="0" max="100" value="100" />
+        </div>
       </div>
       <button class="play playmini" id="moreBtn" title="more options"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
     </div>
@@ -1700,6 +1733,7 @@
     lockResize: false, exportFps: 60, exportQuality: 'balanced', exportRes: 'window',
     displayMode: 'windowed', fullscreenRes: 'native',
     discordEnabled: true, discordClientId: '1519049738224406711', discordImageKey: 'noting',
+    lastfmEnabled: false, lastfmSessionKey: '', lastfmUsername: '',
     gain: 100, eq0: 0, eq1: 0, eq2: 0, eq3: 0, eq4: 0, eq5: 0, eq6: 0, eq7: 0, eq8: 0, eq9: 0,
     shuffle: false, repeat: 'off', playbackRate: 1, drunkMode: '', normalize: false, crossfade: false, crossfadeDur: 4,
     notifyTrack: true, notifyEnd: true,
@@ -3348,6 +3382,7 @@
     if (!tags || !tags.cover) setAmbientCover('');
     sendDiscordActivity();
     updateMediaSession(myFile, tags);
+    lastfmSendNowPlaying(tags, myFile);
     lastTags = tags;
     loadLyricsFor(myFile, tags);
     if (S.notifyTrack) {
@@ -3767,7 +3802,7 @@
   }
   async function confirmBigImport(count) {
     if (count <= BIG_IMPORT_THRESHOLD) return true;
-    return confirmDialog(`this will add ${count} tracks — that's a lot to load at once. continue?`, 'add them all', 'cancel');
+    return confirmDialog(`this will add ${count} tracks and that's a LOT to load at once. continue?`, 'add them all', 'cancel');
   }
   function existingPathSet() { return new Set(playlist.map(f => f._path).filter(Boolean)); }
   async function filterDuplicatePaths(paths) {
@@ -3883,7 +3918,7 @@
     const tList = $('statsTracksList');
     tList.innerHTML = '';
     if (!topTracks.length) {
-      const e = document.createElement('div'); e.className = 'stats-empty'; e.textContent = 'nothing tracked yet — listen to something for a bit.';
+      const e = document.createElement('div'); e.className = 'stats-empty'; e.textContent = 'nothing tracked yet, so time to start to listen to something for a bit!';
       tList.appendChild(e);
     } else {
       topTracks.forEach((t, i) => tList.appendChild(statsRow(i + 1, t.artist ? `${t.title} — ${t.artist}` : t.title, t.plays, t.plays > 1 ? ' plays' : ' play')));
@@ -4009,7 +4044,7 @@
     const path = row.dataset.path;
     if (!path || !window.winControls) { toast("this track's file can't be located.", { error: true }); return; }
     const restored = await window.winControls.readSessionFiles([path]);
-    if (!restored.length) { toast('file not found — it may have been moved or deleted.', { error: true, duration: 5000 }); return; }
+    if (!restored.length) { toast('file not found, it may have been moved or deleted.', { error: true, duration: 5000 }); return; }
     $('recentOverlay').classList.add('hidden');
     await appendFilesWithDupeCheck(restoredToFiles(restored));
   });
@@ -4231,7 +4266,7 @@
     $('propSaveBtn').textContent = onDisk ? 'save' : 'save & download';
     $('propsNote').innerHTML = onDisk
       ? '⚠️ save writes the metadata directly into the file.'
-      : '⚠️ this track isn\'t on disk — save writes the metadata into a downloaded copy.';
+      : '⚠️ this track isn\'t on disk, saving writes the metadata into a downloaded copy.';
     $('propSaveBtn').disabled = false;
     $('propsOverlay').classList.remove('hidden');
     $('propTitle').focus();
@@ -4389,14 +4424,22 @@
     shufflePlayed.add(file);
     statsCounted = false;
     statsLastT = 0;
+    lastfmScrobbled = false;
+    lastfmTrackStartedAt = Math.floor(Date.now() / 1000);
     ensureAudio();
     if (actx.state === 'suspended') actx.resume();
     if (audio.src) {
       if (ghostOwnsUrl) ghostOwnsUrl = false;
-      else URL.revokeObjectURL(audio.src);
+      else if (!audio._isTranscodedSrc) URL.revokeObjectURL(audio.src);
     }
     xfadeArmed = false;
-    audio.src = URL.createObjectURL(file);
+    if (file._transcodedUrl) {
+      audio.src = file._transcodedUrl;
+      audio._isTranscodedSrc = true;
+    } else {
+      audio.src = URL.createObjectURL(file);
+      audio._isTranscodedSrc = false;
+    }
     audio.defaultPlaybackRate = S.playbackRate;
     audio.playbackRate = S.playbackRate;
     curIsVideo = isVideoFile(file);
@@ -4814,7 +4857,7 @@
     window.winControls.onUpdateAvailable(({ version, portable }) => {
       updState = 'available';
       updPortable = !!portable;
-      pill.textContent = updPortable ? `update ${version} available — get it on github` : `update ${version} available — download`;
+      pill.textContent = updPortable ? `update ${version} available! get it on github now!` : `update ${version} available to download`;
       pill.classList.remove('hidden');
       toast(`mediyyu ${version} is out!`, { duration: 6000 });
     });
@@ -4824,7 +4867,7 @@
     window.winControls.onUpdateDownloaded(() => {
       updState = 'ready';
       pill.textContent = 'restart to update';
-      toast('update ready — click the green pill to restart', { duration: 6000 });
+      toast('update downloaded!', { duration: 6000 });
     });
     window.winControls.onUpdateError(() => {
       if (updState === 'downloading') {
@@ -5142,13 +5185,21 @@
       ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 9v6h4l5 5V4l-5 5H5z"/><line x1="16" y1="9" x2="22" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="22" y1="9" x2="16" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
       : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 9v6h4l5 5V4l-5 5H5z"/><path d="M16.5 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   }
-  let volTipHideT = 0;
-  function volTipText() { return audio.muted ? 'muted' : S.volume + '%'; }
-  function flashVolTip() {
-    $('volTip').textContent = volTipText();
-    $('volTip').classList.add('show');
-    clearTimeout(volTipHideT);
-    volTipHideT = setTimeout(() => $('volTip').classList.remove('show'), 900);
+  let volHovering = false;
+  let volHideT = 0;
+  function volPopupText() { return audio.muted ? 'muted' : S.volume + '%'; }
+  function showVolPopup() {
+    clearTimeout(volHideT);
+    $('volPopupPct').textContent = volPopupText();
+    $('volPopup').classList.add('show');
+  }
+  function scheduleHideVolPopup(delay) {
+    clearTimeout(volHideT);
+    volHideT = setTimeout(() => { if (!volHovering) $('volPopup').classList.remove('show'); }, delay);
+  }
+  function flashVolPopup() {
+    showVolPopup();
+    if (!volHovering) scheduleHideVolPopup(900);
   }
   function setVolume(v) {
     S.volume = Math.max(0, Math.min(100, Math.round(v)));
@@ -5156,7 +5207,7 @@
     audio.muted = S.volume === 0;
     $('volume').value = S.volume;
     setVolIcon(audio.muted);
-    flashVolTip();
+    flashVolPopup();
     save();
   }
   audio.volume = S.volume / 100;
@@ -5165,15 +5216,11 @@
   function toggleMute() {
     audio.muted = !audio.muted;
     setVolIcon(audio.muted);
-    flashVolTip();
+    flashVolPopup();
   }
   $('volBtn').addEventListener('click', toggleMute);
-  $('volWrap').addEventListener('mouseenter', () => {
-    $('volTip').textContent = volTipText();
-    $('volTip').classList.add('show');
-    clearTimeout(volTipHideT);
-  });
-  $('volWrap').addEventListener('mouseleave', () => $('volTip').classList.remove('show'));
+  $('volWrap').addEventListener('mouseenter', () => { volHovering = true; showVolPopup(); });
+  $('volWrap').addEventListener('mouseleave', () => { volHovering = false; scheduleHideVolPopup(250); });
   for (const el of [$('volume'), $('volBtn')]) {
     el.addEventListener('wheel', e => {
       e.preventDefault();
@@ -5388,6 +5435,7 @@
     $('timeRem').textContent = '-' + fmt(audio.duration - audio.currentTime);
     saveSession(false);
     trackStatsTick();
+    lastfmTick();
     if (S.crossfade && playing && !recording && !xfadeArmed && S.repeat !== 'one' &&
         audio.duration - audio.currentTime <= S.crossfadeDur && hasNextTrack()) {
       xfadeArmed = true;
@@ -5396,9 +5444,35 @@
   });
   let errStreak = 0;
   audio.addEventListener('loadedmetadata', () => { errStreak = 0; });
-  audio.addEventListener('error', () => {
+  audio.addEventListener('error', async () => {
     if (curIndex < 0 || !playlist.length || !audio.getAttribute('src')) return;
     const f = playlist[curIndex];
+    if (f && !curIsVideo && !f._transcodeAttempted && !f._transcodedUrl && window.winControls) {
+      f._transcodeAttempted = true;
+      toast(`${f.name} won't play directly, i convert it…`, { duration: 5000 });
+      try {
+        const payload = f._path ? { path: f._path, name: f.name } : { buffer: await f.arrayBuffer(), name: f.name };
+        const r = await window.winControls.transcodeAudio(payload);
+        if (playlist[curIndex] !== f) return;
+        if (r && r.ok) {
+          const blob = new Blob([r.data], { type: 'audio/wav' });
+          f._transcodedUrl = URL.createObjectURL(blob);
+          audio.src = f._transcodedUrl;
+          audio._isTranscodedSrc = true;
+          if (resumePos > 0) {
+            const pos = resumePos;
+            resumePos = 0;
+            audio.addEventListener('loadedmetadata', () => { audio.currentTime = pos; }, { once: true });
+          }
+          audio.play().then(() => setPlay(true)).catch(() => setPlay(false));
+          toast(`converted ${f.name} ✓`, { duration: 3000 });
+          return;
+        }
+        toast(`couldn't convert ${f.name} either — skipping.`, { error: true, duration: 4000 });
+      } catch (e) {
+        toast(`couldn't convert ${f.name} either — skipping.`, { error: true, duration: 4000 });
+      }
+    }
     toast(`can't play ${f ? f.name : 'this file'} — skipped`, { error: true });
     setPlay(false);
     if (++errStreak >= Math.min(playlist.length, 50)) {
@@ -5775,6 +5849,95 @@
     });
   });
 
+  let lastfmPendingToken = null;
+  function syncLastfmUI() {
+    const box = $('lastfmConnectRow');
+    if (!box) return;
+    box.innerHTML = '';
+    if (S.lastfmSessionKey) {
+      const span = document.createElement('span');
+      span.className = 'lastfm-status';
+      span.textContent = 'connected as ' + (S.lastfmUsername || '?');
+      const btn = document.createElement('button');
+      btn.textContent = 'disconnect';
+      btn.addEventListener('click', () => {
+        S.lastfmSessionKey = ''; S.lastfmUsername = '';
+        save();
+        syncLastfmUI();
+        toast('disconnected from last.fm');
+      });
+      box.append(span, btn);
+    } else if (lastfmPendingToken) {
+      const span = document.createElement('span');
+      span.className = 'lastfm-status';
+      span.textContent = 'waiting for authorization…';
+      const btn = document.createElement('button');
+      btn.textContent = "I've authorized, continue";
+      btn.addEventListener('click', lastfmFinishAuth);
+      const cancel = document.createElement('button');
+      cancel.textContent = 'cancel';
+      cancel.addEventListener('click', () => { lastfmPendingToken = null; syncLastfmUI(); });
+      box.append(span, btn, cancel);
+    } else {
+      const btn = document.createElement('button');
+      btn.textContent = 'connect last.fm…';
+      btn.addEventListener('click', lastfmStartAuth);
+      box.append(btn);
+    }
+  }
+  async function lastfmStartAuth() {
+    if (!window.winControls) return;
+    const r = await window.winControls.scrobbleGetAuthUrl();
+    if (!r || r.error) { toast('last.fm error: ' + (r ? r.error : 'unknown'), { error: true, duration: 5000 }); return; }
+    lastfmPendingToken = r.token;
+    window.winControls.scrobbleOpenAuth(r.url);
+    syncLastfmUI();
+    toast('authorize mediyyu in your browser, then come back and click continue', { duration: 6000 });
+  }
+  async function lastfmFinishAuth() {
+    if (!lastfmPendingToken || !window.winControls) return;
+    const r = await window.winControls.scrobbleCompleteAuth(lastfmPendingToken);
+    if (!r || r.error) { toast("not authorized yet, make sure you clicked 'allow access' in the browser.", { error: true, duration: 5000 }); return; }
+    S.lastfmSessionKey = r.key;
+    S.lastfmUsername = r.username || '';
+    lastfmPendingToken = null;
+    save();
+    syncLastfmUI();
+    toast('connected to last.fm as ' + S.lastfmUsername);
+  }
+  $('lastfmSeg').querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => { S.lastfmEnabled = btn.dataset.val === 'on'; syncUI(); save(); });
+  });
+
+  let lastfmScrobbled = false;
+  let lastfmTrackStartedAt = 0;
+  function lastfmSendNowPlaying(tags, file) {
+    if (!window.winControls || !S.lastfmEnabled || !S.lastfmSessionKey) return;
+    const artist = tags && tags.artist;
+    const title = (tags && tags.title) || (file && file.name.replace(/\.[^.]+$/, ''));
+    if (!artist || !title) return;
+    window.winControls.scrobbleUpdateNowPlaying({
+      sessionKey: S.lastfmSessionKey, artist, track: title,
+      album: tags && tags.album, duration: audio.duration,
+    }).catch(() => {});
+  }
+  function lastfmTick() {
+    if (!window.winControls || !S.lastfmEnabled || !S.lastfmSessionKey) return;
+    if (lastfmScrobbled || !ready || !playing || !audio.duration || audio.duration <= 30) return;
+    const threshold = Math.min(240, audio.duration / 2);
+    if (audio.currentTime < threshold) return;
+    lastfmScrobbled = true;
+    const tags = lastTags;
+    const file = playlist[curIndex];
+    const artist = tags && tags.artist;
+    const title = (tags && tags.title) || (file && file.name.replace(/\.[^.]+$/, ''));
+    if (!artist || !title) return;
+    window.winControls.scrobbleTrack({
+      sessionKey: S.lastfmSessionKey, artist, track: title,
+      album: tags && tags.album, timestamp: lastfmTrackStartedAt,
+    }).catch(() => {});
+  }
+
   function notify(title, body) {
     if (document.hasFocus()) return;
     if (window.winControls && window.winControls.notify) window.winControls.notify(title, body);
@@ -5955,6 +6118,8 @@
     $('connectionsSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.connections));
     $('alwaysOnTopSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.alwaysOnTop));
     $('discordSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.discordEnabled));
+    $('lastfmSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.lastfmEnabled));
+    syncLastfmUI();
     $('notifyTrackSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.notifyTrack));
     $('notifyEndSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.notifyEnd));
     document.body.classList.toggle('vignette', S.vignette);
