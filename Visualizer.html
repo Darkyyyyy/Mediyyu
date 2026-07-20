@@ -11,9 +11,21 @@
     font-weight: normal;
     font-style: normal;
   }
+  @font-face {
+    font-family: 'Nunito';
+    src: url('fonts/Nunito-Variable.ttf') format('truetype-variations');
+    font-weight: 200 900;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Nunito';
+    src: url('fonts/Nunito-Italic-Variable.ttf') format('truetype-variations');
+    font-weight: 200 900;
+    font-style: italic;
+  }
   :root {
     --ui: 'Renogare', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    --mono: 'Nunito', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
     --glass-rgb: 46, 48, 54;
     --glass-rgb-hover: 62, 65, 72;
     --glass-alpha-mult: 1;
