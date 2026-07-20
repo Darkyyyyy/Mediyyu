@@ -27,6 +27,7 @@ contextBridge.exposeInMainWorld('winControls', {
   scanDirForAudio: (p) => ipcRenderer.invoke('files:scanDir', p),
   logError: (msg) => ipcRenderer.send('log:error', msg),
   fetchAudioUrl: (url) => ipcRenderer.invoke('url:fetchAudio', url),
+  transcodeAudio: (payload) => ipcRenderer.invoke('audio:transcode', payload),
   showInFolder: (p) => ipcRenderer.send('file:showInFolder', p),
   writeFileTags: (payload) => ipcRenderer.invoke('file:writeTags', payload),
   discordConnect: (clientId) => ipcRenderer.send('discord:connect', clientId),
@@ -53,4 +54,9 @@ contextBridge.exposeInMainWorld('winControls', {
   updateDownload: () => ipcRenderer.send('update:download'),
   updateInstall: () => ipcRenderer.send('update:install'),
   updateOpenReleases: () => ipcRenderer.send('update:openReleases'),
+  scrobbleGetAuthUrl: () => ipcRenderer.invoke('scrobble:getAuthUrl'),
+  scrobbleCompleteAuth: (token) => ipcRenderer.invoke('scrobble:completeAuth', token),
+  scrobbleUpdateNowPlaying: (payload) => ipcRenderer.invoke('scrobble:updateNowPlaying', payload),
+  scrobbleTrack: (payload) => ipcRenderer.invoke('scrobble:track', payload),
+  scrobbleOpenAuth: (url) => ipcRenderer.send('scrobble:openAuth', url),
 });

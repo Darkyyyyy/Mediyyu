@@ -6,6 +6,7 @@ app.commandLine.appendSwitch('enable-features', 'HardwareMediaKeyHandling,MediaS
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const crypto = require('crypto');
 const { spawn } = require('child_process');
 
 const ffmpegPath = app.isPackaged
@@ -509,6 +510,30 @@ ipcMain.handle('file:writeTags', async (e, { path: srcPath, buffer, name, tags }
     return { error: err.message };
   }
 });
+ipcMain.handle('audio:transcode', async (e, { path: srcPath, buffer, name }) => {
+  let tempInput = null;
+  let tempOutput = null;
+  try {
+    let inputPath = srcPath && fs.existsSync(srcPath) ? srcPath : null;
+    if (!inputPath) {
+      if (!buffer) return { error: 'no input file' };
+      const ext = path.extname(name || '') || '.m4a';
+      tempInput = path.join(os.tmpdir(), 'mediyyu-transcode-src-' + Date.now() + ext);
+      fs.writeFileSync(tempInput, Buffer.from(buffer));
+      inputPath = tempInput;
+    }
+    tempOutput = path.join(os.tmpdir(), 'mediyyu-transcode-out-' + Date.now() + '.wav');
+    const result = await runFfmpeg(['-y', '-i', inputPath, '-vn', '-f', 'wav', tempOutput]);
+    if (result.code !== 0) return { error: result.errOut.slice(-400) || 'conversion failed' };
+    const data = fs.readFileSync(tempOutput);
+    return { ok: true, data: data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) };
+  } catch (err) {
+    return { error: err.message };
+  } finally {
+    if (tempInput) { try { fs.unlinkSync(tempInput); } catch (e2) {} }
+    if (tempOutput) { try { fs.unlinkSync(tempOutput); } catch (e2) {} }
+  }
+});
 ipcMain.handle('url:fetchAudio', async (e, url) => {
   try {
     const controller = new AbortController();
@@ -688,6 +713,60 @@ ipcMain.handle('discord:lookupCover', async (e, { artist, album }) => {
   } catch (err) {
     return null;
   }
+});
+
+const _sc = Buffer.from('OTllNjhiNjhlNjNmYzBkN2E1MDZlNWY1ZDQ3YjJlYjM6MWE5MzdiYjBlYzQwNTQyNjQ5M2UwNzBmMDE3YzlhOGE=', 'base64').toString('utf8').split(':');
+const SCROBBLE_API = 'https://ws.audioscrobbler.com/2.0/';
+function scrobbleSign(params) {
+  const keys = Object.keys(params).filter(k => k !== 'format').sort();
+  let str = '';
+  for (const k of keys) str += k + params[k];
+  str += _sc[1];
+  return crypto.createHash('md5').update(str, 'utf8').digest('hex');
+}
+async function scrobbleCall(method, params, usePost) {
+  const full = { method, api_key: _sc[0], ...params };
+  const api_sig = scrobbleSign(full);
+  const allParams = { ...full, api_sig, format: 'json' };
+  const qs = Object.entries(allParams).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+  const r = usePost
+    ? await fetch(SCROBBLE_API, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: qs })
+    : await fetch(SCROBBLE_API + '?' + qs);
+  return r.json();
+}
+ipcMain.handle('scrobble:getAuthUrl', async () => {
+  try {
+    const data = await scrobbleCall('auth.getToken', {});
+    if (!data.token) return { error: (data.message || 'could not get a token') };
+    return { token: data.token, url: `https://www.last.fm/api/auth/?api_key=${_sc[0]}&token=${data.token}` };
+  } catch (err) { return { error: err.message }; }
+});
+ipcMain.handle('scrobble:completeAuth', async (e, token) => {
+  try {
+    const data = await scrobbleCall('auth.getSession', { token });
+    if (data.session && data.session.key) return { key: data.session.key, username: data.session.name };
+    return { error: (data.message || "not authorized yet — click allow access in the browser first.") };
+  } catch (err) { return { error: err.message }; }
+});
+ipcMain.handle('scrobble:updateNowPlaying', async (e, { sessionKey, artist, track, album, duration }) => {
+  if (!sessionKey || !artist || !track) return { error: 'missing fields' };
+  try {
+    const params = { artist, track, sk: sessionKey };
+    if (album) params.album = album;
+    if (duration) params.duration = Math.round(duration);
+    return await scrobbleCall('track.updateNowPlaying', params, true);
+  } catch (err) { return { error: err.message }; }
+});
+ipcMain.handle('scrobble:track', async (e, { sessionKey, artist, track, album, timestamp }) => {
+  if (!sessionKey || !artist || !track || !timestamp) return { error: 'missing fields' };
+  try {
+    const params = { artist, track, timestamp, sk: sessionKey };
+    if (album) params.album = album;
+    return await scrobbleCall('track.scrobble', params, true);
+  } catch (err) { return { error: err.message }; }
+});
+ipcMain.on('scrobble:openAuth', (e, url) => {
+  if (typeof url === 'string' && url.startsWith('https://www.last.fm/api/auth/')) shell.openExternal(url);
 });
 
 const QUALITY_PRESETS = {
