@@ -795,6 +795,19 @@
   .toast.show { opacity: 1; transform: none; }
   .toast.err { border-color: rgba(255,90,90,.45); color: #ffb3b3; }
 
+  .load-progress {
+    position: absolute; left: 50%; bottom: 112px; transform: translateX(-50%);
+    z-index: 26; min-width: 230px; max-width: 320px;
+    background-color: rgba(18,19,22,.92); border: 1px solid rgba(255,255,255,.14);
+    border-radius: 14px; padding: 11px 16px; box-shadow: 0 8px 30px rgba(0,0,0,.4);
+    opacity: 0; pointer-events: none; transition: opacity .2s ease;
+  }
+  .load-progress.show { opacity: 1; }
+  .load-progress-label { font-size: 12px; color: rgba(255,255,255,.85); margin-bottom: 8px; }
+  .load-progress-bar { height: 5px; border-radius: 3px; background: rgba(255,255,255,.1); overflow: hidden; }
+  .load-progress-fill { height: 100%; width: 0%; background: rgba(255,255,255,.8); border-radius: 3px; transition: width .18s ease; }
+  .load-progress-count { margin-top: 6px; font-family: var(--mono); font-size: 10.5px; color: var(--dim); text-align: right; }
+
   .transport-seekrow { position: relative; }
   .seek-tip {
     position: absolute; bottom: 22px; transform: translateX(-50%); display: none;
@@ -1531,6 +1544,12 @@
       <label class="browse">browse files<input type="file" id="fileInput" accept="audio/*,video/mp4,video/webm,video/quicktime" multiple hidden /></label>
     </div>
     <button class="resume-note hidden" id="resumeNote">resume previous session?</button>
+  </div>
+
+  <div class="load-progress" id="loadProgress">
+    <div class="load-progress-label" id="loadProgressLabel">loading tracks&hellip;</div>
+    <div class="load-progress-bar"><div class="load-progress-fill" id="loadProgressFill"></div></div>
+    <div class="load-progress-count" id="loadProgressCount">0 / 0</div>
   </div>
 
   <audio id="audio" crossorigin="anonymous"></audio>
@@ -3175,7 +3194,6 @@
     }
     $('npCover').style.backgroundImage = '';
     $('npCover').classList.add('empty');
-    coverColors = null;
     checkMegalovania(file.name, '');
     let tags = null;
     try { tags = await readTags(file); } catch {}
@@ -3209,7 +3227,11 @@
           coverTint = '#' + [1, 3, 5].map(i => soften(parseInt(colors.c1.slice(i, i + 2), 16)).toString(16).padStart(2, '0')).join('');
           if (S.glassTintAuto) applyGlassTint();
         }
+      } else {
+        coverColors = null;
       }
+    } else {
+      coverColors = null;
     }
     if (!tags || !tags.cover) setAmbientCover('');
     sendDiscordActivity();
@@ -3524,6 +3546,37 @@
       box.appendChild(row);
     }
   }
+  function showLoadProgress(label) {
+    $('loadProgressLabel').textContent = label;
+    $('loadProgressFill').style.width = '0%';
+    $('loadProgressCount').textContent = '0 / 0';
+    $('loadProgress').classList.add('show');
+  }
+  function updateLoadProgress(done, total) {
+    $('loadProgressFill').style.width = (total ? (done / total * 100) : 0).toFixed(1) + '%';
+    $('loadProgressCount').textContent = done + ' / ' + total;
+  }
+  function hideLoadProgress() { $('loadProgress').classList.remove('show'); }
+  const READ_CHUNK = 15;
+  async function readPathsWithProgress(paths, label) {
+    if (!window.winControls) return [];
+    if (paths.length <= READ_CHUNK) return window.winControls.readSessionFiles(paths);
+    showLoadProgress(label);
+    updateLoadProgress(0, paths.length);
+    const out = [];
+    try {
+      for (let i = 0; i < paths.length; i += READ_CHUNK) {
+        const chunk = paths.slice(i, i + READ_CHUNK);
+        const restored = await window.winControls.readSessionFiles(chunk);
+        out.push(...restored);
+        updateLoadProgress(Math.min(i + READ_CHUNK, paths.length), paths.length);
+        await new Promise(r => requestAnimationFrame(r));
+      }
+    } finally {
+      hideLoadProgress();
+    }
+    return out;
+  }
   function restoredToFiles(restored) {
     return restored.map(r => {
       const f = new File([r.data], r.name, { type: r.mime });
@@ -3557,7 +3610,7 @@
     const pl = savedPlaylists().find(p => p.name === name);
     if (!pl || !window.winControls) return;
     toast('loading ' + name + '…');
-    const restored = await window.winControls.readSessionFiles(pl.paths);
+    const restored = await readPathsWithProgress(pl.paths, 'loading ' + name + '…');
     if (!restored.length) { toast('none of those files could be found.', { error: true, duration: 5000 }); return; }
     playlist = restoredToFiles(restored);
     playNextQueue = [];
@@ -3617,7 +3670,7 @@
     }
     if (!paths.length) { toast('no tracks found in that file.', { error: true }); return; }
     toast(`importing ${paths.length}…`);
-    const restored = await window.winControls.readSessionFiles(paths);
+    const restored = await readPathsWithProgress(paths, `importing ${paths.length} tracks…`);
     if (!restored.length) { toast('none of those files could be found.', { error: true, duration: 5000 }); return; }
     appendToPlaylist(restoredToFiles(restored), true);
     $('plsOverlay').classList.add('hidden');
@@ -4057,7 +4110,7 @@
     note.classList.remove('hidden');
     note.addEventListener('click', async () => {
       note.classList.add('hidden');
-      const restored = await window.winControls.readSessionFiles(sess.paths);
+      const restored = await readPathsWithProgress(sess.paths, 'restoring session…');
       if (!restored.length || playlist.length) return;
       const files = restored.map(r => {
         const f = new File([r.data], r.name, { type: r.mime });
@@ -4129,7 +4182,7 @@
     }
     if (!paths.length) { toast('no audio files found in that folder', { error: true }); return; }
     toast(`adding ${paths.length} track${paths.length > 1 ? 's' : ''}…`);
-    const restored = await window.winControls.readSessionFiles(paths);
+    const restored = await readPathsWithProgress(paths, `adding ${paths.length} tracks…`);
     const files = restored.map(r => {
       const f = new File([r.data], r.name, { type: r.mime });
       f._path = r.path;
