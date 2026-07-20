@@ -640,21 +640,28 @@ ipcMain.handle('files:scanDir', async (e, dirPath) => {
   return out;
 });
 ipcMain.handle('session:readFiles', async (e, paths) => {
-  const out = [];
-  for (const p of Array.isArray(paths) ? paths : []) {
-    try {
-      if (!p || typeof p !== 'string' || !fs.existsSync(p)) continue;
-      const data = fs.readFileSync(p);
-      const ext = path.extname(p).slice(1).toLowerCase();
-      out.push({
-        name: path.basename(p),
-        mime: AUDIO_MIME[ext] || 'audio/mpeg',
-        data: data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength),
-        path: p,
-      });
-    } catch (err) {}
+  const list = Array.isArray(paths) ? paths : [];
+  const out = new Array(list.length);
+  let next = 0;
+  async function worker() {
+    while (next < list.length) {
+      const idx = next++;
+      const p = list[idx];
+      try {
+        if (!p || typeof p !== 'string' || !fs.existsSync(p)) continue;
+        const data = await fs.promises.readFile(p);
+        const ext = path.extname(p).slice(1).toLowerCase();
+        out[idx] = {
+          name: path.basename(p),
+          mime: AUDIO_MIME[ext] || 'audio/mpeg',
+          data: data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength),
+          path: p,
+        };
+      } catch (err) {}
+    }
   }
-  return out;
+  await Promise.all(Array.from({ length: Math.min(4, list.length) }, worker));
+  return out.filter(Boolean);
 });
 ipcMain.on('discord:connect', (e, clientId) => { discordConnect(clientId); });
 ipcMain.on('discord:disconnect', () => { discordDisconnect(); });
