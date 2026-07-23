@@ -100,7 +100,7 @@
     background-repeat: no-repeat;
     filter: blur(46px) brightness(.55);
     transform: scale(1.12);
-    transition: opacity .5s ease;
+    transition: opacity .5s ease, transform .7s cubic-bezier(.22,.61,.36,1);
   }
   #coverBgFade { opacity: 0; }
   body.bg-cover-art #coverBg, body.bg-cover-art #coverBgFade { display: block; }
@@ -130,17 +130,41 @@
     box-shadow: inset 0 0 18vmax rgba(0,0,0,.65);
   }
 
-  .topbar {
+  .corner-controls {
     position: absolute;
-    top: 44px;
-    right: 22px;
+    top: 0;
+    right: 0;
     display: flex;
-    gap: 10px;
-    z-index: 42;
+    align-items: flex-start;
+    gap: 8px;
+    z-index: 50;
   }
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px;
+    height: 32px;
+    border-radius: 0 0 12px 12px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.09);
+  }
+  .topbar .btn {
+    width: 34px;
+    height: 24px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    box-shadow: none;
+  }
+  .topbar .btn svg { width: 15px; height: 15px; }
+  .topbar .btn:hover { background: rgba(255,255,255,.12); border-color: transparent; }
+  .topbar .btn.rec.active { background: linear-gradient(165deg, rgba(255,255,255,.4) 0%, rgba(255,255,255,.05) 35%), #ff3b3b; }
+  .wincontrols .btn.menu-open,
+  .topbar .btn.menu-open { background: rgba(255,255,255,.18); }
 
   .update-pill {
-    position: absolute; top: 96px; right: 22px; z-index: 42;
+    position: absolute; top: 44px; right: 22px; z-index: 42;
     border: 1px solid rgba(120,220,140,.4); border-radius: 999px;
     background: rgba(26,54,34,.88); color: #9fe8af;
     font-family: var(--ui); font-size: 12px; font-weight: 600;
@@ -221,20 +245,25 @@
   .lyrics-sugg-menu button .sugg-side { color: var(--dim); font-size: 11px; }
 
   .wincontrols {
-    position: absolute;
-    top: 6px;
-    right: 6px;
     height: 32px;
     display: flex;
-    gap: 2px;
-    z-index: 50;
+    gap: 3px;
+    padding: 3px;
+    border-radius: 0 0 0 12px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.09);
+    border-top: 0;
+    border-right: 0;
+    transition: opacity .18s ease;
   }
+  body.edge-to-edge .wincontrols { display: none; }
   .wincontrols .btn {
-    width: 44px;
-    height: 32px;
+    width: 38px;
+    height: 24px;
     border: 0;
-    border-radius: 9px;
+    border-radius: 8px;
     background: transparent;
+    box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
@@ -280,10 +309,10 @@
 
   .panel {
     position: absolute;
-    top: 100px;
+    top: 48px;
     right: 22px;
     width: min(620px, calc(100vw - 44px));
-    max-height: calc(100vh - 132px);
+    max-height: calc(100vh - 80px);
     display: flex;
     align-items: stretch;
     background-color: rgba(var(--glass-rgb), calc(var(--glass-alpha-mult) * 0.9));
@@ -556,6 +585,10 @@
   }
   .play:hover { transform: scale(1.08); }
   .play:active { transform: scale(.9); }
+  .play.menu-open {
+    background: linear-gradient(165deg, rgba(210,215,225,.95) 0%, rgba(175,180,190,.9) 100%);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,.3), 0 2px 6px rgba(0,0,0,.25);
+  }
   .play svg { width: 16px; height: 16px; transition: transform .18s ease; }
   #playBtn svg { width: 23px; height: 23px; }
   #volBtn svg { width: 19px; height: 19px; }
@@ -728,6 +761,7 @@
     font-family: var(--ui); font-size: 15px; line-height: 1; padding: 0;
   }
   .pl-foot-btn:hover { background: rgba(255,255,255,.14); color: #fff; }
+  .pl-foot-btn.menu-open { background: rgba(255,255,255,.22); border-color: rgba(255,255,255,.32); color: #fff; }
   .pl-total { margin-left: auto; font-family: var(--mono); font-size: 10.5px; color: var(--dim); }
   .pl-menu {
     position: absolute; left: 10px; bottom: 48px; z-index: 5; width: 170px; padding: 6px;
@@ -1033,18 +1067,6 @@
   <canvas class="glass-blur" id="transportBlur"></canvas>
   <canvas class="glass-blur" id="playlistBlur"></canvas>
 
-  <div class="topbar auto-hide">
-    <button class="btn rec" id="recBtn" title="export video (records the full track)">
-      <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg>
-    </button>
-    <button class="btn" id="gearBtn" title="options">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <line x1="4" y1="8" x2="20" y2="8"/><circle cx="9" cy="8" r="2.4" fill="#15161a"/>
-        <line x1="4" y1="16" x2="20" y2="16"/><circle cx="15" cy="16" r="2.4" fill="#15161a"/>
-      </svg>
-    </button>
-  </div>
-
   <button class="update-pill hidden auto-hide" id="updatePill"></button>
 
   <div class="lyrics-box off" id="lyricsBox">
@@ -1215,22 +1237,35 @@
     </div>
   </div>
 
-  <div class="wincontrols" id="wincontrols">
-    <button class="btn" id="minBtn" title="minimize">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <line x1="5" y1="12" x2="19" y2="12"/>
-      </svg>
-    </button>
-    <button class="btn" id="maxBtn" title="maximize">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <rect x="5" y="5" width="14" height="14" rx="1.5"/>
-      </svg>
-    </button>
-    <button class="btn" id="closeBtn" title="close">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/>
-      </svg>
-    </button>
+  <div class="corner-controls">
+    <div class="topbar auto-hide">
+      <button class="btn rec" id="recBtn" title="export video (records the full track)">
+        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg>
+      </button>
+      <button class="btn" id="gearBtn" title="options">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="4" y1="8" x2="20" y2="8"/><circle cx="9" cy="8" r="2.4" fill="#15161a"/>
+          <line x1="4" y1="16" x2="20" y2="16"/><circle cx="15" cy="16" r="2.4" fill="#15161a"/>
+        </svg>
+      </button>
+    </div>
+    <div class="wincontrols" id="wincontrols">
+      <button class="btn" id="minBtn" title="minimize">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </button>
+      <button class="btn" id="maxBtn" title="maximize">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <rect x="5" y="5" width="14" height="14" rx="1.5"/>
+        </svg>
+      </button>
+      <button class="btn" id="closeBtn" title="close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/>
+        </svg>
+      </button>
+    </div>
   </div>
 
   <div class="panel hidden auto-hide" id="panel">
@@ -3641,6 +3676,8 @@
     $('plAddMenu').classList.add('hidden');
     $('plMinusMenu').classList.add('hidden');
     $('plUrlBox').classList.add('hidden');
+    $('plAddBtn').classList.remove('menu-open');
+    $('plMinusBtn').classList.remove('menu-open');
   }
   function setPlRemoveMode(on) {
     $('plDrawer').classList.toggle('removing', on);
@@ -3650,13 +3687,13 @@
     e.stopPropagation();
     const wasOpen = !$('plAddMenu').classList.contains('hidden');
     closePlMenus();
-    if (!wasOpen) $('plAddMenu').classList.remove('hidden');
+    if (!wasOpen) { $('plAddMenu').classList.remove('hidden'); $('plAddBtn').classList.add('menu-open'); }
   });
   $('plMinusBtn').addEventListener('click', (e) => {
     e.stopPropagation();
     const wasOpen = !$('plMinusMenu').classList.contains('hidden');
     closePlMenus();
-    if (!wasOpen) $('plMinusMenu').classList.remove('hidden');
+    if (!wasOpen) { $('plMinusMenu').classList.remove('hidden'); $('plMinusBtn').classList.add('menu-open'); }
   });
   window.addEventListener('mousedown', (e) => {
     if (!e.target.closest('.pl-menu') && !e.target.closest('.pl-url') &&
@@ -4669,7 +4706,7 @@
     $('plDrawer').classList.toggle('open', open);
     document.body.classList.toggle('pl-open', open);
     if (open) {
-      $('panel').classList.add('hidden');
+      closePanel();
       scrollPlaylistToCurrent();
     }
   }
@@ -5267,7 +5304,7 @@
     $('xfadeDurVal').textContent = S.crossfadeDur + 's';
     $('xfadeDurRow').classList.toggle('disabled', !S.crossfade);
   }
-  function closeMoreMenu() { $('moreMenu').classList.add('hidden'); closeSpeedSub(); closeLyrSub(); }
+  function closeMoreMenu() { $('moreMenu').classList.add('hidden'); $('moreBtn').classList.remove('menu-open'); closeSpeedSub(); closeLyrSub(); }
   $('moreBtn').addEventListener('click', (e) => {
     e.stopPropagation();
     const menu = $('moreMenu');
@@ -5277,6 +5314,7 @@
     menu.style.left = Math.max(8, Math.min(window.innerWidth - 213, rect.right - 205)) + 'px';
     menu.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
     menu.classList.remove('hidden');
+    $('moreBtn').classList.add('menu-open');
   });
   window.addEventListener('mousedown', (e) => {
     if (!e.target.closest('#moreMenu') && !e.target.closest('#moreBtn')) closeMoreMenu();
@@ -5419,7 +5457,7 @@
     miniOn = on;
     if (on && S.displayMode !== 'windowed') { applyDisplayMode('windowed'); syncUI(); save(); }
     document.body.classList.toggle('mini', on);
-    if (on) { $('panel').classList.add('hidden'); setPlaylistOpen(false); }
+    if (on) { closePanel(); setPlaylistOpen(false); }
     if (window.winControls) {
       window.winControls.setMiniMode(on);
       if (!on) {
@@ -5559,11 +5597,20 @@
   }
   $('closeAppBtn').addEventListener('click', () => { if (window.winControls) window.winControls.close(); });
 
+  function closePanel() {
+    $('panel').classList.add('hidden');
+    $('gearBtn').classList.remove('menu-open');
+  }
   $('gearBtn').addEventListener('click', () => {
     const panel = $('panel');
     const opening = panel.classList.contains('hidden');
-    panel.classList.toggle('hidden');
-    if (opening) setPlaylistOpen(false);
+    if (opening) {
+      panel.classList.remove('hidden');
+      $('gearBtn').classList.add('menu-open');
+      setPlaylistOpen(false);
+    } else {
+      closePanel();
+    }
   });
 
   function switchTab(tab) {
