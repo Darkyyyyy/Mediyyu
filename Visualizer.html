@@ -40,6 +40,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   input, textarea { user-select: text; }
   html, body { height: 100%; overflow: hidden; }
+  img { -webkit-user-drag: none; user-drag: none; }
   body {
     position: relative;
     background: transparent;
@@ -89,6 +90,7 @@
     height: 100%;
     object-fit: fill;
     display: block;
+    transform-origin: 50% 100%;
   }
   #coverBg, #coverBgFade {
     position: absolute;
@@ -208,6 +210,34 @@
   }
   .lyric-next.fadein { animation: lyricNextIn .38s ease .1s backwards; }
   @keyframes lyricNextIn { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
+  .blood-lyrics {
+    position: absolute; inset: 0; z-index: 24; pointer-events: none;
+  }
+  .blood-line {
+    position: absolute; white-space: pre;
+    font-family: var(--ui); font-size: 44px; font-weight: 400; letter-spacing: .03em;
+    transform: translate(-50%, -50%);
+    transition: transform 6.4s linear, opacity .6s ease;
+    animation: bloodFloat 4.6s ease-in-out infinite;
+  }
+  .blood-line.show { transform: translate(calc(-50% - 26px), -50%); }
+  .blood-line.hide { opacity: 0; transition: opacity 1s ease, transform 6.4s linear; }
+  .blood-char {
+    display: inline-block;
+    position: relative;
+    color: #430006;
+    -webkit-text-stroke: 1px #8a0000;
+    text-shadow: 0 0 8px rgba(255,10,10,.9), 0 0 20px rgba(200,0,0,.65), 0 0 44px rgba(140,0,0,.5);
+    opacity: 0;
+    transition: opacity .35s ease;
+  }
+  .blood-line.show .blood-char { opacity: 1; }
+  .blood-indent { display: block; margin-top: .25em; padding-left: 1.6em; }
+  .blood-wrap { display: block; margin-top: .15em; text-align: center; }
+  @keyframes bloodFloat {
+    0%, 100% { margin-top: 0px; }
+    50% { margin-top: -16px; }
+  }
   .lyrics-loading {
     position: absolute; left: 50%; transform: translateX(-50%);
     bottom: 122px; display: flex; align-items: center; gap: 7px;
@@ -544,6 +574,7 @@
     padding: 7px 10px; border-radius: 7px;
   }
   .submenu button:hover { background: rgba(255,255,255,.1); }
+  #lyricsFxItem { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .submenu button.on { background: rgba(255,255,255,.16); color: #fff; }
   .submenu .seg { display: flex; padding: 3px; gap: 3px; }
   .submenu .seg button {
@@ -569,13 +600,17 @@
   body.mini .topbar, body.mini .transport, body.mini .drop, body.mini .panel,
   body.mini .playlist-tab, body.mini .playlist-drawer, body.mini .nowplaying,
   body.mini .wincontrols, body.mini #dragbar,
-  body.mini .recbadge, body.mini .compiling, body.mini .more-menu, body.mini .debug-overlay,
-  body.mini .update-pill, body.mini .lyrics-box, body.mini .lyrics-loading, body.mini .lyrics-sugg-menu { display: none !important; }
+  body.mini .recbadge, body.mini .compiling, body.mini .more-menu, body.mini .debug-overlay, body.mini .perf-overlay,
+  body.mini .update-pill, body.mini .lyrics-box, body.mini .lyrics-loading, body.mini .lyrics-sugg-menu, body.mini .blood-lyrics { display: none !important; }
   .transport-seekrow { display: flex; align-items: center; gap: 5px; }
   .transport-row { display: flex; align-items: center; gap: 14px; }
   .transport-cluster { display: flex; align-items: center; gap: 6px; }
   .title-cluster { flex: 1 1 auto; min-width: 0; }
-  #seek { flex: 1 1 auto; }
+  .seek-wrap { position: relative; flex: 1 1 auto; display: flex; align-items: center; }
+  .seek-wave { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 100%; height: 22px; pointer-events: none; }
+  #seek { flex: 1 1 auto; position: relative; z-index: 1; background: transparent; }
+  #seek::-webkit-slider-runnable-track { background: transparent; }
+  #seek::-moz-range-track { background: transparent; }
   .play {
     width: 40px; height: 40px; border-radius: 50%; border: 0; cursor: pointer;
     background: linear-gradient(165deg, #fff 0%, rgba(255,255,255,.85) 100%); color: #111;
@@ -589,11 +624,12 @@
     background: linear-gradient(165deg, rgba(210,215,225,.95) 0%, rgba(175,180,190,.9) 100%);
     box-shadow: inset 0 2px 4px rgba(0,0,0,.3), 0 2px 6px rgba(0,0,0,.25);
   }
-  .play svg { width: 16px; height: 16px; transition: transform .18s ease; }
-  #playBtn svg { width: 23px; height: 23px; }
+  .play svg, .play img { width: 16px; height: 16px; transition: transform .18s ease; display: block; }
+  #playBtn svg, #playBtn img { width: 19px; height: 19px; }
+  #prevBtn img, #nextBtn img { width: 13px; height: 13px; }
   #volBtn svg { width: 19px; height: 19px; }
-  #prevBtn:hover svg { transform: translateX(-2px); }
-  #nextBtn:hover svg { transform: translateX(2px); }
+  #prevBtn:hover svg, #prevBtn:hover img { transform: translateX(-2px); }
+  #nextBtn:hover svg, #nextBtn:hover img { transform: translateX(2px); }
   #volBtn:hover svg { transform: scale(1.15); }
   .tname { font-size: 12.5px; color: rgba(255,255,255,.78); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1 1 auto; min-width: 0; }
   .time { font-family: var(--mono); font-size: 11.5px; color: var(--dim); white-space: nowrap; flex: 0 0 auto; min-width: 40px; }
@@ -692,6 +728,17 @@
     border-radius: 10px; padding: 10px 13px; pointer-events: none; white-space: pre;
   }
   .debug-overlay.show { display: block; }
+
+  .perf-overlay {
+    position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 46;
+    display: none; font-family: var(--mono); color: rgba(255,255,255,.85);
+    background: rgba(10,11,13,.72); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 10px; padding: 10px 13px; pointer-events: none;
+  }
+  .perf-overlay.show { display: block; }
+  .perf-stats { font-size: 11px; display: flex; gap: 14px; margin-bottom: 6px; white-space: nowrap; }
+  .perf-stats b { color: #fff; font-weight: 600; }
+  #perfCanvas { display: block; width: 260px; height: 70px; }
 
   .playlist-tab {
     position: absolute; right: 0; top: 50%; transform: translateY(-50%);
@@ -978,6 +1025,12 @@
     color: var(--txt); font-family: var(--ui); font-size: 12.5px; padding: 6px 9px;
   }
   .props-fields input::placeholder { color: var(--dim); }
+  .prop-detect-btn {
+    justify-self: start; border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--txt);
+    cursor: pointer; font-family: var(--ui); font-size: 11.5px; border-radius: 8px; padding: 6px 10px;
+  }
+  .prop-detect-btn:hover { background: rgba(255,255,255,.16); }
+  .prop-detect-btn:disabled { opacity: .5; cursor: default; }
   .props-file-grid {
     display: grid; grid-template-columns: auto 1fr; gap: 5px 16px; margin: 8px 20px 0; padding-top: 12px;
     border-top: 1px solid rgba(255,255,255,.08); font-size: 12px; color: rgba(255,255,255,.85);
@@ -1056,6 +1109,18 @@
 <body>
   <div id="dragbar"></div>
 
+  <svg width="0" height="0" style="position: absolute;">
+    <filter id="chromaAbFilter" color-interpolation-filters="sRGB">
+      <feColorMatrix in="SourceGraphic" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="rOnly" />
+      <feOffset in="rOnly" dx="0" dy="0" result="rShift" id="chromaAbR" />
+      <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="gOnly" />
+      <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="bOnly" />
+      <feOffset in="bOnly" dx="0" dy="0" result="bShift" id="chromaAbB" />
+      <feBlend in="rShift" in2="gOnly" mode="lighten" result="rg" />
+      <feBlend in="rg" in2="bShift" mode="lighten" />
+    </filter>
+  </svg>
+
   <div id="stage">
     <div id="coverBg"></div>
     <div id="coverBgFade"></div>
@@ -1073,6 +1138,7 @@
     <div class="lyric-cur" id="lyricCur"></div>
     <div class="lyric-next" id="lyricNext"></div>
   </div>
+  <div class="blood-lyrics" id="bloodLyrics"></div>
   <div class="lyrics-loading" id="lyricsLoading"><span class="lyr-spin"></span>loading lyrics</div>
   <div class="lyrics-loading" id="lyricsNotFound">no lyrics found</div>
   <div class="lyrics-sugg-menu hidden" id="lyricsSuggMenu"></div>
@@ -1088,6 +1154,11 @@
   </div>
 
   <pre class="debug-overlay" id="debugOverlay"></pre>
+
+  <div class="perf-overlay" id="perfOverlay">
+    <div class="perf-stats" id="perfStats"></div>
+    <canvas id="perfCanvas" width="260" height="70"></canvas>
+  </div>
 
   <div class="toasts" id="toasts"></div>
 
@@ -1118,6 +1189,8 @@
           <label>year</label><input type="text" id="propYear" />
           <label>genre</label><input type="text" id="propGenre" />
           <label>bpm</label><input type="text" id="propBpm" />
+          <label>key</label><input type="text" id="propKey" placeholder="e.g. A minor" />
+          <label></label><button type="button" id="propDetectBtn" class="prop-detect-btn" title="analyzes the audio directly — both values are approximate">auto-detect bpm &amp; key</button>
           <label>comment</label><input type="text" id="propComment" />
         </div>
       </div>
@@ -1199,6 +1272,7 @@
         <span>f</span><span>fullscreen</span>
         <span>1&ndash;9</span><span>load preset</span>
         <span>alt+d</span><span>debug overlay</span>
+        <span>shift+alt+d</span><span>performance graph</span>
         <span>esc</span><span>close this / exit mini mode</span>
         <span>?</span><span>show this panel</span>
       </div>
@@ -1429,6 +1503,31 @@
         </div>
       </div>
       <div class="row"><label>particle amount</label><input type="range" id="particlesAmt" min="0" max="100" value="50" /><span class="val" id="particlesAmtVal">50</span></div>
+      <div class="row">
+        <label>beat particles</label>
+        <div class="seg seg-sm" id="beatParticlesSeg">
+          <button data-val="off" class="on">off</button>
+          <button data-val="on">on</button>
+        </div>
+      </div>
+      <div class="row"><label>beat particle amount</label><input type="range" id="beatParticlesAmt" min="0" max="100" value="50" /><span class="val" id="beatParticlesAmtVal">50</span></div>
+      <div class="row">
+        <label>scale to sound</label>
+        <div class="seg seg-sm" id="scaleToSoundSeg">
+          <button data-val="off" class="on">off</button>
+          <button data-val="on">on</button>
+        </div>
+      </div>
+      <div class="row"><label>scale amount</label><input type="range" id="scaleToSoundAmt" min="0" max="100" value="50" /><span class="val" id="scaleToSoundAmtVal">50</span></div>
+      <p class="note">pumps the visualizer (and the ambient cover, a bit softer) in and out with the audio, like OBS's scale-to-sound.</p>
+      <div class="row">
+        <label>chromatic aberration</label>
+        <div class="seg seg-sm" id="chromaAbSeg">
+          <button data-val="off" class="on">off</button>
+          <button data-val="on">on</button>
+        </div>
+      </div>
+      <div class="row"><label>aberration amount</label><input type="range" id="chromaAbAmt" min="0" max="100" value="50" /><span class="val" id="chromaAbAmtVal">50</span></div>
       <div class="row"><label>background pulse</label><input type="range" id="bgPulse" min="0" max="100" value="0" /><span class="val" id="bgPulseVal">0</span></div>
       <div class="row"><label>flash</label><input type="range" id="flash" min="0" max="100" value="0" /><span class="val" id="flashVal">0</span></div>
       <div class="row">
@@ -1567,6 +1666,13 @@
       </div>
       <p class="note">blurs what's behind the bigger glass panels. turn off if it's too heavy for your PC.</p>
       <div class="row" style="margin-top:13px;">
+        <label>seek bar style</label>
+      </div>
+      <div class="seg" id="seekStyleSeg">
+        <button data-val="thin" class="on">thin</button>
+        <button data-val="waveform">waveform</button>
+      </div>
+      <div class="row" style="margin-top:13px;">
         <label>discord rich presence</label>
         <div class="seg seg-sm" id="discordSeg">
           <button data-val="off" class="on">off</button>
@@ -1627,6 +1733,14 @@
         <button data-res="1080x1920">1080 &times; 1920 (vertical)</button>
       </div>
       <p class="note">renders the recording at this fixed resolution, regardless of the window's actual size.</p>
+      <div class="row" style="margin-top:13px;">
+        <label>include lyrics</label>
+      </div>
+      <div class="seg" id="exportLyricsSeg">
+        <button data-val="off" class="on">off</button>
+        <button data-val="on">on</button>
+      </div>
+      <p class="note">burns the current lyric line into exported videos.</p>
     </div>
 
     <div class="sec" data-tab="presets">
@@ -1657,22 +1771,25 @@
   <div class="transport hidden auto-hide" id="transport">
     <div class="transport-seekrow">
       <span class="time time-cur" id="timeCur">0:00</span>
-      <input type="range" class="seek" id="seek" min="0" max="1000" value="0" />
+      <div class="seek-wrap" id="seekWrap">
+        <canvas class="seek-wave" id="seekWave"></canvas>
+        <input type="range" class="seek" id="seek" min="0" max="1000" value="0" />
+      </div>
       <span class="time time-rem" id="timeRem">-0:00</span>
       <div class="seek-tip" id="seekTip">0:00</div>
     </div>
     <div class="transport-row">
       <div class="transport-cluster">
-        <button class="play playmini" id="prevBtn" title="previous track"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
-        <button class="play" id="playBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
-        <button class="play playmini" id="nextBtn" title="next track"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+        <button class="play playmini" id="prevBtn" title="previous track"><img src="assets/buttons/prev.png" alt="" /></button>
+        <button class="play" id="playBtn"><img src="assets/buttons/play.png" alt="" /></button>
+        <button class="play playmini" id="nextBtn" title="next track"><img src="assets/buttons/next.png" alt="" /></button>
       </div>
       <div class="transport-cluster">
         <button class="play playmini" id="shuffleBtn" title="shuffle"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></button>
         <button class="play playmini" id="repeatBtn" title="repeat: off"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg></button>
       </div>
       <div class="transport-cluster title-cluster">
-        <button class="play playmini" id="favBtn" title="favorite (h)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.87-10.2-9.6C.3 8.3 1.7 5 5 5c2 0 3.5 1.1 4.2 2.4.2.4.6.4.8 0C10.7 6.1 12.2 5 14.2 5c3.3 0 4.7 3.3 3.2 6.4C19.5 16.13 12 21 12 21z"/></svg></button>
+        <button class="play playmini" id="favBtn" title="favorite (h)"><img src="assets/buttons/like.png" alt="" /></button>
         <span class="tname" id="tName">track</span>
       </div>
       <div class="vol-wrap" id="volWrap">
@@ -1722,6 +1839,7 @@
           <button data-val="separated">separated</button>
         </div>
         <button id="lyricsSourceItem">change source&hellip;</button>
+        <button id="lyricsFxItem"><span>visualizer fx on lyrics</span><span class="menu-side" id="lyricsFxCheck"></span></button>
       </div>
     </div>
     <div class="menu-sep"></div>
@@ -1731,9 +1849,9 @@
 
   <div class="minibar" id="miniBar">
     <span class="mini-title" id="miniTitle">track</span>
-    <button class="play playmini" id="miniPrev" title="previous track"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
-    <button class="play playmini" id="miniPlay"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
-    <button class="play playmini" id="miniNext" title="next track"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+    <button class="play playmini" id="miniPrev" title="previous track"><img src="assets/buttons/prev.png" alt="" /></button>
+    <button class="play playmini" id="miniPlay"><img src="assets/buttons/play.png" alt="" /></button>
+    <button class="play playmini" id="miniNext" title="next track"><img src="assets/buttons/next.png" alt="" /></button>
     <button class="play playmini" id="miniExpand" title="exit mini mode"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
   </div>
 
@@ -1776,16 +1894,16 @@
     mode: 'solid', color1: '#575757', color2: '#7b5bff', rainbow: false,
     layout: 'bars', mirror: false, flipH: false, kaleidoscope: false,
     glow: 20, smooth: 45, fall: 73, sens: 100, count: 110, trails: 0, legacy: false,
-    particles: false, particlesAmt: 50, bgPulse: 0, flash: 0, reflection: false, vignette: false,
+    particles: false, particlesAmt: 50, beatParticles: false, beatParticlesAmt: 50, scaleToSound: false, scaleToSoundAmt: 50, chromaAb: false, chromaAbAmt: 50, bgPulse: 0, flash: 0, reflection: false, vignette: false,
     peakHold: false, connections: false,
     winTransparent: false, alwaysOnTop: false,
     bgCoverArt: false, bgCoverBlur: 46, bgCoverDim: 55,
     waveStyle: 'line', waveSmooth: 40, fallsSpeed: 50, psyPetals: 9, psySpeed: 50, psyTrail: 50,
-    lyricsMode: 'compact',
-    volume: 100, volWheelStep: 5, seekWheelStep: 5,
+    lyricsMode: 'compact', lyricsFx: true,
+    volume: 100, volWheelStep: 5, seekWheelStep: 5, seekBarStyle: 'thin',
     bg: '#0a0b0d',
     glassTint: '#ffffff', glassTintAuto: false, glassAlpha: 5, glassBlur: true,
-    lockResize: false, exportFps: 60, exportQuality: 'balanced', exportRes: 'window',
+    lockResize: false, exportFps: 60, exportQuality: 'balanced', exportRes: 'window', exportLyrics: false,
     displayMode: 'windowed', fullscreenRes: 'native',
     discordEnabled: true, discordClientId: '1519049738224406711', discordImageKey: 'noting',
     lastfmEnabled: false, lastfmSessionKey: '', lastfmUsername: '',
@@ -2139,6 +2257,11 @@
       g.addColorStop(0, '#eaf6ff'); g.addColorStop(0.5, '#37d8ff'); g.addColorStop(1, '#1f5eff');
       return g;
     }
+    if (bloodEggActive && bloodEggTrack === 'btw') {
+      const g = c.createLinearGradient(0, 0, W, 0);
+      g.addColorStop(0, '#f7c948'); g.addColorStop(1, '#e8820c');
+      return g;
+    }
     if (S.rainbow) {
       const g = c.createLinearGradient(0, 0, W, 0);
       const t = (performance.now() / 4000) % 1;
@@ -2313,6 +2436,95 @@
     for (let i = 0; i < n; i++) s += bars[i];
     return s / n;
   }
+  function overallEnergy() {
+    let s = 0;
+    for (let i = 0; i < NUM; i++) s += bars[i];
+    return s / NUM;
+  }
+  let scalePulse = 0;
+  function updateScalePulse() {
+    if (!S.scaleToSound && !S.chromaAb) { scalePulse = 0; return; }
+    const target = overallEnergy();
+    scalePulse += (target - scalePulse) * (target > scalePulse ? 0.5 : 0.08);
+  }
+  function vizPulseScale() {
+    return S.scaleToSound ? 1 + scalePulse * (S.scaleToSoundAmt / 100) * 0.18 : 1;
+  }
+  function coverPulseScale() {
+    return S.scaleToSound ? 1 + scalePulse * (S.scaleToSoundAmt / 100) * 0.18 * 0.35 : 1;
+  }
+  let vizXformLast = null;
+  let lyricsXformLast = null;
+  let bloodXformLast = null;
+  function applyVizPulse() {
+    const scale = vizPulseScale();
+    const xform = S.scaleToSound ? `scale(${scale.toFixed(4)})` : '';
+    if (vizXformLast !== xform) {
+      vizXformLast = xform;
+      $('viz').style.transform = xform;
+    }
+    const lyricsXform = S.scaleToSound && S.lyricsFx ? `translateX(-50%) scale(${scale.toFixed(4)})` : '';
+    if (lyricsXformLast !== lyricsXform) {
+      lyricsXformLast = lyricsXform;
+      $('lyricsBox').style.transform = lyricsXform;
+    }
+    const bloodXform = S.scaleToSound && S.lyricsFx ? `scale(${scale.toFixed(4)})` : '';
+    if (bloodXformLast !== bloodXform) {
+      bloodXformLast = bloodXform;
+      $('bloodLyrics').style.transform = bloodXform;
+    }
+  }
+  let chromaAbApplied = false;
+  let lyricsChromaApplied = false;
+  function applyChromaAb() {
+    if (S.chromaAb !== chromaAbApplied) {
+      chromaAbApplied = S.chromaAb;
+      $('viz').style.filter = chromaAbApplied ? 'url(#chromaAbFilter)' : '';
+    }
+    const lyricsChromaOn = S.chromaAb && S.lyricsFx;
+    if (lyricsChromaOn !== lyricsChromaApplied) {
+      lyricsChromaApplied = lyricsChromaOn;
+      const f = lyricsChromaOn ? 'url(#chromaAbFilter)' : '';
+      $('lyricsBox').style.filter = f;
+      $('bloodLyrics').style.filter = f;
+    }
+    if (!S.chromaAb) return;
+    const off = scalePulse * (S.chromaAbAmt / 100) * 8;
+    $('chromaAbR').setAttribute('dx', (-off).toFixed(2));
+    $('chromaAbB').setAttribute('dx', off.toFixed(2));
+  }
+  const beatHistory = [];
+  let lastBeatT = 0;
+  function detectBeat(bassNow, nowTs) {
+    const HIST = 43;
+    beatHistory.push(bassNow);
+    if (beatHistory.length > HIST) beatHistory.shift();
+    if (beatHistory.length < HIST) return false;
+    let avg = 0;
+    for (const v of beatHistory) avg += v;
+    avg /= beatHistory.length;
+    if (bassNow > avg * 1.4 + 0.06 && bassNow > 0.16 && nowTs - lastBeatT > 200) {
+      lastBeatT = nowTs;
+      return true;
+    }
+    return false;
+  }
+  let beatBurstSide = false;
+  function spawnBeatBurst() {
+    const n = Math.round(6 + (S.beatParticlesAmt / 100) * 28);
+    beatBurstSide = !beatBurstSide;
+    const x = beatBurstSide ? 0 : W;
+    const dir = beatBurstSide ? 1 : -1;
+    for (let i = 0; i < n && particles.length < 400; i++) {
+      const y = Math.random() * H;
+      particles.push({
+        x, y, px: x, py: y,
+        vx: dir * (4 + Math.random() * 6), vy: -3 - Math.random() * 4,
+        life: 40 + Math.random() * 30, age: 0,
+        size: 2 + Math.random() * 3,
+      });
+    }
+  }
   function barAlignedLayout() {
     return S.layout === 'bars' || (S.layout === 'radial' && !S.kaleidoscope);
   }
@@ -2351,6 +2563,7 @@
   }
   function accentColor() {
     if (megaMode) return '#37d8ff';
+    if (bloodEggActive && bloodEggTrack === 'btw') return '#f0a520';
     if (S.rainbow) return `hsl(${((performance.now() / 4000) % 1) * 360},85%,60%)`;
     if (S.mode === 'cover' && coverColors) return coverColors.c1;
     if (S.mode === 'split') return '#ffd23b';
@@ -2664,6 +2877,8 @@
   let debugOn = false;
   let fpsFrames = 0, fpsWindowStart = performance.now(), fpsValue = 0;
   let debugLastPaint = 0;
+  const FPS_HISTORY_MS = 60000;
+  const fpsHistory = [];
   function updateDebugOverlay(now) {
     fpsFrames++;
     const elapsed = now - fpsWindowStart;
@@ -2671,6 +2886,8 @@
       fpsValue = Math.round((fpsFrames * 1000) / elapsed);
       fpsFrames = 0;
       fpsWindowStart = now;
+      fpsHistory.push({ t: now, fps: fpsValue });
+      while (fpsHistory.length && now - fpsHistory[0].t > FPS_HISTORY_MS) fpsHistory.shift();
     }
     if (!debugOn || now - debugLastPaint < 250) return;
     debugLastPaint = now;
@@ -2678,21 +2895,62 @@
     const mem = performance.memory ? (performance.memory.usedJSHeapSize / 1048576).toFixed(1) + ' MB' : 'n/a';
     const audioState = ready ? `${fmt(audio.currentTime)} / ${fmt(audio.duration)} ${playing ? '▶' : '⏸'}` : '—';
     $('debugOverlay').textContent = [
-      `Mediyyu v${window.winControls ? window.winControls.appVersion : 'dev'}`,
+      `Mediyyu v${window.winControls ? window.winControls.appVersion : 'dev'}${window.winControls && !window.winControls.isPackaged ? '-dev' : ''}`,
       `fps: ${fpsValue}`,
       `window: ${window.innerWidth}×${window.innerHeight} (dpr ${dpr})`,
       `canvas: ${canvas.width}×${canvas.height}`,
       `display mode: ${S.displayMode}${S.displayMode === 'fullscreen' ? ' [' + S.fullscreenRes + ']' : ''}`,
       `layout: ${S.layout} | bars: ${S.count} | color: ${S.mode}`,
-      `glow: ${S.glow} | trails: ${S.trails} | particles: ${S.particles ? particles.length : 0}`,
+      `glow: ${S.glow} | trails: ${S.trails} | particles: ${(S.particles || S.beatParticles) ? particles.length : 0}`,
       `glass blur: ${S.glassBlur ? 'on' : 'off'} | tint alpha: ${S.glassAlpha}`,
       `audio: ${audioState}`,
       `recording: ${recording ? 'yes' : 'no'}${exporting ? ' (exporting)' : ''}`,
       `js heap: ${mem}`,
     ].join('\n');
   }
+  let perfOn = false;
+  let perfLastPaint = 0;
+  function drawPerfGraph(now) {
+    if (!perfOn || now - perfLastPaint < 250) return;
+    perfLastPaint = now;
+    const n = fpsHistory.length;
+    let avg = 0, min = Infinity, max = 0;
+    for (const s of fpsHistory) { avg += s.fps; if (s.fps < min) min = s.fps; if (s.fps > max) max = s.fps; }
+    avg = n ? Math.round(avg / n) : 0;
+    if (!n) min = 0;
+    $('perfStats').innerHTML = `<span>now <b>${fpsValue}</b></span><span>avg <b>${avg}</b></span><span>min <b>${min}</b></span><span>max <b>${max}</b></span>`;
+    const cv = $('perfCanvas');
+    const ctx2 = cv.getContext('2d');
+    const w = cv.width, h = cv.height;
+    ctx2.clearRect(0, 0, w, h);
+    if (n < 2) return;
+    const graphMax = Math.max(max, 30);
+    ctx2.strokeStyle = 'rgba(255,255,255,.12)';
+    ctx2.lineWidth = 1;
+    for (const frac of [0.25, 0.5, 0.75]) {
+      const y = h - frac * h;
+      ctx2.beginPath();
+      ctx2.moveTo(0, y);
+      ctx2.lineTo(w, y);
+      ctx2.stroke();
+    }
+    ctx2.beginPath();
+    ctx2.strokeStyle = 'rgba(255,255,255,.85)';
+    ctx2.lineWidth = 1.5;
+    for (let i = 0; i < n; i++) {
+      const x = (i / (n - 1)) * w;
+      const y = h - Math.min(1, fpsHistory[i].fps / graphMax) * h;
+      if (i === 0) ctx2.moveTo(x, y); else ctx2.lineTo(x, y);
+    }
+    ctx2.stroke();
+  }
   window.addEventListener('keydown', e => {
-    if (e.altKey && (e.key === 'd' || e.key === 'D')) {
+    if (e.altKey && e.shiftKey && (e.key === 'd' || e.key === 'D')) {
+      e.preventDefault();
+      perfOn = !perfOn;
+      $('perfOverlay').classList.toggle('show', perfOn);
+      if (perfOn) perfLastPaint = 0;
+    } else if (e.altKey && !e.shiftKey && (e.key === 'd' || e.key === 'D')) {
       e.preventDefault();
       debugOn = !debugOn;
       $('debugOverlay').classList.toggle('show', debugOn);
@@ -2712,6 +2970,130 @@
       megaHeart.y = 0; megaHeart.vy = 0; megaHeart.grounded = true;
     }
     megaMode = on;
+  }
+  let bloodEggActive = false;
+  let bloodEggTrack = null;
+  const BLOOD_EGG_TRACKS = {
+    btw: { match: ['between two worlds'], lrcId: 25215258, slowIntro: true },
+    violet: { match: ['through patches of violet'], lrcId: 22434851, slowIntro: false },
+  };
+  function checkBloodLyrics(name, title, artist) {
+    const hay = ((name || '') + ' ' + (title || '') + ' ' + (artist || '')).toLowerCase();
+    bloodEggTrack = null;
+    if (hay.includes('mili')) {
+      for (const key in BLOOD_EGG_TRACKS) {
+        if (BLOOD_EGG_TRACKS[key].match.some(m => hay.includes(m))) { bloodEggTrack = key; break; }
+      }
+    }
+    bloodEggActive = !!bloodEggTrack;
+  }
+  let bloodIdx = -2;
+  let bloodActiveLines = [];
+  function retireOneBloodLine(entry, immediate) {
+    clearTimeout(entry.timer);
+    entry.el.classList.add('hide');
+    if (immediate) entry.el.remove();
+    else setTimeout(() => entry.el.remove(), 1300);
+    bloodActiveLines = bloodActiveLines.filter(e => e !== entry);
+  }
+  function retireAllBloodLines(immediate) {
+    for (const entry of [...bloodActiveLines]) retireOneBloodLine(entry, immediate);
+  }
+  function scheduleBloodRetire(entry, ms) {
+    clearTimeout(entry.timer);
+    entry.timer = setTimeout(() => retireOneBloodLine(entry, false), ms);
+  }
+  function spawnBloodLine(text) {
+    const now = performance.now();
+    for (const entry of bloodActiveLines) {
+      const elapsed = now - entry.spawnT;
+      scheduleBloodRetire(entry, Math.max(0, 3000 - elapsed));
+    }
+    if (!text) return;
+    const el = document.createElement('div');
+    el.className = 'blood-line';
+    el.style.left = (32 + Math.random() * 36).toFixed(1) + '%';
+    el.style.top = (28 + Math.random() * 34).toFixed(1) + '%';
+    el.style.animationDelay = (-Math.random() * 4.6).toFixed(2) + 's';
+    const slowIntro = bloodEggTrack && BLOOD_EGG_TRACKS[bloodEggTrack].slowIntro;
+    const perCharDelay = (!slowIntro || audio.currentTime >= 120)
+      ? Math.min(0.05, 1.3 / Math.max(1, text.length))
+      : Math.min(0.16, 3.6 / Math.max(1, text.length));
+    const cascadeDir = Math.random() < 0.5 ? 1 : -1;
+    const cascadeMax = 10 + Math.random() * 8;
+    let delayCursor = 0, cascadeI = 0;
+    const buildSpans = (segment, container) => {
+      const rowStep = Math.min(3.6, cascadeMax / Math.max(1, segment.length - 1));
+      [...segment].forEach(ch => {
+        const span = document.createElement('span');
+        span.className = 'blood-char';
+        span.textContent = ch;
+        span.style.transitionDelay = delayCursor.toFixed(3) + 's';
+        span.style.top = (cascadeDir * cascadeI * rowStep).toFixed(1) + 'px';
+        delayCursor += perCharDelay;
+        cascadeI++;
+        container.appendChild(span);
+      });
+    };
+    const WRAP_LEN = 35;
+    const wrapChunks = (segment) => {
+      const chunks = [];
+      let rem = segment;
+      while (rem.length > WRAP_LEN) {
+        const breakAt = rem.indexOf(' ', WRAP_LEN);
+        if (breakAt === -1) break;
+        chunks.push(rem.slice(0, breakAt));
+        rem = rem.slice(breakAt + 1);
+      }
+      chunks.push(rem);
+      return chunks;
+    };
+    const commaSegments = [];
+    let rem = text, m;
+    while ((m = rem.match(/,\s*/))) {
+      commaSegments.push(rem.slice(0, m.index + 1));
+      rem = rem.slice(m.index + m[0].length);
+    }
+    commaSegments.push(rem);
+    commaSegments.forEach((seg, i) => {
+      const clean = i === 0 ? seg : seg.replace(/^\s+/, '');
+      wrapChunks(clean).forEach((chunk, j) => {
+        cascadeI = 0;
+        if (i === 0 && j === 0) {
+          buildSpans(chunk, el);
+        } else if (j === 0) {
+          delayCursor += 0.9;
+          const indentLine = document.createElement('div');
+          indentLine.className = 'blood-indent';
+          indentLine.style.paddingLeft = (1.6 * i) + 'em';
+          buildSpans(chunk, indentLine);
+          el.appendChild(indentLine);
+        } else {
+          const wrapLine = document.createElement('div');
+          wrapLine.className = 'blood-wrap';
+          buildSpans(chunk, wrapLine);
+          el.appendChild(wrapLine);
+        }
+      });
+    });
+    $('bloodLyrics').appendChild(el);
+    void el.offsetWidth;
+    requestAnimationFrame(() => el.classList.add('show'));
+    const entry = { el, spawnT: now, timer: null };
+    scheduleBloodRetire(entry, 6000);
+    bloodActiveLines.push(entry);
+  }
+  function updateBloodLyrics() {
+    if (!lyricsLines || !ready) return;
+    const t = audio.currentTime + 0.05;
+    let lo = 0, hi = lyricsLines.length - 1, idx = -1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (lyricsLines[mid].t <= t) { idx = mid; lo = mid + 1; } else hi = mid - 1;
+    }
+    if (idx === bloodIdx) return;
+    bloodIdx = idx;
+    spawnBloodLine(idx >= 0 ? lyricsLines[idx].text : '');
   }
   const gastNeutral = new Image(); gastNeutral.src = 'assets/gast1.png';
   const gastFiring = new Image(); gastFiring.src = 'assets/gast2.png';
@@ -2861,9 +3243,11 @@
     if (!S.bgCoverArt || curIsVideo || !ready || !isFinite(audio.duration) || !audio.duration) return;
     const p = Math.min(1, audio.currentTime / audio.duration);
     const x = ((p * 2 - 1) * 3).toFixed(2);
-    if (coverPanLast !== x) {
-      coverPanLast = x;
-      const tf = `translateX(${x}%) scale(1.12)`;
+    const scale = (1.12 * coverPulseScale()).toFixed(4);
+    const key = x + '|' + scale;
+    if (coverPanLast !== key) {
+      coverPanLast = key;
+      const tf = `translateX(${x}%) scale(${scale})`;
       $('coverBg').style.transform = tf;
       $('coverBgFade').style.transform = tf;
     }
@@ -2911,21 +3295,245 @@
     }
   }
 
+  const WAVE_BUCKETS = 300;
+  const WAVE_MAX_DURATION = 20 * 60;
+  const waveformCache = new Map();
+  let currentWave = null;
+  async function computeWaveform(file, waveState) {
+    const key = trackStatsKey(file);
+    if (key && waveformCache.has(key)) {
+      waveState.peaks.set(waveformCache.get(key));
+      waveState.done = WAVE_BUCKETS;
+      return;
+    }
+    if (audio.duration && isFinite(audio.duration) && audio.duration > WAVE_MAX_DURATION) return;
+    try {
+      const buf = await file.arrayBuffer();
+      const audioBuf = await actx.decodeAudioData(buf.slice(0));
+      const numCh = audioBuf.numberOfChannels;
+      const channels = [];
+      for (let c = 0; c < numCh; c++) channels.push(audioBuf.getChannelData(c));
+      const total = audioBuf.length;
+      const bucketSize = Math.max(1, Math.floor(total / WAVE_BUCKETS));
+      let sliceStart = performance.now();
+      for (let i = 0; i < WAVE_BUCKETS; i++) {
+        const start = i * bucketSize;
+        const end = Math.min(start + bucketSize, total);
+        let max = 0;
+        for (let j = start; j < end; j++) {
+          let v = 0;
+          for (let c = 0; c < numCh; c++) v += channels[c][j];
+          v = Math.abs(v / numCh);
+          if (v > max) max = v;
+        }
+        waveState.peaks[i] = max;
+        waveState.done = i + 1;
+        if (performance.now() - sliceStart > 8) {
+          await new Promise(r => setTimeout(r, 0));
+          sliceStart = performance.now();
+        }
+      }
+      if (key) {
+        waveformCache.set(key, waveState.peaks.slice());
+        if (waveformCache.size > 60) waveformCache.delete(waveformCache.keys().next().value);
+      }
+    } catch (e) {
+      // leave whatever partial peaks were computed; drawSeekWave falls back to a flat line if done===0
+    }
+  }
+  function makeFFT(size) {
+    const bits = Math.log2(size);
+    const bitrev = new Uint32Array(size);
+    for (let i = 0; i < size; i++) {
+      let x = i, r = 0;
+      for (let b = 0; b < bits; b++) { r = (r << 1) | (x & 1); x >>= 1; }
+      bitrev[i] = r;
+    }
+    const cos = new Float32Array(size / 2), sin = new Float32Array(size / 2);
+    for (let i = 0; i < size / 2; i++) { const a = -2 * Math.PI * i / size; cos[i] = Math.cos(a); sin[i] = Math.sin(a); }
+    return function fft(re, im) {
+      for (let i = 0; i < size; i++) { const j = bitrev[i]; if (j > i) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; } }
+      for (let len = 2; len <= size; len <<= 1) {
+        const half = len >> 1, step = size / len;
+        for (let i = 0; i < size; i += len) {
+          for (let j = 0, k = 0; j < half; j++, k += step) {
+            const c = cos[k], s = sin[k];
+            const a = i + j, b = a + half;
+            const tr = re[b] * c - im[b] * s, ti = re[b] * s + im[b] * c;
+            re[b] = re[a] - tr; im[b] = im[a] - ti;
+            re[a] += tr; im[a] += ti;
+          }
+        }
+      }
+    };
+  }
+  async function estimateBpm(mono, sr) {
+    const envRate = 200;
+    const hop = Math.round(sr / envRate);
+    const n = Math.floor(mono.length / hop);
+    const env = new Float32Array(n);
+    let sliceStart = performance.now();
+    for (let i = 0; i < n; i++) {
+      let s = 0;
+      const start = i * hop, end = Math.min(start + hop, mono.length);
+      for (let j = start; j < end; j++) s += Math.abs(mono[j]);
+      env[i] = s / (end - start);
+      if (performance.now() - sliceStart > 8) { await new Promise(r => setTimeout(r, 0)); sliceStart = performance.now(); }
+    }
+    const onset = new Float32Array(n);
+    for (let i = 1; i < n; i++) onset[i] = Math.max(0, env[i] - env[i - 1]);
+    const minBpm = 60, maxBpm = 200;
+    const minLag = Math.max(1, Math.round(envRate * 60 / maxBpm));
+    const maxLag = Math.round(envRate * 60 / minBpm);
+    let bestLag = minLag, bestScore = -Infinity;
+    sliceStart = performance.now();
+    for (let lag = minLag; lag <= maxLag; lag++) {
+      let score = 0;
+      for (let i = lag; i < n; i++) score += onset[i] * onset[i - lag];
+      if (score > bestScore) { bestScore = score; bestLag = lag; }
+      if (performance.now() - sliceStart > 8) { await new Promise(r => setTimeout(r, 0)); sliceStart = performance.now(); }
+    }
+    return Math.round(60 * envRate / bestLag);
+  }
+  const KEY_NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const KEY_MAJOR_PROFILE = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88];
+  const KEY_MINOR_PROFILE = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17];
+  async function estimateKey(mono, sr) {
+    const fftSize = 4096;
+    const fft = makeFFT(fftSize);
+    const win = new Float32Array(fftSize);
+    for (let i = 0; i < fftSize; i++) win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (fftSize - 1));
+    const chroma = new Float32Array(12);
+    const re = new Float32Array(fftSize), im = new Float32Array(fftSize);
+    const nFrames = Math.floor(mono.length / fftSize);
+    let sliceStart = performance.now();
+    for (let f = 0; f < nFrames; f++) {
+      const start = f * fftSize;
+      for (let i = 0; i < fftSize; i++) { re[i] = mono[start + i] * win[i]; im[i] = 0; }
+      fft(re, im);
+      for (let k = 1; k < fftSize / 2; k++) {
+        const freq = k * sr / fftSize;
+        if (freq < 80 || freq > 5000) continue;
+        const mag = Math.sqrt(re[k] * re[k] + im[k] * im[k]);
+        const pc = (((Math.round(12 * Math.log2(freq / 440)) + 9) % 12) + 12) % 12;
+        chroma[pc] += mag;
+      }
+      if (performance.now() - sliceStart > 8) { await new Promise(r => setTimeout(r, 0)); sliceStart = performance.now(); }
+    }
+    let maxC = 0;
+    for (const v of chroma) if (v > maxC) maxC = v;
+    if (maxC > 0) for (let i = 0; i < 12; i++) chroma[i] /= maxC;
+    function corr(profile, rotation) {
+      let sumP = 0, sumC = 0, sumPP = 0, sumCC = 0, sumPC = 0;
+      for (let i = 0; i < 12; i++) {
+        const p = profile[(i - rotation + 12) % 12];
+        const c = chroma[i];
+        sumP += p; sumC += c; sumPP += p * p; sumCC += c * c; sumPC += p * c;
+      }
+      const num = 12 * sumPC - sumP * sumC;
+      const den = Math.sqrt((12 * sumPP - sumP * sumP) * (12 * sumCC - sumC * sumC));
+      return den > 0 ? num / den : 0;
+    }
+    let best = { score: -Infinity, name: '' };
+    for (let root = 0; root < 12; root++) {
+      const sMaj = corr(KEY_MAJOR_PROFILE, root);
+      const sMin = corr(KEY_MINOR_PROFILE, root);
+      if (sMaj > best.score) best = { score: sMaj, name: KEY_NOTE_NAMES[root] + ' major' };
+      if (sMin > best.score) best = { score: sMin, name: KEY_NOTE_NAMES[root] + ' minor' };
+    }
+    return best.name;
+  }
+  async function analyzeBpmAndKey(file) {
+    ensureAudio();
+    if (actx.state === 'suspended') await actx.resume();
+    const buf = await file.arrayBuffer();
+    const audioBuf = await actx.decodeAudioData(buf.slice(0));
+    const sr = audioBuf.sampleRate;
+    const maxSamples = Math.min(audioBuf.length, sr * 90);
+    const numCh = audioBuf.numberOfChannels;
+    const mono = new Float32Array(maxSamples);
+    for (let c = 0; c < numCh; c++) {
+      const d = audioBuf.getChannelData(c);
+      for (let i = 0; i < maxSamples; i++) mono[i] += d[i] / numCh;
+    }
+    const bpm = await estimateBpm(mono, sr);
+    const key = await estimateKey(mono, sr);
+    return { bpm, key };
+  }
+  function loadWaveformFor(file) {
+    currentWave = null;
+    if (S.seekBarStyle !== 'waveform') return;
+    const waveState = { peaks: new Float32Array(WAVE_BUCKETS), done: 0 };
+    currentWave = waveState;
+    const start = () => { if (currentWave === waveState) computeWaveform(file, waveState); };
+    if (audio.duration && isFinite(audio.duration)) start();
+    else audio.addEventListener('loadedmetadata', start, { once: true });
+  }
+  function drawSeekWave() {
+    const canvas = $('seekWave');
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.max(1, Math.round(rect.width)), h = Math.max(1, Math.round(rect.height));
+    if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+    }
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    const progress = ready && audio.duration ? audio.currentTime / audio.duration : 0;
+    if (!seeking && ready && audio.duration) $('seek').value = progress * 1000;
+    const thumbR = 6.5;
+    const playedX = thumbR + progress * (w - thumbR * 2);
+    if (S.seekBarStyle !== 'waveform' || !currentWave || currentWave.done === 0) {
+      const lh = 4;
+      ctx.fillStyle = 'rgba(255,255,255,.5)';
+      ctx.fillRect(0, (h - lh) / 2, playedX, lh);
+      ctx.fillStyle = 'rgba(255,255,255,.2)';
+      ctx.fillRect(playedX, (h - lh) / 2, w - playedX, lh);
+      return;
+    }
+    const { peaks, done } = currentWave;
+    let peakMax = 0;
+    for (let i = 0; i < done; i++) if (peaks[i] > peakMax) peakMax = peaks[i];
+    const scale = peakMax > 0 ? 1 / peakMax : 1;
+    const barW = w / WAVE_BUCKETS;
+    for (let i = 0; i < WAVE_BUCKETS; i++) {
+      const x = i * barW;
+      if (i >= done) {
+        ctx.fillStyle = 'rgba(255,255,255,.12)';
+        ctx.fillRect(x, h / 2 - 1, Math.max(1, barW - 1), 2);
+        continue;
+      }
+      const amp = Math.max(0.07, peaks[i] * scale);
+      const bh = Math.max(2, amp * h);
+      ctx.fillStyle = x < playedX ? 'rgba(255,255,255,.8)' : 'rgba(255,255,255,.26)';
+      ctx.fillRect(x, (h - bh) / 2, Math.max(1, barW - 1), bh);
+    }
+  }
+
   function draw() {
     const nowTs = performance.now();
     updateDebugOverlay(nowTs);
+    drawPerfGraph(nowTs);
     updateLyricsOverlay();
     syncLyricsWin(nowTs);
     paintSliders();
+    drawSeekWave();
     updateCoverPan();
     checkClipDrift();
+    updateLiveVideoColor(nowTs);
     if (ready && playing) readBands(nowTs); else idleBands();
     updatePeaks();
+    updateScalePulse();
+    applyVizPulse();
+    applyChromaAb();
 
     const bassNow = bassEnergy();
     const realTransparent = S.bg === 'transparent' || S.winTransparent;
     const overCover = S.bgCoverArt && !realTransparent;
-    const transparentCanvas = realTransparent || overCover;
+    const transparentCanvas = realTransparent || (overCover && !recording);
 
     ctx.save();
     if (S.flipH) { ctx.translate(W, 0); ctx.scale(-1, 1); }
@@ -2985,10 +3593,12 @@
 
     drawConnections(maxExtent);
     drawPeaks(maxExtent, floorY);
+    if (S.beatParticles && ready && playing && detectBeat(bassNow, nowTs)) spawnBeatBurst();
     updateParticles();
     drawParticles();
 
     ctx.restore();
+    if (recording && S.exportLyrics) drawExportLyrics();
     drawMegalovania(bassNow, performance.now());
     if (S.glassBlur) updateGlassBlur();
     requestAnimationFrame(draw);
@@ -3055,6 +3665,7 @@
       else if ((id === 'TDRC' || id === 'TYER' || id === 'TDAT') && !result.year) result.year = decodeID3Text(frame).slice(0, 4);
       else if (id === 'TCON') result.genre = decodeID3Text(frame).replace(/^\((\d+)\)$/, '$1');
       else if (id === 'TBPM') result.bpm = decodeID3Text(frame);
+      else if (id === 'TKEY') result.key = decodeID3Text(frame);
       else if (id === 'COMM') {
         const enc = frame[0];
         let p = 4;
@@ -3135,6 +3746,7 @@
       else if ((key === 'DATE' || key === 'YEAR') && !result.year) result.year = val.slice(0, 4);
       else if (key === 'GENRE' && !result.genre) result.genre = val;
       else if (key === 'BPM' && !result.bpm) result.bpm = val;
+      else if ((key === 'KEY' || key === 'INITIALKEY') && !result.key) result.key = val;
       else if ((key === 'COMMENT' || key === 'DESCRIPTION') && !result.comment) result.comment = val;
       else if ((key === 'LYRICS' || key === 'UNSYNCEDLYRICS' || key === 'SYNCEDLYRICS') && !result.lyrics) result.lyrics = val;
       else if (key === 'METADATA_BLOCK_PICTURE' && !result.cover) {
@@ -3346,6 +3958,50 @@
   let discordCoverUrl = null;
   let coverColors = null;
   let coverTint = null;
+  let frameSampleCanvas = null;
+  function sampleFrameColors(source) {
+    try {
+      const size = 16;
+      if (!frameSampleCanvas) {
+        frameSampleCanvas = document.createElement('canvas');
+        frameSampleCanvas.width = size;
+        frameSampleCanvas.height = size;
+      }
+      const cx = frameSampleCanvas.getContext('2d');
+      cx.drawImage(source, 0, 0, size, size);
+      const data = cx.getImageData(0, 0, size, size).data;
+      let rSum = 0, gSum = 0, bSum = 0, n = 0;
+      let bestScore = -1, accent = null;
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+        rSum += r; gSum += g; bSum += b; n++;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        const sat = max === 0 ? 0 : (max - min) / max;
+        const score = sat * (max / 255);
+        if (score > bestScore) { bestScore = score; accent = [r, g, b]; }
+      }
+      if (!n) return null;
+      const avg = [rSum / n, gSum / n, bSum / n];
+      return { accent: accent || avg, darker: avg.map(v => v * 0.55) };
+    } catch (e) { return null; }
+  }
+  let videoColorTarget = null, videoColorCurrent = null, videoColorSampleT = 0;
+  function updateLiveVideoColor(nowTs) {
+    if (!curIsVideo || S.mode !== 'cover' || !ready || !playing) return;
+    if (nowTs - videoColorSampleT > 160) {
+      videoColorSampleT = nowTs;
+      const sampled = sampleFrameColors($('clipBg'));
+      if (sampled) videoColorTarget = sampled;
+    }
+    if (!videoColorTarget) return;
+    if (!videoColorCurrent) videoColorCurrent = { accent: [...videoColorTarget.accent], darker: [...videoColorTarget.darker] };
+    for (let i = 0; i < 3; i++) {
+      videoColorCurrent.accent[i] += (videoColorTarget.accent[i] - videoColorCurrent.accent[i]) * 0.12;
+      videoColorCurrent.darker[i] += (videoColorTarget.darker[i] - videoColorCurrent.darker[i]) * 0.12;
+    }
+    const toHex = (rgb) => '#' + rgb.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+    coverColors = { c1: toHex(videoColorCurrent.accent), c2: toHex(videoColorCurrent.darker) };
+  }
   function extractCoverColors(url) {
     return new Promise((resolve) => {
       const img = new Image();
@@ -3396,11 +4052,13 @@
     $('npCover').style.backgroundImage = '';
     $('npCover').classList.add('empty');
     checkMegalovania(file.name, '');
+    checkBloodLyrics(file.name, '', '');
     let tags = null;
     try { tags = await readTags(file); } catch {}
     if (playlist[curIndex] !== myFile) return;
     if (tags) {
       if (tags.title) checkMegalovania(file.name, tags.title);
+      checkBloodLyrics(file.name, tags.title, tags.artist);
       if (tags.title) $('npTitle').textContent = tags.title;
       if (tags.artist) { $('npArtist').textContent = tags.artist; $('npArtist').classList.remove('hidden'); }
       if (tags.album) npAlbum = tags.album;
@@ -3657,6 +4315,11 @@
     if (window.winControls) window.winControls.discordClearActivity();
     setAmbientCover('');
     setPlRemoveMode(false);
+    currentWave = null;
+    bloodEggActive = false;
+    bloodEggTrack = null;
+    bloodIdx = -2;
+    retireAllBloodLines(true);
     renderPlaylist();
   }
   function removeFromPlaylist(i) {
@@ -4285,7 +4948,7 @@
   const PROP_FIELDS = {
     title: 'propTitle', artist: 'propArtist', album: 'propAlbum', albumArtist: 'propAlbumArtist',
     composer: 'propComposer', track: 'propTrack', disc: 'propDisc', year: 'propYear',
-    genre: 'propGenre', bpm: 'propBpm', comment: 'propComment',
+    genre: 'propGenre', bpm: 'propBpm', key: 'propKey', comment: 'propComment',
   };
   let propsIdx = -1;
   let propsCoverUrl = null;
@@ -4328,6 +4991,25 @@
     $('propsOverlay').classList.remove('hidden');
     $('propTitle').focus();
   }
+  $('propDetectBtn').addEventListener('click', async () => {
+    const f = playlist[propsIdx];
+    if (!f) return;
+    const btn = $('propDetectBtn');
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'detecting…';
+    try {
+      const { bpm, key } = await analyzeBpmAndKey(f);
+      if (propsIdx >= 0 && playlist[propsIdx] === f) {
+        $('propBpm').value = bpm;
+        $('propKey').value = key;
+      }
+    } catch (e) {
+      toast('couldn\'t analyze this track.', { error: true });
+    }
+    btn.disabled = false;
+    btn.textContent = label;
+  });
   $('propCancelBtn').addEventListener('click', () => $('propsOverlay').classList.add('hidden'));
   $('propsOverlay').addEventListener('click', e => { if (e.target === $('propsOverlay')) $('propsOverlay').classList.add('hidden'); });
   for (const id of Object.values(PROP_FIELDS)) {
@@ -4483,6 +5165,8 @@
     statsLastT = 0;
     lastfmScrobbled = false;
     lastfmTrackStartedAt = Math.floor(Date.now() / 1000);
+    videoColorTarget = null;
+    videoColorCurrent = null;
     ensureAudio();
     if (actx.state === 'suspended') actx.resume();
     if (audio.src) {
@@ -4529,6 +5213,7 @@
     renderPlaylist();
     scrollPlaylistToCurrent();
     saveSession(true);
+    loadWaveformFor(file);
     $('drop').classList.add('gone');
     $('transport').classList.remove('hidden');
     audio.play().then(() => setPlay(true)).catch(() => setPlay(false));
@@ -4784,11 +5469,9 @@
 
   function setPlay(p) {
     playing = p;
-    const icon = p
-      ? '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
-      : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
-    $('playBtn').innerHTML = icon;
-    $('miniPlay').innerHTML = icon;
+    const src = p ? 'assets/buttons/pause.png' : 'assets/buttons/play.png';
+    $('playBtn').querySelector('img').src = src;
+    $('miniPlay').querySelector('img').src = src;
     if (window.winControls) window.winControls.thumbarPlaying(p);
     if ('mediaSession' in navigator) navigator.mediaSession.playbackState = p ? 'playing' : 'paused';
     sendDiscordActivity();
@@ -5021,14 +5704,22 @@
   async function loadLyricsFor(file, tags) {
     const token = ++lyricsToken;
     lyricsLines = null; lyricsIdx = -2;
+    bloodIdx = -2;
+    retireAllBloodLines(true);
     lyricsSuggs = null; lyricsCurKey = '';
     clearTimeout(lyricsNfT);
     $('lyricsNotFound').classList.remove('show', 'clickable');
     $('lyricsSuggMenu').classList.add('hidden');
-    if (S.lyricsMode === 'off') return;
+    if (S.lyricsMode === 'off' && !bloodEggActive) return;
     const loadEl = $('lyricsLoading');
     const spinT = setTimeout(() => { if (token === lyricsToken) loadEl.classList.add('show'); }, 250);
     try {
+      if (bloodEggActive && bloodEggTrack && window.winControls) {
+        const pr = await window.winControls.lyricsFetchById(BLOOD_EGG_TRACKS[bloodEggTrack].lrcId);
+        if (token !== lyricsToken) return;
+        const parsed = pr && pr.synced ? parseLRC(pr.synced) : null;
+        if (parsed) { lyricsLines = parsed; return; }
+      }
       if (file._path && window.winControls) {
         const loc = await window.winControls.lyricsFindLocal(file._path);
         if (token !== lyricsToken) return;
@@ -5155,6 +5846,7 @@
 
   function updateLyricsOverlay() {
     const box = $('lyricsBox');
+    if (bloodEggActive) { box.classList.add('off'); updateBloodLyrics(); return; }
     if (S.lyricsMode !== 'compact' || !lyricsLines || !ready) { box.classList.add('off'); return; }
     const t = audio.currentTime + 0.05;
     let lo = 0, hi = lyricsLines.length - 1, idx = -1;
@@ -5188,6 +5880,70 @@
     void curEl.offsetWidth;
     curEl.classList.add(forward ? 'rise' : 'pop');
     nextEl.classList.add('fadein');
+  }
+
+  function drawExportLyrics() {
+    const FONT_STACK = `'Renogare', 'Helvetica Neue', Helvetica, Arial, sans-serif`;
+    const pulseScale = (S.scaleToSound && S.lyricsFx) ? vizPulseScale() : 1;
+    const chromaOn = S.chromaAb && S.lyricsFx;
+    if (bloodEggActive) {
+      const lines = $('bloodLyrics').querySelectorAll('.blood-line');
+      if (!lines.length) return;
+      const scaleX = W / window.innerWidth, scaleY = H / window.innerHeight;
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.filter = chromaOn ? 'url(#chromaAbFilter)' : 'none';
+      for (const lineEl of lines) {
+        const lineOpacity = parseFloat(getComputedStyle(lineEl).opacity);
+        if (!(lineOpacity > 0)) continue;
+        const fontSize = Math.round(parseFloat(getComputedStyle(lineEl).fontSize) * scaleY * pulseScale);
+        ctx.font = `400 ${fontSize}px ${FONT_STACK}`;
+        const chars = lineEl.querySelectorAll('.blood-char');
+        for (const ch of chars) {
+          const charOpacity = parseFloat(getComputedStyle(ch).opacity);
+          const opacity = lineOpacity * charOpacity;
+          if (!(opacity > 0)) continue;
+          const r = ch.getBoundingClientRect();
+          ctx.shadowColor = `rgba(255,10,10,${0.85 * opacity})`;
+          ctx.shadowBlur = fontSize * 0.5;
+          ctx.fillStyle = `rgba(67,0,6,${opacity})`;
+          ctx.fillText(ch.textContent, (r.left + r.width / 2) * scaleX, (r.top + r.height / 2) * scaleY);
+        }
+      }
+      ctx.restore();
+      return;
+    }
+    if (S.lyricsMode !== 'compact' || !lyricsLines || !ready) return;
+    if (lyricsIdx < 0 || lyricsIdx >= lyricsLines.length) return;
+    const boxOpacity = parseFloat(getComputedStyle($('lyricsBox')).opacity);
+    if (!(boxOpacity > 0)) return;
+    const line = lyricsLines[lyricsIdx];
+    const cur = line.text;
+    if (!cur) return;
+    const FADE = 0.35;
+    const nextT = lyricsIdx + 1 < lyricsLines.length ? lyricsLines[lyricsIdx + 1].t : Infinity;
+    const fadeIn = Math.max(0, Math.min(1, (audio.currentTime - line.t) / FADE));
+    const fadeOut = Math.max(0, Math.min(1, (nextT - audio.currentTime) / FADE));
+    const opacity = Math.min(fadeIn, fadeOut) * boxOpacity;
+    if (opacity <= 0) return;
+    const s = Math.min(W, H) / 900 * pulseScale;
+    const cx = W / 2;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.shadowColor = `rgba(0,0,0,${0.85 * opacity})`;
+    ctx.shadowBlur = 10 * s;
+    ctx.filter = chromaOn ? 'url(#chromaAbFilter)' : 'none';
+    let size = Math.round(26 * s);
+    ctx.font = `700 ${size}px ${FONT_STACK}`;
+    while (size > 8 && ctx.measureText(cur).width > W * 0.86) {
+      size--;
+      ctx.font = `700 ${size}px ${FONT_STACK}`;
+    }
+    ctx.fillStyle = `rgba(255,255,255,${opacity})`;
+    ctx.fillText(cur, cx, H * 0.85);
+    ctx.restore();
   }
 
   let lyricsWinOpen = false;
@@ -5291,6 +6047,13 @@
   }, { passive: false });
   $('volWheelStep').addEventListener('input', e => { S.volWheelStep = +e.target.value; $('volWheelStepVal').textContent = S.volWheelStep; save(); });
   $('seekWheelStep').addEventListener('input', e => { S.seekWheelStep = +e.target.value; $('seekWheelStepVal').textContent = S.seekWheelStep + 's'; save(); });
+  $('seekStyleSeg').querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      S.seekBarStyle = btn.dataset.val;
+      if (S.seekBarStyle === 'waveform' && !currentWave && playlist[curIndex]) loadWaveformFor(playlist[curIndex]);
+      syncUI(); save();
+    });
+  });
 
   function syncMoreMenu() {
     $('speedMenu').querySelectorAll('button[data-speed]').forEach(b => b.classList.toggle('on', !S.drunkMode && +b.dataset.speed === S.playbackRate));
@@ -5298,6 +6061,7 @@
     $('speedCur').innerHTML = S.drunkMode ? 'drunk' : S.playbackRate + '&times;';
     $('normCheck').textContent = S.normalize ? '✓' : '';
     $('xfadeCheck').textContent = S.crossfade ? '✓' : '';
+    $('lyricsFxCheck').textContent = S.lyricsFx ? '✓' : '';
     $('lyricsCheck').textContent = S.lyricsMode;
     $('lyricsModeSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.val === S.lyricsMode));
     $('xfadeDur').value = S.crossfadeDur;
@@ -5448,6 +6212,11 @@
   applyDrunkMode();
   $('normItem').addEventListener('click', () => { S.normalize = !S.normalize; applyAudioChain(); syncMoreMenu(); save(); });
   $('xfadeItem').addEventListener('click', () => { S.crossfade = !S.crossfade; syncMoreMenu(); save(); });
+  $('lyricsFxItem').addEventListener('click', () => {
+    S.lyricsFx = !S.lyricsFx;
+    if (!S.lyricsFx) { $('lyricsBox').style.transform = ''; $('lyricsBox').style.filter = ''; $('bloodLyrics').style.transform = ''; $('bloodLyrics').style.filter = ''; lyricsXformLast = null; bloodXformLast = null; lyricsChromaApplied = false; }
+    syncMoreMenu(); save();
+  });
   $('xfadeDur').addEventListener('input', (e) => { S.crossfadeDur = +e.target.value; $('xfadeDurVal').textContent = S.crossfadeDur + 's'; save(); });
   $('miniItem').addEventListener('click', () => { closeMoreMenu(); setMiniMode(true); });
 
@@ -5581,7 +6350,7 @@
       applyDisplayMode(S.displayMode === 'fullscreen' ? 'windowed' : 'fullscreen');
       syncUI(); save();
     }
-    else if (/^[1-9]$/.test(e.key) && !typing) { applyPreset(+e.key - 1); }
+    else if (/^Digit[1-9]$/.test(e.code) && !typing) { applyPreset(+e.code.slice(5) - 1); }
   });
   $('helpOverlay').addEventListener('click', () => $('helpOverlay').classList.add('hidden'));
 
@@ -5755,6 +6524,9 @@
   specSlider('specRolloffRate', 'specRolloffRate', v => v, v => String(v));
 
   $('particlesAmt').addEventListener('input', e => { S.particlesAmt = +e.target.value; $('particlesAmtVal').textContent = S.particlesAmt; save(); });
+  $('beatParticlesAmt').addEventListener('input', e => { S.beatParticlesAmt = +e.target.value; $('beatParticlesAmtVal').textContent = S.beatParticlesAmt; save(); });
+  $('scaleToSoundAmt').addEventListener('input', e => { S.scaleToSoundAmt = +e.target.value; $('scaleToSoundAmtVal').textContent = S.scaleToSoundAmt; save(); });
+  $('chromaAbAmt').addEventListener('input', e => { S.chromaAbAmt = +e.target.value; $('chromaAbAmtVal').textContent = S.chromaAbAmt; save(); });
   $('bgPulse').addEventListener('input', e => { S.bgPulse = +e.target.value; $('bgPulseVal').textContent = S.bgPulse; save(); });
   $('flash').addEventListener('input', e => { S.flash = +e.target.value; $('flashVal').textContent = S.flash; save(); });
   $('gain').addEventListener('input', e => { S.gain = +e.target.value; $('gainVal').textContent = S.gain + '%'; applyAudioChain(); save(); });
@@ -5792,6 +6564,15 @@
   });
   $('particlesSeg').querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => { S.particles = btn.dataset.val === 'on'; syncUI(); save(); });
+  });
+  $('beatParticlesSeg').querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => { S.beatParticles = btn.dataset.val === 'on'; syncUI(); save(); });
+  });
+  $('scaleToSoundSeg').querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => { S.scaleToSound = btn.dataset.val === 'on'; if (!S.scaleToSound && !S.chromaAb) scalePulse = 0; applyVizPulse(); syncUI(); save(); });
+  });
+  $('chromaAbSeg').querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => { S.chromaAb = btn.dataset.val === 'on'; if (!S.scaleToSound && !S.chromaAb) scalePulse = 0; applyChromaAb(); syncUI(); save(); });
   });
   $('reflectionSeg').querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => { S.reflection = btn.dataset.val === 'on'; syncUI(); save(); });
@@ -5846,6 +6627,9 @@
   });
   $('exportQualitySeg').querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => { S.exportQuality = btn.dataset.val; syncUI(); save(); });
+  });
+  $('exportLyricsSeg').querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => { S.exportLyrics = btn.dataset.val === 'on'; syncUI(); save(); });
   });
   $('exportResGrid').querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => { S.exportRes = btn.dataset.res; syncUI(); save(); });
@@ -6130,11 +6914,15 @@
     $('count').value = S.count; $('countVal').textContent = S.count;
     $('trails').value = S.trails; $('trailsVal').textContent = S.trails;
     $('particlesAmt').value = S.particlesAmt; $('particlesAmtVal').textContent = S.particlesAmt;
+    $('beatParticlesAmt').value = S.beatParticlesAmt; $('beatParticlesAmtVal').textContent = S.beatParticlesAmt;
+    $('scaleToSoundAmt').value = S.scaleToSoundAmt; $('scaleToSoundAmtVal').textContent = S.scaleToSoundAmt;
+    $('chromaAbAmt').value = S.chromaAbAmt; $('chromaAbAmtVal').textContent = S.chromaAbAmt;
     $('bgPulse').value = S.bgPulse; $('bgPulseVal').textContent = S.bgPulse;
     $('flash').value = S.flash; $('flashVal').textContent = S.flash;
     $('gain').value = S.gain; $('gainVal').textContent = S.gain + '%';
     $('volWheelStep').value = S.volWheelStep; $('volWheelStepVal').textContent = S.volWheelStep;
     $('seekWheelStep').value = S.seekWheelStep; $('seekWheelStepVal').textContent = S.seekWheelStep + 's';
+    $('seekStyleSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.val === S.seekBarStyle));
     EQ_FREQS.forEach((f, i) => {
       $('eq' + i).value = S['eq' + i];
       $('eq' + i + 'Val').textContent = (S['eq' + i] > 0 ? '+' : '') + S['eq' + i];
@@ -6161,6 +6949,9 @@
     $('psyTrail').value = S.psyTrail; $('psyTrailVal').textContent = S.psyTrail;
     $('rainbowSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.rainbow));
     $('particlesSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.particles));
+    $('beatParticlesSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.beatParticles));
+    $('scaleToSoundSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.scaleToSound));
+    $('chromaAbSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.chromaAb));
     $('reflectionSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.reflection));
     $('vignetteSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.vignette));
     $('winTransparentSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.winTransparent));
@@ -6180,6 +6971,7 @@
     $('exportFpsSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.val === S.exportFps));
     $('exportQualitySeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.val === S.exportQuality));
     $('exportResGrid').querySelectorAll('button').forEach(b => b.classList.toggle('sel', b.dataset.res === S.exportRes));
+    $('exportLyricsSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.exportLyrics));
     $('kaleidoSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.kaleidoscope));
     $('peakHoldSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.peakHold));
     $('connectionsSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.connections));

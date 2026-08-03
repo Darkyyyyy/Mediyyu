@@ -341,6 +341,7 @@ app.on('activate', () => {
 });
 
 ipcMain.on('app:getVersion', (e) => { e.returnValue = app.getVersion(); });
+ipcMain.on('app:isPackaged', (e) => { e.returnValue = app.isPackaged; });
 ipcMain.on('win:minimize', (e) => {
   const win = BrowserWindow.fromWebContents(e.sender);
   if (win && !animating.has(win)) animateMinimize(win);
@@ -457,6 +458,7 @@ function buildTagArgs(tags, ext) {
   put('track', t.track); put('disc', t.disc); put('date', t.year);
   put('genre', t.genre); put('comment', t.comment);
   if (t.bpm) { meta.push('-metadata', 'TBPM=' + t.bpm, '-metadata', 'bpm=' + t.bpm); }
+  if (t.key) { meta.push('-metadata', 'TKEY=' + t.key, '-metadata', 'key=' + t.key, '-metadata', 'initialkey=' + t.key); }
   const extra = /\.mp3$/i.test(ext) ? ['-id3v2_version', '3', '-write_id3v1', '1'] : [];
   return { meta, extra };
 }

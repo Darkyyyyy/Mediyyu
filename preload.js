@@ -1,8 +1,10 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 const appVersion = ipcRenderer.sendSync('app:getVersion');
+const isPackaged = ipcRenderer.sendSync('app:isPackaged');
 
 contextBridge.exposeInMainWorld('winControls', {
   appVersion,
+  isPackaged,
   minimize: () => ipcRenderer.send('win:minimize'),
   maximize: () => ipcRenderer.send('win:maximize'),
   close: () => ipcRenderer.send('win:close'),
