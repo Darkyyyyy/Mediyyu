@@ -2958,11 +2958,15 @@
     }
   });
 
+  function wordMatch(hay, phrase) {
+    const esc = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+    return new RegExp('\\b' + esc + '\\b', 'i').test(hay);
+  }
   let megaMode = false, megaStart = 0, megaShake = 0, megaShaken = false;
   let megaBlasters = [], megaBones = [], megaLastBlaster = 0, megaNextBone = 0;
   const megaHeart = { y: 0, vy: 0, grounded: true };
   function checkMegalovania(name, title) {
-    const on = ((name || '') + ' ' + (title || '')).toLowerCase().includes('megalovania');
+    const on = wordMatch((name || '') + ' ' + (title || ''), 'megalovania');
     if (on && !megaMode) {
       megaStart = performance.now();
       megaBlasters = []; megaBones = [];
@@ -2978,11 +2982,11 @@
     violet: { match: ['through patches of violet'], lrcId: 22434851, slowIntro: false },
   };
   function checkBloodLyrics(name, title, artist) {
-    const hay = ((name || '') + ' ' + (title || '') + ' ' + (artist || '')).toLowerCase();
+    const hay = (name || '') + ' ' + (title || '') + ' ' + (artist || '');
     bloodEggTrack = null;
-    if (hay.includes('mili')) {
+    if (wordMatch(hay, 'mili')) {
       for (const key in BLOOD_EGG_TRACKS) {
-        if (BLOOD_EGG_TRACKS[key].match.some(m => hay.includes(m))) { bloodEggTrack = key; break; }
+        if (BLOOD_EGG_TRACKS[key].match.some(m => wordMatch(hay, m))) { bloodEggTrack = key; break; }
       }
     }
     bloodEggActive = !!bloodEggTrack;
@@ -5882,14 +5886,25 @@
     nextEl.classList.add('fadein');
   }
 
+  function firstRGBA(str) {
+    const m = (str || '').match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+))?\)/);
+    if (!m) return { r: 255, g: 255, b: 255, a: 1 };
+    return { r: +m[1], g: +m[2], b: +m[3], a: m[4] !== undefined ? +m[4] : 1 };
+  }
   function drawExportLyrics() {
     const FONT_STACK = `'Renogare', 'Helvetica Neue', Helvetica, Arial, sans-serif`;
     const pulseScale = (S.scaleToSound && S.lyricsFx) ? vizPulseScale() : 1;
     const chromaOn = S.chromaAb && S.lyricsFx;
+    const scaleY = H / window.innerHeight;
     if (bloodEggActive) {
       const lines = $('bloodLyrics').querySelectorAll('.blood-line');
       if (!lines.length) return;
-      const scaleX = W / window.innerWidth, scaleY = H / window.innerHeight;
+      const refChar = $('bloodLyrics').querySelector('.blood-char');
+      if (!refChar) return;
+      const refStyle = getComputedStyle(refChar);
+      const textColor = firstRGBA(refStyle.color);
+      const shadowColor = firstRGBA(refStyle.textShadow);
+      const scaleX = W / window.innerWidth;
       ctx.save();
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -5905,9 +5920,9 @@
           const opacity = lineOpacity * charOpacity;
           if (!(opacity > 0)) continue;
           const r = ch.getBoundingClientRect();
-          ctx.shadowColor = `rgba(255,10,10,${0.85 * opacity})`;
+          ctx.shadowColor = `rgba(${shadowColor.r},${shadowColor.g},${shadowColor.b},${shadowColor.a * opacity})`;
           ctx.shadowBlur = fontSize * 0.5;
-          ctx.fillStyle = `rgba(67,0,6,${opacity})`;
+          ctx.fillStyle = `rgba(${textColor.r},${textColor.g},${textColor.b},${opacity})`;
           ctx.fillText(ch.textContent, (r.left + r.width / 2) * scaleX, (r.top + r.height / 2) * scaleY);
         }
       }
@@ -5927,21 +5942,25 @@
     const fadeOut = Math.max(0, Math.min(1, (nextT - audio.currentTime) / FADE));
     const opacity = Math.min(fadeIn, fadeOut) * boxOpacity;
     if (opacity <= 0) return;
-    const s = Math.min(W, H) / 900 * pulseScale;
+    const curEl = $('lyricCur');
+    const curStyle = getComputedStyle(curEl);
+    const textColor = firstRGBA(curStyle.color);
+    const shadowColor = firstRGBA(curStyle.textShadow);
+    const fontSize = parseFloat(curStyle.fontSize) * scaleY * pulseScale;
     const cx = W / 2;
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
-    ctx.shadowColor = `rgba(0,0,0,${0.85 * opacity})`;
-    ctx.shadowBlur = 10 * s;
+    ctx.shadowColor = `rgba(${shadowColor.r},${shadowColor.g},${shadowColor.b},${shadowColor.a * opacity})`;
+    ctx.shadowBlur = fontSize * 0.45;
     ctx.filter = chromaOn ? 'url(#chromaAbFilter)' : 'none';
-    let size = Math.round(26 * s);
-    ctx.font = `700 ${size}px ${FONT_STACK}`;
+    let size = Math.round(fontSize);
+    ctx.font = `${curStyle.fontWeight} ${size}px ${FONT_STACK}`;
     while (size > 8 && ctx.measureText(cur).width > W * 0.86) {
       size--;
-      ctx.font = `700 ${size}px ${FONT_STACK}`;
+      ctx.font = `${curStyle.fontWeight} ${size}px ${FONT_STACK}`;
     }
-    ctx.fillStyle = `rgba(255,255,255,${opacity})`;
+    ctx.fillStyle = `rgba(${textColor.r},${textColor.g},${textColor.b},${opacity})`;
     ctx.fillText(cur, cx, H * 0.85);
     ctx.restore();
   }
