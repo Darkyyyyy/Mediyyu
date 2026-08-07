@@ -40,6 +40,8 @@ contextBridge.exposeInMainWorld('winControls', {
   lyricsFindLocal: (p) => ipcRenderer.invoke('lyrics:findLocal', p),
   lyricsFetch: (meta) => ipcRenderer.invoke('lyrics:fetch', meta),
   lyricsFetchById: (id) => ipcRenderer.invoke('lyrics:fetchById', id),
+  lyricsSearch: (query) => ipcRenderer.invoke('lyrics:search', query),
+  lyricsOpenTrackPage: (id) => ipcRenderer.send('lyrics:openTrackPage', id),
   lyricsWinToggle: () => ipcRenderer.send('lyrwin:toggle'),
   lyricsWinSet: (open) => ipcRenderer.send('lyrwin:set', open),
   lyricsWinSync: (p) => ipcRenderer.send('lyrwin:sync', p),

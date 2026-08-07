@@ -647,6 +647,29 @@ ipcMain.handle('lyrics:fetchById', async (e, id) => {
     return { synced: j.syncedLyrics || '', plain: j.plainLyrics || '' };
   } catch { return null; }
 });
+ipcMain.handle('lyrics:search', async (e, query) => {
+  try {
+    if (!query || !query.trim()) return { results: [] };
+    const r = await fetch('https://lrclib.net/api/search?q=' + encodeURIComponent(query.trim()), { headers: { 'User-Agent': lrclibUA() } });
+    if (!r.ok) return { results: [] };
+    const list = await r.json();
+    const results = (Array.isArray(list) ? list : []).slice(0, 30).map(it => ({
+      id: it.id,
+      trackName: it.trackName || '',
+      artistName: it.artistName || '',
+      albumName: it.albumName || '',
+      duration: it.duration || 0,
+      synced: !!it.syncedLyrics,
+      wordSynced: /<\d{1,2}:\d{2}(?:\.\d{2,3})?>/.test(it.syncedLyrics || ''),
+      hasPlain: !!it.plainLyrics,
+    }));
+    return { results };
+  } catch { return { results: [] }; }
+});
+ipcMain.on('lyrics:openTrackPage', (e, id) => {
+  if (id == null) return;
+  shell.openExternal('https://lrclib.net/tracks/' + encodeURIComponent(id));
+});
 
 ipcMain.handle('files:scanDir', async (e, dirPath) => {
   const out = [];

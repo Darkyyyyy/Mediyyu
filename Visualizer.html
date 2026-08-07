@@ -232,6 +232,11 @@
     transition: opacity .35s ease;
   }
   .blood-line.show .blood-char { opacity: 1; }
+  .blood-line.blood-gold .blood-char {
+    color: #fff3d6;
+    -webkit-text-stroke: 1px rgba(220,180,110,.7);
+    text-shadow: 0 0 8px rgba(255,224,150,.9), 0 0 20px rgba(255,205,110,.65), 0 0 44px rgba(255,190,90,.45);
+  }
   .blood-indent { display: block; margin-top: .25em; padding-left: 1.6em; }
   .blood-wrap { display: block; margin-top: .15em; text-align: center; }
   @keyframes bloodFloat {
@@ -265,6 +270,8 @@
     opacity: 1; transform: translateX(-50%) scale(1); transition: opacity .14s ease, transform .14s ease;
   }
   .lyrics-sugg-menu.hidden { opacity: 0; transform: translateX(-50%) scale(.96); pointer-events: none; }
+  .lyrics-sugg-menu::-webkit-scrollbar { width: 7px; }
+  .lyrics-sugg-menu::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 7px; }
   .lyrics-sugg-menu button {
     display: block; width: 100%; text-align: left; border: 0; background: none; cursor: pointer;
     color: rgba(255,255,255,.85); font-family: var(--ui); font-size: 12px;
@@ -273,6 +280,17 @@
   }
   .lyrics-sugg-menu button:hover { background: rgba(255,255,255,.1); }
   .lyrics-sugg-menu button .sugg-side { color: var(--dim); font-size: 11px; }
+  .sugg-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 6px 6px;
+    font-size: 10.5px; color: var(--dim); text-transform: uppercase; letter-spacing: .04em;
+    white-space: nowrap;
+  }
+  .lyrics-sugg-menu button.sugg-close-x {
+    display: flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; flex: 0 0 auto; border-radius: 50%; border: 0; cursor: pointer; padding: 0;
+    background: rgba(255,255,255,.1); color: rgba(255,255,255,.7); font-size: 10px; line-height: 1;
+  }
+  .lyrics-sugg-menu button.sugg-close-x:hover { background: rgba(255,255,255,.22); color: #fff; }
 
   .wincontrols {
     height: 32px;
@@ -351,9 +369,15 @@
     border-radius: 24px;
     z-index: 43;
     transform-origin: top right;
-    transition: opacity .2s ease, transform .2s ease;
+    transition: opacity .2s ease, transform .2s ease, background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
     box-shadow: inset 0 1px 1px rgba(255,255,255,.6), inset 0 0 0 1px rgba(255,255,255,.08), inset 0 -8px 16px -8px rgba(255,255,255,.1), 0 24px 60px rgba(0,0,0,.5), var(--glass-edge);
     overflow: hidden;
+  }
+  .panel.peek {
+    background-color: rgba(var(--glass-rgb), calc(var(--glass-alpha-mult) * 0.12));
+    background-image: none;
+    box-shadow: none;
+    border-color: rgba(255,255,255,.04);
   }
   .panel.hidden { opacity: 0; transform: scale(.96) translateY(-6px); pointer-events: none; }
 
@@ -477,7 +501,66 @@
   }
   .bgmode.on { border-color: #fff; color: #fff; box-shadow: 0 0 0 1px #fff inset; }
   .note { font-size: 11px; line-height: 1.5; color: var(--dim); margin-top: 11px; }
+  .ee-link { color: rgba(255,255,255,.75); text-decoration: underline dotted rgba(255,255,255,.4); cursor: pointer; }
+  .ee-link:hover { color: #fff; }
+  .ee-table-wrap { max-height: 340px; overflow-y: auto; }
+  .ee-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .ee-table th {
+    text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em;
+    color: var(--dim); padding: 0 10px 8px 0; border-bottom: 1px solid var(--line);
+  }
+  .ee-table td {
+    padding: 10px 10px 10px 0; border-bottom: 1px solid rgba(255,255,255,.06);
+    color: rgba(255,255,255,.85); line-height: 1.4; vertical-align: top;
+  }
+  .ee-table tr:last-child td { border-bottom: 0; }
+  .ee-table-wrap::-webkit-scrollbar { width: 7px; }
+  .ee-table-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 7px; }
   .sec-head { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); margin: 0 0 10px; }
+  .settings-search {
+    width: 100%; box-sizing: border-box; margin-bottom: 14px;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 9px;
+    color: #fff; font-family: var(--ui); font-size: 12.5px; padding: 7px 11px; outline: none;
+  }
+  .settings-search::placeholder { color: var(--dim); }
+  .input-clear-x {
+    position: fixed; z-index: 1000; width: 16px; height: 16px; border: 0; border-radius: 50%;
+    background: rgba(255,255,255,.16); color: rgba(255,255,255,.8);
+    font-size: 9px; line-height: 1; cursor: pointer; display: none;
+    align-items: center; justify-content: center; padding: 0; font-family: var(--ui);
+  }
+  .input-clear-x.show { display: flex; }
+  .input-clear-x:hover { background: rgba(255,255,255,.35); color: #fff; }
+  .settings-search:focus { border-color: rgba(255,255,255,.3); }
+  .panel.searching .sec { display: block; opacity: 1; transform: none; }
+  .panel.searching .srch-hide { display: none !important; }
+  .panel-nav { transition: flex-basis .25s ease, padding .25s ease, opacity .18s ease, border-right-width .25s ease; min-width: 0; white-space: nowrap; }
+  .panel.searching .panel-nav { flex-basis: 0; padding-left: 0; padding-right: 0; opacity: 0; overflow: hidden; border-right-width: 0; pointer-events: none; }
+  .panel.searching #specAdvanced.collapsed { grid-template-rows: 1fr; }
+  .panel.searching .sec:not(:has(.row:not(.srch-hide))):not(:has(.sec-head:not(.srch-hide))) { display: none; }
+  .panel.peek .sec.active .row,
+  .panel.peek .sec.active .sec-head,
+  .panel.peek .sec.active .note,
+  .panel.peek .sec.active > .adv-toggle {
+    opacity: .1; transition: opacity .12s ease;
+  }
+  .panel.peek .sec.active .row.peek-active { opacity: 1; }
+  .panel-nav, .panel-content { transition: opacity .12s ease; }
+  .panel.peek .panel-nav, .panel.peek .settings-search { opacity: .1; }
+  .adv-toggle {
+    display: block; width: 100%; text-align: left; border: 0; background: rgba(255,255,255,.05);
+    color: var(--dim); font-family: var(--ui); font-size: 12px; cursor: pointer;
+    padding: 8px 11px; border-radius: 9px; margin: 4px 0 10px;
+  }
+  .adv-toggle:hover { background: rgba(255,255,255,.1); color: rgba(255,255,255,.85); }
+  .adv-toggle .arrow { display: inline-block; transition: transform .15s ease; margin-right: 6px; }
+  .adv-toggle.open .arrow { transform: rotate(90deg); }
+  #specAdvanced {
+    display: grid; grid-template-rows: 1fr;
+    transition: grid-template-rows .28s ease;
+  }
+  #specAdvanced.collapsed { grid-template-rows: 0fr; }
+  #specAdvanced .adv-inner { overflow: hidden; min-height: 0; }
   .sec-divider { height: 1px; background: rgba(255,255,255,.1); margin: 15px 0; }
 
   .drop {
@@ -524,7 +607,7 @@
   .play.fav-on { background: rgba(255,90,120,.9); color: #fff; }
 
   .more-menu {
-    position: fixed; z-index: 45; width: 205px; padding: 6px;
+    position: fixed; z-index: 60; width: 205px; padding: 6px;
     background-color: rgba(18,19,22,.92);
     border: 1px solid rgba(255,255,255,.12); border-radius: 13px;
     box-shadow: 0 10px 34px rgba(0,0,0,.5);
@@ -923,6 +1006,45 @@
     font-family: var(--ui); font-size: 12px; border-radius: 8px; padding: 6px 11px; white-space: nowrap;
   }
   .pls-save-row button:hover, .pls-foot button:hover { background: rgba(255,255,255,.16); }
+  .lyr-search-row { display: flex; gap: 7px; margin-bottom: 4px; }
+  .lyr-search-row input {
+    flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 8px; outline: none;
+    background: rgba(255,255,255,.05); color: var(--txt); font-family: var(--ui); font-size: 12.5px; padding: 7px 10px;
+  }
+  .lyr-search-row input:focus { border-color: rgba(255,255,255,.3); }
+  .lyr-search-row button {
+    border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--txt); cursor: pointer;
+    font-family: var(--ui); font-size: 12px; border-radius: 8px; padding: 7px 13px; white-space: nowrap;
+  }
+  .lyr-search-row button:hover { background: rgba(255,255,255,.16); }
+  .lyr-result-name { flex: 1; min-width: 0; overflow: hidden; }
+  .lyr-result-track { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lyr-result-sub { font-size: 10.5px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+  .lyr-badge {
+    flex: 0 0 auto; font-size: 9.5px; font-family: var(--mono); padding: 2px 6px; border-radius: 5px;
+    color: rgba(255,255,255,.6); background: rgba(255,255,255,.08); border: 1px solid var(--line);
+  }
+  .lyr-badge.synced { color: #8affb0; background: rgba(90,255,140,.12); border-color: rgba(90,255,140,.3); }
+  .lyr-badge.word-synced { color: #9cc4ff; background: rgba(90,160,255,.12); border-color: rgba(90,160,255,.3); }
+  .lyr-badge-wrap { flex: 0 0 auto; display: flex; align-items: center; gap: 7px; }
+  .lyr-duration { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,.65); white-space: nowrap; }
+  .lyr-search-foot { justify-content: space-between; }
+  .lyr-search-target { font-size: 11px; color: var(--dim); text-align: left; }
+  .lyr-search-target b { color: rgba(255,255,255,.85); font-family: var(--mono); font-weight: 600; }
+  .lyr-best-tag { font-size: 10px; font-weight: 600; color: #ffd54a; white-space: nowrap; }
+  .pls-row.lyr-best { background: rgba(255,213,74,.14); border: 1px solid rgba(255,213,74,.4); }
+  .pls-row.lyr-best:hover { background: rgba(255,213,74,.22); }
+  .pls-row.lyr-best .lyr-result-track { color: #ffd54a; }
+  .lyr-current-tag { font-size: 10px; font-weight: 600; color: #6dffa0; white-space: nowrap; }
+  .pls-row.lyr-current { background: rgba(90,255,140,.14); border: 1px solid rgba(90,255,140,.4); }
+  .pls-row.lyr-current:hover { background: rgba(90,255,140,.22); }
+  .pls-row.lyr-current .lyr-result-track { color: #6dffa0; }
+  .lyr-open-btn {
+    flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
+    border: 1px solid var(--line); background: rgba(255,255,255,.08); color: rgba(255,255,255,.7);
+    font-size: 11px; line-height: 1; padding: 0; display: flex; align-items: center; justify-content: center;
+  }
+  .lyr-open-btn:hover { background: rgba(255,255,255,.2); color: #fff; }
 
   .stats-box { width: 380px; max-height: 82vh; overflow-y: auto; }
   .stats-box::-webkit-scrollbar { width: 7px; }
@@ -1257,6 +1379,56 @@
     </div>
   </div>
 
+  <div class="help-overlay hidden" id="eeTableOverlay">
+    <div class="help-box pls-box" style="width: 520px;">
+      <div class="help-title">easter eggs</div>
+      <div class="ee-table-wrap">
+        <table class="ee-table">
+          <thead><tr><th>artist</th><th>track</th><th>effect</th></tr></thead>
+          <tbody>
+            <tr><td>Toby Fox</td><td>Megalovania</td><td>undertale-style boss-fight visual &mdash; screen shake, bones, blasters</td></tr>
+            <tr><td>Mili</td><td>Between Two Worlds</td><td>cascading blood-red lyrics, pale gold during the slow intro (before 2:00)</td></tr>
+            <tr><td>Mili</td><td>Through Patches of Violet</td><td>cascading blood-red lyrics</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note" style="margin-top:12px;">if an effect doesn't trigger on the right track, double-check the file's metadata (title/artist tags) &mdash; detection relies on those being correct.</p>
+      <div class="pls-foot" style="justify-content:flex-end; margin-top:10px;">
+        <button id="eeTableCloseBtn">close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="help-overlay hidden" id="lyricsSearchOverlay">
+    <div class="help-box pls-box">
+      <div class="help-title">search lrclib</div>
+      <div class="lyr-search-row">
+        <input type="text" id="lyrSearchInput" placeholder="track title, artist&hellip;" spellcheck="false" />
+        <button id="lyrSearchBtn">search</button>
+      </div>
+      <div class="pls-list" id="lyrSearchResults"></div>
+      <div class="pls-foot lyr-search-foot">
+        <div class="lyr-search-target" id="lyrSearchTargetInfo"></div>
+        <button id="lyrSearchCloseBtn">close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="help-overlay hidden" id="lyricsUrlOverlay">
+    <div class="help-box" style="max-width: 380px;">
+      <div class="help-title">lrclib url</div>
+      <div class="lyr-search-row">
+        <input type="text" id="lyrUrlInput" placeholder="https://lrclib.net/tracks/&hellip; or id" spellcheck="false" />
+      </div>
+      <p class="note" style="margin-top:8px;"> </p>
+      <div class="confirm-actions">
+        <button id="lyrUrlCancelBtn">cancel</button>
+        <button id="lyrUrlLoadBtn" class="primary">load</button>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="lyricsFileInput" accept=".lrc,.vtt" style="display:none" />
+
   <div class="help-overlay hidden" id="helpOverlay">
     <div class="help-box">
       <div class="help-title">keyboard shortcuts</div>
@@ -1351,11 +1523,13 @@
       <button data-tab="audio">audio</button>
       <button data-tab="background">background</button>
       <button data-tab="window">window</button>
+      <button data-tab="misc">misc</button>
       <button data-tab="export">export</button>
       <button data-tab="presets">presets</button>
       <button class="nav-close" id="closeAppBtn">close</button>
     </div>
     <div class="panel-content">
+    <input type="text" class="settings-search" id="settingsSearch" placeholder="search settings&hellip;" spellcheck="false" />
     <div class="sec active show" data-tab="shape">
       <div class="seg" id="layoutSeg" style="margin-bottom:13px;">
         <button data-val="bars" class="on">bars</button>
@@ -1452,6 +1626,9 @@
       </div>
 
       <div id="spectrumParams">
+      <button class="adv-toggle" id="specAdvToggle"><span class="arrow">&#9656;</span>advanced spectrum settings</button>
+      <div id="specAdvanced" class="collapsed">
+      <div class="adv-inner">
       <div class="row"><label>fft size</label>
         <select id="specFftSize"><option>512</option><option>1024</option><option>2048</option><option>4096</option><option>8192</option><option>16384</option></select>
       </div>
@@ -1490,46 +1667,14 @@
       <div class="row"><label>rolloff q</label><input type="range" id="specRolloffQ" min="0" max="100" value="0" /><span class="val" id="specRolloffQVal">0.00</span></div>
       <div class="row"><label>rolloff rate</label><input type="range" id="specRolloffRate" min="0" max="65" value="0" /><span class="val" id="specRolloffRateVal">0</span></div>
       </div>
+      </div>
+      </div>
     </div>
 
     <div class="sec" data-tab="effects">
+      <p class="sec-head">post-processing</p>
       <div class="row"><label>bloom</label><input type="range" id="glow" min="0" max="40" value="20" /><span class="val" id="glowVal">20</span></div>
       <div class="row"><label>trails</label><input type="range" id="trails" min="0" max="100" value="0" /><span class="val" id="trailsVal">0</span></div>
-      <div class="row">
-        <label>particles</label>
-        <div class="seg seg-sm" id="particlesSeg">
-          <button data-val="off" class="on">off</button>
-          <button data-val="on">on</button>
-        </div>
-      </div>
-      <div class="row"><label>particle amount</label><input type="range" id="particlesAmt" min="0" max="100" value="50" /><span class="val" id="particlesAmtVal">50</span></div>
-      <div class="row">
-        <label>beat particles</label>
-        <div class="seg seg-sm" id="beatParticlesSeg">
-          <button data-val="off" class="on">off</button>
-          <button data-val="on">on</button>
-        </div>
-      </div>
-      <div class="row"><label>beat particle amount</label><input type="range" id="beatParticlesAmt" min="0" max="100" value="50" /><span class="val" id="beatParticlesAmtVal">50</span></div>
-      <div class="row">
-        <label>scale to sound</label>
-        <div class="seg seg-sm" id="scaleToSoundSeg">
-          <button data-val="off" class="on">off</button>
-          <button data-val="on">on</button>
-        </div>
-      </div>
-      <div class="row"><label>scale amount</label><input type="range" id="scaleToSoundAmt" min="0" max="100" value="50" /><span class="val" id="scaleToSoundAmtVal">50</span></div>
-      <p class="note">pumps the visualizer (and the ambient cover, a bit softer) in and out with the audio, like OBS's scale-to-sound.</p>
-      <div class="row">
-        <label>chromatic aberration</label>
-        <div class="seg seg-sm" id="chromaAbSeg">
-          <button data-val="off" class="on">off</button>
-          <button data-val="on">on</button>
-        </div>
-      </div>
-      <div class="row"><label>aberration amount</label><input type="range" id="chromaAbAmt" min="0" max="100" value="50" /><span class="val" id="chromaAbAmtVal">50</span></div>
-      <div class="row"><label>background pulse</label><input type="range" id="bgPulse" min="0" max="100" value="0" /><span class="val" id="bgPulseVal">0</span></div>
-      <div class="row"><label>flash</label><input type="range" id="flash" min="0" max="100" value="0" /><span class="val" id="flashVal">0</span></div>
       <div class="row">
         <label>reflection</label>
         <div class="seg seg-sm" id="reflectionSeg">
@@ -1558,6 +1703,45 @@
           <button data-val="on">on</button>
         </div>
       </div>
+
+      <p class="sec-head" style="margin-top:20px;">particles</p>
+      <div class="row">
+        <label>particles</label>
+        <div class="seg seg-sm" id="particlesSeg">
+          <button data-val="off" class="on">off</button>
+          <button data-val="on">on</button>
+        </div>
+      </div>
+      <div class="row"><label>particle amount</label><input type="range" id="particlesAmt" min="0" max="100" value="50" /><span class="val" id="particlesAmtVal">50</span></div>
+      <div class="row">
+        <label>beat particles</label>
+        <div class="seg seg-sm" id="beatParticlesSeg">
+          <button data-val="off" class="on">off</button>
+          <button data-val="on">on</button>
+        </div>
+      </div>
+      <div class="row"><label>beat particle amount</label><input type="range" id="beatParticlesAmt" min="0" max="100" value="50" /><span class="val" id="beatParticlesAmtVal">50</span></div>
+
+      <p class="sec-head" style="margin-top:20px;">audio-reactive</p>
+      <div class="row">
+        <label>scale to sound</label>
+        <div class="seg seg-sm" id="scaleToSoundSeg">
+          <button data-val="off" class="on">off</button>
+          <button data-val="on">on</button>
+        </div>
+      </div>
+      <div class="row"><label>scale amount</label><input type="range" id="scaleToSoundAmt" min="0" max="100" value="50" /><span class="val" id="scaleToSoundAmtVal">50</span></div>
+      <p class="note">pumps the visualizer (and the ambient cover, a bit softer) in and out with the audio, like OBS's scale-to-sound.</p>
+      <div class="row">
+        <label>chromatic aberration</label>
+        <div class="seg seg-sm" id="chromaAbSeg">
+          <button data-val="off" class="on">off</button>
+          <button data-val="on">on</button>
+        </div>
+      </div>
+      <div class="row"><label>aberration amount</label><input type="range" id="chromaAbAmt" min="0" max="100" value="50" /><span class="val" id="chromaAbAmtVal">50</span></div>
+      <div class="row"><label>background pulse</label><input type="range" id="bgPulse" min="0" max="100" value="0" /><span class="val" id="bgPulseVal">0</span></div>
+      <div class="row"><label>flash</label><input type="range" id="flash" min="0" max="100" value="0" /><span class="val" id="flashVal">0</span></div>
     </div>
 
     <div class="sec" data-tab="audio">
@@ -1665,14 +1849,20 @@
         </div>
       </div>
       <p class="note">blurs what's behind the bigger glass panels. turn off if it's too heavy for your PC.</p>
-      <div class="row" style="margin-top:13px;">
+    </div>
+
+    <div class="sec" data-tab="misc">
+      <p class="sec-head">playback</p>
+      <div class="row">
         <label>seek bar style</label>
       </div>
       <div class="seg" id="seekStyleSeg">
         <button data-val="thin" class="on">thin</button>
         <button data-val="waveform">waveform</button>
       </div>
-      <div class="row" style="margin-top:13px;">
+
+      <p class="sec-head" style="margin-top:20px;">integrations</p>
+      <div class="row">
         <label>discord rich presence</label>
         <div class="seg seg-sm" id="discordSeg">
           <button data-val="off" class="on">off</button>
@@ -1687,7 +1877,9 @@
         </div>
       </div>
       <div class="row lastfm-connect-row" id="lastfmConnectRow" style="margin-top:8px;"></div>
-      <div class="row" style="margin-top:13px;">
+
+      <p class="sec-head" style="margin-top:20px;">notifications</p>
+      <div class="row">
         <label>notify on track change</label>
         <div class="seg seg-sm" id="notifyTrackSeg">
           <button data-val="off" class="on">off</button>
@@ -1702,6 +1894,16 @@
         </div>
       </div>
       <p class="note">system notifications, only shown while the window isn't focused.</p>
+
+      <p class="sec-head" style="margin-top:20px;">easter eggs</p>
+      <div class="row">
+        <label>enable easter eggs</label>
+        <div class="seg seg-sm" id="easterEggsSeg">
+          <button data-val="off">off</button>
+          <button data-val="on" class="on">on</button>
+        </div>
+      </div>
+      <p class="note">some tracks trigger hidden visual effects. turn this off if you'd rather never run into one, or click <span class="ee-link" id="eeLink">here</span> to see exactly what they are first.</p>
     </div>
 
     <div class="sec" data-tab="export">
@@ -1740,7 +1942,7 @@
         <button data-val="off" class="on">off</button>
         <button data-val="on">on</button>
       </div>
-      <p class="note">burns the current lyric line into exported videos.</p>
+      <p class="note">lyrics will be displayed on your export video.</p>
     </div>
 
     <div class="sec" data-tab="presets">
@@ -1838,7 +2040,16 @@
           <button data-val="compact">compact</button>
           <button data-val="separated">separated</button>
         </div>
-        <button id="lyricsSourceItem">change source&hellip;</button>
+        <div class="menu-sep"></div>
+        <div class="menu-item has-sub" id="lyricsSrcItem">
+          <span>change source&hellip;</span>
+          <div class="submenu" id="lyricsSrcMenu" style="width: 160px;">
+            <button id="lyricsSrcSearch">search lrclib&hellip;</button>
+            <button id="lyricsSrcUrl">lrclib url&hellip;</button>
+            <button id="lyricsSrcFile">lyrics file&hellip;</button>
+          </div>
+        </div>
+        <div class="menu-sep"></div>
         <button id="lyricsFxItem"><span>visualizer fx on lyrics</span><span class="menu-side" id="lyricsFxCheck"></span></button>
       </div>
     </div>
@@ -1909,7 +2120,7 @@
     lastfmEnabled: false, lastfmSessionKey: '', lastfmUsername: '',
     gain: 100, eq0: 0, eq1: 0, eq2: 0, eq3: 0, eq4: 0, eq5: 0, eq6: 0, eq7: 0, eq8: 0, eq9: 0,
     shuffle: false, repeat: 'off', playbackRate: 1, drunkMode: '', normalize: false, crossfade: false, crossfadeDur: 4,
-    notifyTrack: true, notifyEnd: true,
+    notifyTrack: true, notifyEnd: true, easterEggs: true,
     specFftSize: 4096, specWindow: 'blackman', specSineExp: 3,
     specLogScale: true, specMirror: false, specChannel: 'mono',
     specTsmooth: 'ema', specInertia: 0.6, specFastPeaks: false, specGravity: 0,
@@ -2966,7 +3177,7 @@
   let megaBlasters = [], megaBones = [], megaLastBlaster = 0, megaNextBone = 0;
   const megaHeart = { y: 0, vy: 0, grounded: true };
   function checkMegalovania(name, title) {
-    const on = wordMatch((name || '') + ' ' + (title || ''), 'megalovania');
+    const on = S.easterEggs && wordMatch((name || '') + ' ' + (title || ''), 'megalovania');
     if (on && !megaMode) {
       megaStart = performance.now();
       megaBlasters = []; megaBones = [];
@@ -2984,7 +3195,7 @@
   function checkBloodLyrics(name, title, artist) {
     const hay = (name || '') + ' ' + (title || '') + ' ' + (artist || '');
     bloodEggTrack = null;
-    if (wordMatch(hay, 'mili')) {
+    if (S.easterEggs && wordMatch(hay, 'mili')) {
       for (const key in BLOOD_EGG_TRACKS) {
         if (BLOOD_EGG_TRACKS[key].match.some(m => wordMatch(hay, m))) { bloodEggTrack = key; break; }
       }
@@ -3020,14 +3231,16 @@
     el.style.top = (28 + Math.random() * 34).toFixed(1) + '%';
     el.style.animationDelay = (-Math.random() * 4.6).toFixed(2) + 's';
     const slowIntro = bloodEggTrack && BLOOD_EGG_TRACKS[bloodEggTrack].slowIntro;
+    const introGold = slowIntro && audio.currentTime < 120;
+    if (introGold) el.classList.add('blood-gold');
     const perCharDelay = (!slowIntro || audio.currentTime >= 120)
       ? Math.min(0.05, 1.3 / Math.max(1, text.length))
       : Math.min(0.16, 3.6 / Math.max(1, text.length));
     const cascadeDir = Math.random() < 0.5 ? 1 : -1;
-    const cascadeMax = 10 + Math.random() * 8;
+    const cascadeMax = 40 + Math.random() * 32;
     let delayCursor = 0, cascadeI = 0;
     const buildSpans = (segment, container) => {
-      const rowStep = Math.min(3.6, cascadeMax / Math.max(1, segment.length - 1));
+      const rowStep = Math.min(14.2, cascadeMax / Math.max(1, segment.length - 1));
       [...segment].forEach(ch => {
         const span = document.createElement('span');
         span.className = 'blood-char';
@@ -5792,6 +6005,17 @@
   function openSuggMenu() {
     const menu = $('lyricsSuggMenu');
     menu.innerHTML = '';
+    const header = document.createElement('div');
+    header.className = 'sugg-header';
+    const label = document.createElement('span');
+    label.textContent = 'other matches';
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'sugg-close-x';
+    closeBtn.textContent = '✕';
+    closeBtn.addEventListener('click', () => menu.classList.add('hidden'));
+    header.appendChild(label); header.appendChild(closeBtn);
+    menu.appendChild(header);
     for (const s of lyricsSuggs) {
       const b = document.createElement('button');
       const durTxt = s.duration ? `${Math.floor(s.duration / 60)}:${String(Math.round(s.duration % 60)).padStart(2, '0')}` : '';
@@ -5827,25 +6051,154 @@
     openSuggMenu();
   });
 
-  $('lyricsSourceItem').addEventListener('click', async () => {
+  function closeLyricsSearchOverlay() { $('lyricsSearchOverlay').classList.add('hidden'); }
+  function closeLyricsUrlOverlay() { $('lyricsUrlOverlay').classList.add('hidden'); }
+
+  function applyPickedLyrics(parsed, id) {
+    if (!parsed) { toast('could not use those lyrics', { error: true }); return false; }
+    if (S.lyricsMode === 'off') setLyricsMode('compact');
+    lyricsLines = parsed;
+    lyricsIdx = -2;
+    if (id != null) saveLyricsPick(id);
+    $('lyricsNotFound').classList.remove('show', 'clickable');
+    toast('lyrics applied');
+    return true;
+  }
+
+  let lyrSearchTarget = null;
+  $('lyricsSrcSearch').addEventListener('click', async () => {
     closeMoreMenu();
     const file = playlist[curIndex];
     if (!file || !window.winControls) { toast('no track playing', { error: true }); return; }
-    if (S.lyricsMode === 'off') setLyricsMode('compact');
-    const token = lyricsToken;
-    const loadEl = $('lyricsLoading');
-    loadEl.classList.add('show');
-    try {
-      const dur = await waitDuration();
-      const r = await window.winControls.lyricsFetch({ ...lyricsMeta(file, lastTags), duration: dur, suggestOnly: true });
-      if (token !== lyricsToken) return;
-      lyricsCurKey = file.name + '|' + Math.round(dur || 0);
-      lyricsSuggs = (r && r.suggestions) || [];
-      if (!lyricsSuggs.length) { toast('no alternative lyrics found', { error: true }); return; }
-      openSuggMenu();
-    } finally {
-      if (token === lyricsToken) loadEl.classList.remove('show');
-    }
+    const meta = lyricsMeta(file, lastTags);
+    lyrSearchTarget = { artist: meta.artist, title: meta.title, duration: await waitDuration() };
+    $('lyrSearchInput').value = [meta.artist, meta.title].filter(Boolean).join(' ');
+    $('lyrSearchResults').innerHTML = '';
+    const td = lyrSearchTarget.duration;
+    $('lyrSearchTargetInfo').innerHTML = td ? `now playing duration: <b>${Math.floor(td / 60)}:${String(Math.round(td % 60)).padStart(2, '0')}</b>` : '';
+    $('lyricsSearchOverlay').classList.remove('hidden');
+    $('lyrSearchInput').focus();
+    if ($('lyrSearchInput').value.trim()) runLyricsSearch();
+  });
+
+  function normLyrText(s) { return (s || '').toLowerCase().trim().replace(/\s+/g, ' '); }
+  function lyrTextMatches(a, b) { return !!a && !!b && (a.includes(b) || b.includes(a)); }
+  function findBestLyricsMatch(list) {
+    if (!lyrSearchTarget) return -1;
+    const ta = normLyrText(lyrSearchTarget.artist), tt = normLyrText(lyrSearchTarget.title), td = lyrSearchTarget.duration;
+    if (!ta || !tt || !td) return -1;
+    return list.findIndex(s => s.synced && lyrTextMatches(normLyrText(s.artistName), ta) && lyrTextMatches(normLyrText(s.trackName), tt) && Math.abs((s.duration || 0) - td) <= 2);
+  }
+
+  async function runLyricsSearch() {
+    const q = $('lyrSearchInput').value.trim();
+    const results = $('lyrSearchResults');
+    if (!q || !window.winControls) { results.innerHTML = '<div class="pls-empty">type something to search</div>'; return; }
+    results.innerHTML = '<div class="pls-empty">searching&hellip;</div>';
+    const r = await window.winControls.lyricsSearch(q);
+    let list = (r && r.results) || [];
+    if (!list.length) { results.innerHTML = '<div class="pls-empty">no results</div>'; return; }
+    let bestIdx = findBestLyricsMatch(list);
+    if (bestIdx > 0) { const [best] = list.splice(bestIdx, 1); list = [best, ...list]; bestIdx = 0; }
+    const currentId = lyricsCurKey ? lyricsPicks[lyricsCurKey] : null;
+    results.innerHTML = '';
+    list.forEach((s, i) => {
+      const isCurrent = currentId != null && s.id === currentId;
+      const row = document.createElement('div');
+      row.className = 'pls-row' + (isCurrent ? ' lyr-current' : i === bestIdx ? ' lyr-best' : '');
+      const durTxt = s.duration ? `${Math.floor(s.duration / 60)}:${String(Math.round(s.duration % 60)).padStart(2, '0')}` : '';
+      const nameWrap = document.createElement('div');
+      nameWrap.className = 'lyr-result-name';
+      const trackEl = document.createElement('div');
+      trackEl.className = 'lyr-result-track';
+      trackEl.textContent = s.trackName || '(untitled)';
+      const subEl = document.createElement('div');
+      subEl.className = 'lyr-result-sub';
+      subEl.textContent = [s.artistName, s.albumName].filter(Boolean).join(' · ');
+      nameWrap.appendChild(trackEl); nameWrap.appendChild(subEl);
+      const badgeWrap = document.createElement('div');
+      badgeWrap.className = 'lyr-badge-wrap';
+      const durEl = document.createElement('span');
+      durEl.className = 'lyr-duration';
+      durEl.textContent = durTxt || '--:--';
+      badgeWrap.appendChild(durEl);
+      if (isCurrent) {
+        const curTag = document.createElement('span');
+        curTag.className = 'lyr-current-tag';
+        curTag.textContent = 'current';
+        badgeWrap.appendChild(curTag);
+      } else if (i === bestIdx) {
+        const bestTag = document.createElement('span');
+        bestTag.className = 'lyr-best-tag';
+        bestTag.textContent = '★ best match';
+        badgeWrap.appendChild(bestTag);
+      }
+      const badge = document.createElement('span');
+      badge.className = 'lyr-badge' + (s.synced ? ' synced' : '');
+      badge.textContent = s.synced ? 'synced' : 'unsynced';
+      badgeWrap.appendChild(badge);
+      if (s.wordSynced) {
+        const wordBadge = document.createElement('span');
+        wordBadge.className = 'lyr-badge word-synced';
+        wordBadge.textContent = 'word sync';
+        badgeWrap.appendChild(wordBadge);
+      }
+      const openBtn = document.createElement('button');
+      openBtn.className = 'lyr-open-btn';
+      openBtn.title = 'open on lrclib.net';
+      openBtn.textContent = '↗';
+      openBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (window.winControls) window.winControls.lyricsOpenTrackPage(s.id);
+      });
+      badgeWrap.appendChild(openBtn);
+      row.appendChild(nameWrap); row.appendChild(badgeWrap);
+      row.addEventListener('click', async () => {
+        if (!s.synced) { toast('no synced lyrics for that result', { error: true }); return; }
+        const pr = await window.winControls.lyricsFetchById(s.id);
+        const parsed = pr && pr.synced ? parseLRC(pr.synced) : null;
+        if (applyPickedLyrics(parsed, s.id)) closeLyricsSearchOverlay();
+      });
+      results.appendChild(row);
+    });
+  }
+  $('lyrSearchBtn').addEventListener('click', runLyricsSearch);
+  $('lyrSearchInput').addEventListener('keydown', e => { if (e.key === 'Enter') runLyricsSearch(); });
+  $('lyrSearchCloseBtn').addEventListener('click', closeLyricsSearchOverlay);
+  $('lyricsSearchOverlay').addEventListener('click', e => { if (e.target === $('lyricsSearchOverlay')) closeLyricsSearchOverlay(); });
+
+  $('lyricsSrcUrl').addEventListener('click', () => {
+    closeMoreMenu();
+    if (!playlist[curIndex] || !window.winControls) { toast('no track playing', { error: true }); return; }
+    $('lyrUrlInput').value = '';
+    $('lyricsUrlOverlay').classList.remove('hidden');
+    $('lyrUrlInput').focus();
+  });
+  async function loadLyricsFromUrl() {
+    const raw = $('lyrUrlInput').value.trim();
+    const m = raw.match(/(\d+)\s*$/);
+    if (!m) { toast('paste a valid lrclib url or id', { error: true }); return; }
+    const pr = await window.winControls.lyricsFetchById(m[1]);
+    const parsed = pr && pr.synced ? parseLRC(pr.synced) : null;
+    if (applyPickedLyrics(parsed, m[1])) closeLyricsUrlOverlay();
+  }
+  $('lyrUrlLoadBtn').addEventListener('click', loadLyricsFromUrl);
+  $('lyrUrlInput').addEventListener('keydown', e => { if (e.key === 'Enter') loadLyricsFromUrl(); });
+  $('lyrUrlCancelBtn').addEventListener('click', closeLyricsUrlOverlay);
+  $('lyricsUrlOverlay').addEventListener('click', e => { if (e.target === $('lyricsUrlOverlay')) closeLyricsUrlOverlay(); });
+
+  $('lyricsSrcFile').addEventListener('click', () => {
+    closeMoreMenu();
+    if (!playlist[curIndex]) { toast('no track playing', { error: true }); return; }
+    $('lyricsFileInput').click();
+  });
+  $('lyricsFileInput').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const text = await file.text();
+    const parsed = /\.vtt$/i.test(file.name) ? parseVTT(text) : parseLRC(text);
+    applyPickedLyrics(parsed, null);
   });
 
   function updateLyricsOverlay() {
@@ -6130,6 +6483,7 @@
   function closeLyrSub() {
     clearTimeout(lyrSubCloseT); lyrSubCloseT = null;
     lyricsSubMenu.classList.remove('open');
+    closeSrcSub();
   }
   lyricsSubItem.addEventListener('mouseenter', (e) => { closeSpeedSub(); openLyrSub(e); });
   window.addEventListener('mousemove', (e) => {
@@ -6139,6 +6493,9 @@
     const subR = lyricsSubMenu.getBoundingClientRect();
     if (inRect(itemR, x, y)) { lyrSubApex = { x, y }; clearTimeout(lyrSubCloseT); lyrSubCloseT = null; return; }
     if (inRect(subR, x, y, 2)) { clearTimeout(lyrSubCloseT); lyrSubCloseT = null; return; }
+    if (lyricsSrcMenu.classList.contains('open') && inRect(lyricsSrcMenu.getBoundingClientRect(), x, y, 8)) {
+      clearTimeout(lyrSubCloseT); lyrSubCloseT = null; return;
+    }
     const apex = lyrSubApex || { x: itemR.right - 8, y: (itemR.top + itemR.bottom) / 2 };
     const inCone = inTriangle({ x, y }, apex, { x: subR.left, y: subR.top - 10 }, { x: subR.left, y: subR.bottom + 10 });
     if (inCone) {
@@ -6146,6 +6503,35 @@
       lyrSubCloseT = setTimeout(closeLyrSub, 500);
     } else {
       closeLyrSub();
+    }
+  });
+
+  const lyricsSrcItem = $('lyricsSrcItem'), lyricsSrcMenu = $('lyricsSrcMenu');
+  let srcSubApex = null, srcSubCloseT = null;
+  function openSrcSub(e) {
+    clearTimeout(srcSubCloseT); srcSubCloseT = null;
+    if (e) srcSubApex = { x: e.clientX, y: e.clientY };
+    lyricsSrcMenu.classList.add('open');
+  }
+  function closeSrcSub() {
+    clearTimeout(srcSubCloseT); srcSubCloseT = null;
+    lyricsSrcMenu.classList.remove('open');
+  }
+  lyricsSrcItem.addEventListener('mouseenter', (e) => { openSrcSub(e); });
+  window.addEventListener('mousemove', (e) => {
+    if (!lyricsSrcMenu.classList.contains('open')) return;
+    const x = e.clientX, y = e.clientY;
+    const itemR = lyricsSrcItem.getBoundingClientRect();
+    const subR = lyricsSrcMenu.getBoundingClientRect();
+    if (inRect(itemR, x, y)) { srcSubApex = { x, y }; clearTimeout(srcSubCloseT); srcSubCloseT = null; return; }
+    if (inRect(subR, x, y, 2)) { clearTimeout(srcSubCloseT); srcSubCloseT = null; return; }
+    const apex = srcSubApex || { x: itemR.right - 8, y: (itemR.top + itemR.bottom) / 2 };
+    const inCone = inTriangle({ x, y }, apex, { x: subR.left, y: subR.top - 10 }, { x: subR.left, y: subR.bottom + 10 });
+    if (inCone) {
+      clearTimeout(srcSubCloseT);
+      srcSubCloseT = setTimeout(closeSrcSub, 500);
+    } else {
+      closeSrcSub();
     }
   });
 
@@ -6347,6 +6733,8 @@
       else if (!$('plsOverlay').classList.contains('hidden')) $('plsOverlay').classList.add('hidden');
       else if (!$('statsOverlay').classList.contains('hidden')) $('statsOverlay').classList.add('hidden');
       else if (!$('recentOverlay').classList.contains('hidden')) $('recentOverlay').classList.add('hidden');
+      else if (!$('lyricsSearchOverlay').classList.contains('hidden')) closeLyricsSearchOverlay();
+      else if (!$('lyricsUrlOverlay').classList.contains('hidden')) closeLyricsUrlOverlay();
       else if (!$('helpOverlay').classList.contains('hidden')) $('helpOverlay').classList.add('hidden');
       else if (miniOn) setMiniMode(false);
     }
@@ -6422,6 +6810,103 @@
       switchTab(btn.dataset.tab);
     });
   });
+
+  $('specAdvToggle').addEventListener('click', () => {
+    const collapsed = $('specAdvanced').classList.toggle('collapsed');
+    $('specAdvToggle').classList.toggle('open', !collapsed);
+  });
+
+  function searchGroups(container) {
+    const groups = [];
+    let cur = null;
+    for (const el of container.children) {
+      if (el.classList.contains('settings-search')) continue;
+      const isBreak = el.classList.contains('sec-head') || el.classList.contains('shape-opt') ||
+        (el.classList.contains('row') && el.querySelector('label'));
+      const isContainer = !isBreak && el.querySelector('.row label');
+      if (isBreak) { cur = { els: [el] }; groups.push(cur); }
+      else if (isContainer) { cur = null; groups.push(...searchGroups(el)); }
+      else if (cur) cur.els.push(el);
+      else { cur = { els: [el] }; groups.push(cur); }
+    }
+    return groups;
+  }
+  $('settingsSearch').addEventListener('input', () => {
+    const q = $('settingsSearch').value.trim().toLowerCase();
+    const panel = $('panel');
+    panel.querySelectorAll('.srch-hide').forEach(el => el.classList.remove('srch-hide'));
+    panel.classList.toggle('searching', !!q);
+    if (!q) return;
+    for (const sec of panel.querySelectorAll('.sec')) {
+      let headMatched = false;
+      for (const g of searchGroups(sec)) {
+        const isHead = g.els[0].classList.contains('sec-head');
+        if (isHead) headMatched = false;
+        const text = g.els.map(e => e.textContent).join(' ').toLowerCase();
+        const match = text.includes(q);
+        if (isHead && match) headMatched = true;
+        if (!match && !headMatched) g.els.forEach(e => e.classList.add('srch-hide'));
+      }
+    }
+  });
+
+  const clearX = document.createElement('button');
+  clearX.type = 'button'; clearX.className = 'input-clear-x'; clearX.textContent = '✕'; clearX.tabIndex = -1;
+  document.body.appendChild(clearX);
+  let clearTarget = null;
+  function clearXVisible() {
+    if (!clearTarget || !clearTarget.value || document.activeElement !== clearTarget) return false;
+    if (clearTarget.offsetParent === null) return false;
+    const overlay = clearTarget.closest('.help-overlay');
+    if (overlay && overlay.classList.contains('hidden')) return false;
+    return true;
+  }
+  function tickClearX() {
+    if (clearXVisible()) {
+      const r = clearTarget.getBoundingClientRect();
+      clearX.style.left = (r.right - 22) + 'px';
+      clearX.style.top = (r.top + r.height / 2 - 8) + 'px';
+      clearX.classList.add('show');
+    } else {
+      clearX.classList.remove('show');
+    }
+    requestAnimationFrame(tickClearX);
+  }
+  requestAnimationFrame(tickClearX);
+  document.addEventListener('focusin', e => {
+    if (e.target.matches('input[type="text"]')) clearTarget = e.target;
+  });
+  document.addEventListener('focusout', e => {
+    if (e.target === clearTarget) setTimeout(() => { if (document.activeElement !== clearTarget) clearTarget = null; }, 0);
+  });
+  clearX.addEventListener('pointerdown', e => e.preventDefault());
+  clearX.addEventListener('click', () => {
+    if (!clearTarget) return;
+    clearTarget.value = '';
+    clearTarget.dispatchEvent(new Event('input', { bubbles: true }));
+    clearTarget.focus();
+  });
+
+  let sliderPeek = false, peekRow = null;
+  const startPeek = e => {
+    if (sliderPeek || !e.target.matches('input[type=range]')) return;
+    sliderPeek = true;
+    $('panel').classList.add('peek');
+    peekRow = e.target.closest('.row');
+    if (peekRow) peekRow.classList.add('peek-active');
+  };
+  const endPeek = () => {
+    if (!sliderPeek) return;
+    sliderPeek = false;
+    $('panel').classList.remove('peek');
+    if (peekRow) { peekRow.classList.remove('peek-active'); peekRow = null; }
+  };
+  $('panel').addEventListener('pointerdown', startPeek);
+  $('panel').addEventListener('mousedown', startPeek);
+  window.addEventListener('pointerup', endPeek);
+  window.addEventListener('pointercancel', endPeek);
+  window.addEventListener('mouseup', endPeek);
+  window.addEventListener('blur', endPeek);
 
   const PRESETS = [
     { name: 'white', mode: 'solid',    c1: '#ffffff' },
@@ -6819,6 +7304,25 @@
   $('notifyEndSeg').querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => { S.notifyEnd = btn.dataset.val === 'on'; syncUI(); save(); });
   });
+  $('easterEggsSeg').querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      S.easterEggs = btn.dataset.val === 'on';
+      if (!S.easterEggs) {
+        megaMode = false;
+        if (megaShaken) { canvas.style.transform = ''; megaShaken = false; }
+        bloodEggActive = false;
+        bloodEggTrack = null;
+        retireAllBloodLines(true);
+      }
+      syncUI(); save();
+    });
+  });
+  $('eeLink').addEventListener('click', async () => {
+    const ok = await confirmDialog('this will reveal every hidden easter egg and exactly which track triggers it. if you want to stumble onto them yourself, close this instead.', 'show me anyway', 'cancel');
+    if (ok) $('eeTableOverlay').classList.remove('hidden');
+  });
+  $('eeTableCloseBtn').addEventListener('click', () => $('eeTableOverlay').classList.add('hidden'));
+  $('eeTableOverlay').addEventListener('click', e => { if (e.target === $('eeTableOverlay')) $('eeTableOverlay').classList.add('hidden'); });
   setInterval(() => { if (S.discordEnabled && S.discordClientId) applyDiscordConnection(); }, 20000);
   applyDiscordConnection();
 
@@ -7000,6 +7504,7 @@
     syncLastfmUI();
     $('notifyTrackSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.notifyTrack));
     $('notifyEndSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.notifyEnd));
+    $('easterEggsSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.easterEggs));
     document.body.classList.toggle('vignette', S.vignette);
     document.body.classList.toggle('win-transparent', S.winTransparent);
     presetsEl.querySelectorAll('.swatch').forEach((b, i) => {
