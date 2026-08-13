@@ -1,4 +1,5 @@
-# mediyyu
+# mediyyu  
+*/mɪdijuː/*
 
 a music player + audio visualizer for windows, built with electron.
 
