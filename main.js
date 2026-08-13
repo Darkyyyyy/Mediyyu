@@ -581,7 +581,33 @@ ipcMain.handle('lyrics:findLocal', async (e, audioPath) => {
   } catch { return null; }
 });
 const lrclibUA = () => `Mediyyu v${app.getVersion()} (https://github.com/Darkyyyyy/Mediyyu)`;
-ipcMain.handle('lyrics:fetch', async (e, { artist, title, album, duration, suggestOnly }) => {
+async function neteaseFetchLyric(artist, title, duration) {
+  try {
+    const query = [artist, title].filter(Boolean).join(' ').trim();
+    if (!query) return null;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    const headers = { 'User-Agent': lrclibUA(), 'Referer': 'https://music.163.com/' };
+    const sr = await fetch('https://music.163.com/api/search/get?s=' + encodeURIComponent(query) + '&type=1&limit=8', { headers, signal: controller.signal });
+    if (!sr.ok) { clearTimeout(timeout); return null; }
+    const sj = await sr.json();
+    const songs = (sj && sj.result && sj.result.songs) || [];
+    if (!songs.length) { clearTimeout(timeout); return null; }
+    let best = songs[0];
+    if (duration) {
+      const close = songs.filter(s => s.duration && Math.abs(Math.round(s.duration / 1000) - duration) <= 3);
+      if (close.length) best = close[0];
+    }
+    const lr = await fetch('https://music.163.com/api/song/lyric?id=' + encodeURIComponent(best.id) + '&lv=1&kv=1&tv=-1', { headers, signal: controller.signal });
+    clearTimeout(timeout);
+    if (!lr.ok) return null;
+    const lj = await lr.json();
+    const lyric = lj && lj.lrc && lj.lrc.lyric;
+    if (!lyric || !lyric.trim()) return null;
+    return { synced: lyric };
+  } catch { return null; }
+}
+ipcMain.handle('lyrics:fetch', async (e, { artist, title, album, duration, suggestOnly, sourcePref }) => {
   try {
     const q = (o) => Object.entries(o).filter(([, v]) => v != null && v !== '').map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
     const controller = new AbortController();
@@ -604,38 +630,60 @@ ipcMain.handle('lyrics:fetch', async (e, { artist, title, album, duration, sugge
       } catch {}
       return [];
     };
-    let exact = null;
-    if (!suggestOnly) {
-      const r = await fetch('https://lrclib.net/api/get?' + q({ artist_name: artist, track_name: title, album_name: album, duration: duration ? Math.round(duration) : null }), opts);
-      if (r.ok) {
-        const j = await r.json();
-        if (j.syncedLyrics || j.plainLyrics) exact = { synced: j.syncedLyrics || '', plain: j.plainLyrics || '' };
-      }
-    }
-    if (suggestOnly || !exact || !exact.synced) {
-      const [byMeta, byQuery, byTitle] = await Promise.all([
-        fetchList({ artist_name: artist, track_name: title }),
-        artist && title ? fetchList({ q: artist + ' ' + title }) : [],
-        title ? fetchList({ q: title }) : [],
-      ]);
-      collect(byMeta);
+    async function fetchFromLrclib() {
+      let exact = null;
       if (!suggestOnly) {
-        const close = duration ? suggestions.filter(x => x.duration && Math.abs(x.duration - duration) <= 7) : [];
-        if (close.length) {
-          close.sort((a, b) => Math.abs(a.duration - duration) - Math.abs(b.duration - duration));
-          exact = { synced: close[0].synced, plain: '' };
+        const r = await fetch('https://lrclib.net/api/get?' + q({ artist_name: artist, track_name: title, album_name: album, duration: duration ? Math.round(duration) : null }), opts);
+        if (r.ok) {
+          const j = await r.json();
+          if (j.syncedLyrics || j.plainLyrics) exact = { synced: j.syncedLyrics || '', plain: j.plainLyrics || '' };
         }
       }
-      if (suggestOnly || !exact) {
-        collect(byQuery);
-        if (suggestions.length < 8) collect(byTitle);
+      if (suggestOnly || !exact || !exact.synced) {
+        const [byMeta, byQuery, byTitle] = await Promise.all([
+          fetchList({ artist_name: artist, track_name: title }),
+          artist && title ? fetchList({ q: artist + ' ' + title }) : [],
+          title ? fetchList({ q: title }) : [],
+        ]);
+        collect(byMeta);
+        if (!suggestOnly) {
+          const close = duration ? suggestions.filter(x => x.duration && Math.abs(x.duration - duration) <= 7) : [];
+          if (close.length) {
+            close.sort((a, b) => Math.abs(a.duration - duration) - Math.abs(b.duration - duration));
+            exact = { synced: close[0].synced, plain: '' };
+          }
+        }
+        if (suggestOnly || !exact) {
+          collect(byQuery);
+          if (suggestions.length < 8) collect(byTitle);
+        }
       }
+      return exact;
+    }
+    let exact = null;
+    let source = '';
+    async function tryNetease() {
+      const ne = await neteaseFetchLyric(artist, title, duration);
+      if (ne && ne.synced) { exact = { synced: ne.synced, plain: '' }; source = 'netease'; return true; }
+      return false;
+    }
+    async function tryLrclib() {
+      const lr = await fetchFromLrclib();
+      if (lr && lr.synced) { exact = lr; source = 'lrclib'; return true; }
+      if (lr && !exact) exact = lr;
+      return false;
+    }
+    if (!suggestOnly && sourcePref === 'netease') {
+      if (!(await tryNetease())) await tryLrclib();
+    } else {
+      if (!(await tryLrclib()) && !suggestOnly) await tryNetease();
     }
     clearTimeout(timeout);
     return {
       synced: exact ? exact.synced : '',
       plain: exact ? exact.plain : '',
       suggestions: !suggestOnly && exact && exact.synced ? [] : suggestions.slice(0, 8),
+      source,
     };
   } catch { return null; }
 });

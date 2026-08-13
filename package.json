@@ -1,6 +1,6 @@
 {
   "name": "mediyyu",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Mediyyu audio visualizer desktop app",
   "author": "Wiliam",
   "main": "main.js",
@@ -56,11 +56,13 @@
       "target": [
         "nsis",
         "portable"
-      ]
+      ],
+      "artifactName": "${productName}-${version}.${ext}"
     },
     "nsis": {
       "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico"
+      "uninstallerIcon": "build/icon.ico",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "mac": {
       "target": [

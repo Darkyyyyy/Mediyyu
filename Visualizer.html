@@ -208,6 +208,14 @@
     margin-top: 7px; font-size: 14px; color: rgba(255,255,255,.55);
     text-shadow: 0 1px 8px rgba(0,0,0,.8);
   }
+  .lyric-gap-bar {
+    display: none; width: 120px; height: 3px; margin: 8px auto 0;
+    background: rgba(255,255,255,.15); border-radius: 3px; overflow: hidden;
+  }
+  .lyric-gap-bar.show { display: block; }
+  .lyric-gap-fill {
+    height: 100%; width: 0%; background: rgba(255,255,255,.7); border-radius: 3px;
+  }
   .lyric-next.fadein { animation: lyricNextIn .38s ease .1s backwards; }
   @keyframes lyricNextIn { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
   .blood-lyrics {
@@ -492,6 +500,7 @@
   .res-grid button:hover { background: rgba(255,255,255,.13); border-color: rgba(255,255,255,.3); }
   .res-grid button.sel { border-color: #fff; background: rgba(255,255,255,.18); }
   .res-grid.disabled, .seg.disabled { opacity: .35; pointer-events: none; }
+  .row.disabled { opacity: .35; pointer-events: none; }
   .bgmode {
     width: 100%; margin-top: 9px; padding: 9px; border-radius: 9px; cursor: pointer;
     border: 1px solid var(--line); background: rgba(255,255,255,.05); color: rgba(255,255,255,.8);
@@ -607,7 +616,7 @@
   .play.fav-on { background: rgba(255,90,120,.9); color: #fff; }
 
   .more-menu {
-    position: fixed; z-index: 60; width: 205px; padding: 6px;
+    position: fixed; z-index: 60; width: 244px; padding: 7px;
     background-color: rgba(18,19,22,.92);
     border: 1px solid rgba(255,255,255,.12); border-radius: 13px;
     box-shadow: 0 10px 34px rgba(0,0,0,.5);
@@ -615,14 +624,15 @@
   }
   .more-menu.hidden { opacity: 0; transform: scale(.96); pointer-events: none; }
   .menu-item {
-    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    display: flex; align-items: center; justify-content: flex-start; gap: 11px;
     width: 100%; border: 0; background: none; cursor: pointer;
-    font-family: var(--ui); font-size: 12.5px; color: rgba(255,255,255,.88);
-    padding: 8px 10px; border-radius: 8px; position: relative; box-sizing: border-box;
+    font-family: var(--ui); font-size: 13.5px; color: rgba(255,255,255,.88);
+    padding: 9px 11px; border-radius: 8px; position: relative; box-sizing: border-box;
   }
   .menu-item:hover { background: rgba(255,255,255,.1); }
-  .menu-item.has-sub::after { content: '▸'; color: var(--dim); font-size: 11px; margin-left: -4px; }
-  .menu-side { font-size: 11px; color: var(--dim); }
+  .menu-item.has-sub::after { content: '▸'; color: var(--dim); font-size: 12px; margin-left: -4px; }
+  .menu-side { font-size: 12px; color: var(--dim); margin-left: auto; }
+  .menu-icon { width: 20px; height: 20px; object-fit: contain; opacity: .75; flex: 0 0 auto; display: block; }
   .menu-sep { height: 1px; margin: 5px 8px; background: rgba(255,255,255,.1); }
   .menu-slider { display: flex; align-items: center; gap: 9px; padding: 4px 10px 8px; }
   .menu-slider input[type=range] { flex: 1; width: auto; }
@@ -1258,6 +1268,7 @@
 
   <div class="lyrics-box off" id="lyricsBox">
     <div class="lyric-cur" id="lyricCur"></div>
+    <div class="lyric-gap-bar" id="lyricGapBar"><div class="lyric-gap-fill" id="lyricGapFill"></div></div>
     <div class="lyric-next" id="lyricNext"></div>
   </div>
   <div class="blood-lyrics" id="bloodLyrics"></div>
@@ -1770,6 +1781,15 @@
         <button data-eq="vocal">vocal</button>
         <button data-eq="warm">warm</button>
       </div>
+      <div class="sec-divider"></div>
+      <div class="row">
+        <label>crossfade</label>
+        <div class="seg seg-sm" id="xfadeSeg">
+          <button data-val="off" class="on">off</button>
+          <button data-val="on">on</button>
+        </div>
+      </div>
+      <div class="row" id="xfadeDurRow" style="margin-top:11px;"><label>crossfade duration</label><input type="range" id="xfadeDur" min="1" max="10" step="1" value="4" /><span class="val" id="xfadeDurVal">4s</span></div>
     </div>
 
     <div class="sec" data-tab="background">
@@ -2009,7 +2029,7 @@
 
   <div class="more-menu hidden" id="moreMenu">
     <div class="menu-item has-sub" id="speedItem">
-      <span>playback speed</span><span class="menu-side" id="speedCur">1&times;</span>
+      <img class="menu-icon" src="assets/buttons/playback.png" alt="" /><span>playback speed</span><span class="menu-side" id="speedCur">1&times;</span>
       <div class="submenu" id="speedMenu">
         <button data-speed="0.5">0.5&times;</button>
         <button data-speed="0.75">0.75&times;</button>
@@ -2026,14 +2046,9 @@
         </div>
       </div>
     </div>
-    <button class="menu-item" id="normItem"><span>normalization</span><span class="menu-side" id="normCheck"></span></button>
-    <button class="menu-item" id="xfadeItem"><span>crossfade</span><span class="menu-side" id="xfadeCheck"></span></button>
-    <div class="menu-slider" id="xfadeDurRow">
-      <input type="range" id="xfadeDur" min="1" max="10" step="1" value="4" />
-      <span class="menu-side" id="xfadeDurVal">4s</span>
-    </div>
+    <button class="menu-item" id="normItem"><img class="menu-icon" src="assets/buttons/norm.png" alt="" /><span>normalization</span><span class="menu-side" id="normCheck"></span></button>
     <div class="menu-item has-sub" id="lyricsSubItem">
-      <span>lyrics</span><span class="menu-side" id="lyricsCheck"></span>
+      <img class="menu-icon" src="assets/buttons/lyrics.png" alt="" /><span>lyrics</span><span class="menu-side" id="lyricsCheck"></span>
       <div class="submenu" id="lyricsSubMenu" style="width: 212px;">
         <div class="seg" id="lyricsModeSeg" style="margin-bottom: 6px;">
           <button data-val="off">off</button>
@@ -2044,6 +2059,11 @@
         <div class="menu-item has-sub" id="lyricsSrcItem">
           <span>change source&hellip;</span>
           <div class="submenu" id="lyricsSrcMenu" style="width: 160px;">
+            <div class="seg" id="lyricsSourcePrefSeg" style="margin: 2px 8px 7px;">
+              <button data-val="lrclib" class="on">lrclib</button>
+              <button data-val="netease">netease</button>
+            </div>
+            <div class="menu-sep"></div>
             <button id="lyricsSrcSearch">search lrclib&hellip;</button>
             <button id="lyricsSrcUrl">lrclib url&hellip;</button>
             <button id="lyricsSrcFile">lyrics file&hellip;</button>
@@ -2054,8 +2074,8 @@
       </div>
     </div>
     <div class="menu-sep"></div>
-    <button class="menu-item" id="statsItem"><span>listening stats&hellip;</span></button>
-    <button class="menu-item" id="miniItem"><span>mini mode</span></button>
+    <button class="menu-item" id="statsItem"><img class="menu-icon" src="assets/buttons/stats.png" alt="" /><span>listening stats&hellip;</span></button>
+    <button class="menu-item" id="miniItem"><img class="menu-icon" src="assets/buttons/miniMode.png" alt="" /><span>mini mode</span></button>
   </div>
 
   <div class="minibar" id="miniBar">
@@ -2110,7 +2130,7 @@
     winTransparent: false, alwaysOnTop: false,
     bgCoverArt: false, bgCoverBlur: 46, bgCoverDim: 55,
     waveStyle: 'line', waveSmooth: 40, fallsSpeed: 50, psyPetals: 9, psySpeed: 50, psyTrail: 50,
-    lyricsMode: 'compact', lyricsFx: true,
+    lyricsMode: 'compact', lyricsFx: true, lyricsSourcePref: 'lrclib',
     volume: 100, volWheelStep: 5, seekWheelStep: 5, seekBarStyle: 'thin',
     bg: '#0a0b0d',
     glassTint: '#ffffff', glassTintAuto: false, glassAlpha: 5, glassBlur: true,
@@ -3735,6 +3755,7 @@
     updateDebugOverlay(nowTs);
     drawPerfGraph(nowTs);
     updateLyricsOverlay();
+    updateLyricsGapBar();
     syncLyricsWin(nowTs);
     paintSliders();
     drawSeekWave();
@@ -5958,9 +5979,14 @@
           const parsed = pr && pr.synced ? parseLRC(pr.synced) : null;
           if (parsed) { lyricsLines = parsed; return; }
         }
-        const r = await window.winControls.lyricsFetch({ ...lyricsMeta(file, tags), duration: dur });
+        const r = await window.winControls.lyricsFetch({ ...lyricsMeta(file, tags), duration: dur, sourcePref: S.lyricsSourcePref });
         if (token !== lyricsToken) return;
-        if (r && r.synced) lyricsLines = parseLRC(r.synced);
+        if (r && r.synced) {
+          lyricsLines = parseLRC(r.synced);
+          if (lyricsLines && r.source && r.source !== S.lyricsSourcePref) {
+            toast(`lyrics source: ${r.source} (${S.lyricsSourcePref} had no match)`);
+          }
+        }
         if (!lyricsLines && r && r.suggestions && r.suggestions.length) lyricsSuggs = r.suggestions;
       }
     } finally {
@@ -6239,6 +6265,22 @@
     nextEl.classList.add('fadein');
   }
 
+  function updateLyricsGapBar() {
+    const bar = $('lyricGapBar');
+    if (bloodEggActive || S.lyricsMode !== 'compact' || !lyricsLines || !ready) { bar.classList.remove('show'); return; }
+    const idx = lyricsIdx;
+    const curText = idx >= 0 ? lyricsLines[idx].text : '';
+    const nextIdx = idx + 1;
+    if (curText || nextIdx >= lyricsLines.length) { bar.classList.remove('show'); return; }
+    const gapStart = idx >= 0 ? lyricsLines[idx].t : 0;
+    const gapEnd = lyricsLines[nextIdx].t;
+    const gapDur = gapEnd - gapStart;
+    if (gapDur < 5) { bar.classList.remove('show'); return; }
+    const progress = Math.max(0, Math.min(1, (audio.currentTime - gapStart) / gapDur));
+    $('lyricGapFill').style.width = (progress * 100) + '%';
+    bar.classList.add('show');
+  }
+
   function firstRGBA(str) {
     const m = (str || '').match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+))?\)/);
     if (!m) return { r: 255, g: 255, b: 255, a: 1 };
@@ -6336,6 +6378,13 @@
   $('lyricsModeSeg').querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => setLyricsMode(btn.dataset.val));
   });
+  $('lyricsSourcePrefSeg').querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      S.lyricsSourcePref = btn.dataset.val;
+      syncMoreMenu(); save();
+      toast('lyrics source preference: ' + S.lyricsSourcePref);
+    });
+  });
   if (window.winControls && window.winControls.onLyricsWinState) {
     window.winControls.onLyricsWinState((open) => {
       lyricsWinOpen = open;
@@ -6432,13 +6481,10 @@
     $('drunkOpts').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.drunk === S.drunkMode));
     $('speedCur').innerHTML = S.drunkMode ? 'drunk' : S.playbackRate + '&times;';
     $('normCheck').textContent = S.normalize ? '✓' : '';
-    $('xfadeCheck').textContent = S.crossfade ? '✓' : '';
     $('lyricsFxCheck').textContent = S.lyricsFx ? '✓' : '';
     $('lyricsCheck').textContent = S.lyricsMode;
     $('lyricsModeSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.val === S.lyricsMode));
-    $('xfadeDur').value = S.crossfadeDur;
-    $('xfadeDurVal').textContent = S.crossfadeDur + 's';
-    $('xfadeDurRow').classList.toggle('disabled', !S.crossfade);
+    $('lyricsSourcePrefSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.val === S.lyricsSourcePref));
   }
   function closeMoreMenu() { $('moreMenu').classList.add('hidden'); $('moreBtn').classList.remove('menu-open'); closeSpeedSub(); closeLyrSub(); }
   $('moreBtn').addEventListener('click', (e) => {
@@ -6447,7 +6493,7 @@
     if (!menu.classList.contains('hidden')) { closeMoreMenu(); return; }
     syncMoreMenu();
     const rect = $('moreBtn').getBoundingClientRect();
-    menu.style.left = Math.max(8, Math.min(window.innerWidth - 213, rect.right - 205)) + 'px';
+    menu.style.left = Math.max(8, Math.min(window.innerWidth - 252, rect.right - 244)) + 'px';
     menu.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
     menu.classList.remove('hidden');
     $('moreBtn').classList.add('menu-open');
@@ -6616,11 +6662,13 @@
   });
   applyDrunkMode();
   $('normItem').addEventListener('click', () => { S.normalize = !S.normalize; applyAudioChain(); syncMoreMenu(); save(); });
-  $('xfadeItem').addEventListener('click', () => { S.crossfade = !S.crossfade; syncMoreMenu(); save(); });
   $('lyricsFxItem').addEventListener('click', () => {
     S.lyricsFx = !S.lyricsFx;
     if (!S.lyricsFx) { $('lyricsBox').style.transform = ''; $('lyricsBox').style.filter = ''; $('bloodLyrics').style.transform = ''; $('bloodLyrics').style.filter = ''; lyricsXformLast = null; bloodXformLast = null; lyricsChromaApplied = false; }
     syncMoreMenu(); save();
+  });
+  $('xfadeSeg').querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => { S.crossfade = btn.dataset.val === 'on'; syncUI(); save(); });
   });
   $('xfadeDur').addEventListener('input', (e) => { S.crossfadeDur = +e.target.value; $('xfadeDurVal').textContent = S.crossfadeDur + 's'; save(); });
   $('miniItem').addEventListener('click', () => { closeMoreMenu(); setMiniMode(true); });
@@ -7451,6 +7499,10 @@
       $('eq' + i + 'Val').textContent = (S['eq' + i] > 0 ? '+' : '') + S['eq' + i];
     });
     syncEqPresetSel();
+    $('xfadeSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.crossfade));
+    $('xfadeDur').value = S.crossfadeDur;
+    $('xfadeDurVal').textContent = S.crossfadeDur + 's';
+    $('xfadeDurRow').classList.toggle('disabled', !S.crossfade);
     applyAudioChain();
     $('shuffleBtn').classList.toggle('tog-on', S.shuffle);
     $('repeatBtn').classList.toggle('tog-on', S.repeat !== 'off');
