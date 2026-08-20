@@ -13,8 +13,8 @@ const ffmpegPath = app.isPackaged
   ? require('ffmpeg-static').replace('app.asar', 'app.asar.unpacked')
   : require('ffmpeg-static');
 
-const AUDIO_EXT_RE = /\.(mp3|wav|ogg|m4a|flac|aac|mp4|webm|mov|m4v)$/i;
-const AUDIO_MIME = { mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', m4a: 'audio/mp4', flac: 'audio/flac', aac: 'audio/aac', mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', m4v: 'video/mp4' };
+const AUDIO_EXT_RE = /\.(mp3|wav|ogg|m4a|flac|aac|mp4|webm|mov|m4v|mid|midi)$/i;
+const AUDIO_MIME = { mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', m4a: 'audio/mp4', flac: 'audio/flac', aac: 'audio/aac', mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', m4v: 'video/mp4', mid: 'audio/midi', midi: 'audio/midi' };
 function findAudioArg(argv) {
   return argv.find(a => AUDIO_EXT_RE.test(a) && fs.existsSync(a));
 }
@@ -718,6 +718,19 @@ ipcMain.on('lyrics:openTrackPage', (e, id) => {
   if (id == null) return;
   shell.openExternal('https://lrclib.net/tracks/' + encodeURIComponent(id));
 });
+ipcMain.on('shell:openExternal', (e, url) => {
+  if (typeof url === 'string' && /^https:\/\//i.test(url)) shell.openExternal(url);
+});
+ipcMain.handle('releases:fetch', async () => {
+  try {
+    const r = await fetch('https://api.github.com/repos/Darkyyyyy/Mediyyu/releases', { headers: { 'User-Agent': lrclibUA() } });
+    if (!r.ok) return [];
+    const list = await r.json();
+    return (Array.isArray(list) ? list : []).map(rel => ({
+      tag_name: rel.tag_name || '', name: rel.name || '', body: rel.body || '', published_at: rel.published_at || '',
+    }));
+  } catch { return []; }
+});
 
 ipcMain.handle('files:scanDir', async (e, dirPath) => {
   const out = [];
@@ -760,6 +773,13 @@ ipcMain.handle('session:readFiles', async (e, paths) => {
   }
   await Promise.all(Array.from({ length: Math.min(4, list.length) }, worker));
   return out.filter(Boolean);
+});
+ipcMain.handle('soundfont:read', async (e, p) => {
+  try {
+    if (!p || typeof p !== 'string' || !fs.existsSync(p)) return null;
+    const data = await fs.promises.readFile(p);
+    return { name: path.basename(p), data: data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) };
+  } catch { return null; }
 });
 ipcMain.on('discord:connect', (e, clientId) => { discordConnect(clientId); });
 ipcMain.on('discord:disconnect', () => { discordDisconnect(); });

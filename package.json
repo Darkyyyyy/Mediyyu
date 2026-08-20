@@ -30,6 +30,7 @@
       "lyrics.html",
       "fonts/**/*",
       "assets/**/*",
+      "libs/**/*",
       "node_modules/**/*"
     ],
     "asarUnpack": [
@@ -43,7 +44,9 @@
           "ogg",
           "m4a",
           "flac",
-          "aac"
+          "aac",
+          "mid",
+          "midi"
         ],
         "name": "Audio File",
         "description": "Audio file",

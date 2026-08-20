@@ -117,6 +117,8 @@
     filter: blur(46px) brightness(.55);
   }
   body.bg-clip #clipBg { display: block; }
+  body.bad-apple-egg #clipBg { inset: 0; width: 100%; height: 100%; }
+  body.bad-apple-egg #viz { mix-blend-mode: difference; }
   .glass-blur {
     position: absolute; display: none; pointer-events: none;
     filter: blur(16px); transform: scale(1.08);
@@ -124,6 +126,20 @@
   #panelBlur { z-index: 28; border-radius: 24px; }
   #transportBlur { z-index: 24; border-radius: 29px; }
   #playlistBlur { z-index: 45; border-radius: 22px; }
+  #topbarBlur { z-index: 49; border-radius: 0 0 12px 12px; }
+  #wincontrolsBlur { z-index: 49; border-radius: 0 0 0 12px; }
+  body.glass-native-blur #panel,
+  body.glass-native-blur #transport,
+  body.glass-native-blur #plDrawer,
+  body.glass-native-blur #topbar,
+  body.glass-native-blur #wincontrols {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  body.glass-native-blur #topbar,
+  body.glass-native-blur #wincontrols {
+    background-color: rgba(var(--glass-rgb), calc(var(--glass-alpha-mult) * 0.85));
+  }
   body.vignette #stage::after {
     content: '';
     position: absolute;
@@ -436,6 +452,16 @@
   }
   .lastfm-connect-row button:hover { background: rgba(255,255,255,.16); }
   .lastfm-status { font-size: 11.5px; color: var(--dim); }
+  .soundfont-row { justify-content: flex-start; gap: 10px; }
+  .soundfont-row button, .btn-neutral {
+    border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--txt); cursor: pointer;
+    font-family: var(--ui); font-size: 11.5px; border-radius: 7px; padding: 5px 11px;
+  }
+  .soundfont-row button:hover, .btn-neutral:hover { background: rgba(255,255,255,.16); }
+  .soundfont-name {
+    font-size: 11.5px; color: var(--dim); flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
   .val { font-family: var(--mono); font-size: 11.5px; color: var(--dim); min-width: 34px; text-align: right; }
   .row select {
     border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.06); color: var(--txt);
@@ -525,6 +551,37 @@
   .ee-table tr:last-child td { border-bottom: 0; }
   .ee-table-wrap::-webkit-scrollbar { width: 7px; }
   .ee-table-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 7px; }
+  .toast-action {
+    display: inline-block; margin-left: 8px; color: #fff; font-weight: 600;
+    text-decoration: underline dotted rgba(255,255,255,.5); cursor: pointer;
+  }
+  .toast-action:hover { text-decoration-color: #fff; }
+  .patchnotes-box { width: min(680px, 92vw); }
+  .patchnotes-body { display: flex; gap: 0; height: 420px; margin-top: 2px; }
+  .patchnotes-nav {
+    flex: 0 0 140px; overflow-y: auto; padding-right: 10px;
+    border-right: 1px solid rgba(255,255,255,.08);
+  }
+  .patchnotes-nav button {
+    display: block; width: 100%; text-align: left; border: 0; background: transparent;
+    color: var(--dim); font-family: var(--mono); font-size: 12px; font-weight: 600;
+    padding: 8px 10px; border-radius: 8px; cursor: pointer; margin-bottom: 2px;
+  }
+  .patchnotes-nav button:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.85); }
+  .patchnotes-nav button.on { background: rgba(255,255,255,.14); color: #fff; }
+  .patchnotes-content {
+    flex: 1 1 auto; min-width: 0; overflow-y: auto; padding: 0 4px 0 18px;
+    font-size: 13px; line-height: 1.6; color: rgba(255,255,255,.82);
+  }
+  .patchnotes-nav::-webkit-scrollbar, .patchnotes-content::-webkit-scrollbar { width: 7px; }
+  .patchnotes-nav::-webkit-scrollbar-thumb, .patchnotes-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 7px; }
+  .patchnotes-content h1, .patchnotes-content h2, .patchnotes-content h3 { color: #fff; margin: 14px 0 6px; line-height: 1.3; }
+  .patchnotes-content h1:first-child, .patchnotes-content h2:first-child, .patchnotes-content h3:first-child { margin-top: 0; }
+  .patchnotes-content ul { margin: 6px 0; padding-left: 20px; }
+  .patchnotes-content li { margin: 4px 0; }
+  .patchnotes-content p { margin: 8px 0; }
+  .patchnotes-content a { color: #8ecbff; }
+  .patchnotes-content code { background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 4px; font-family: var(--mono); font-size: 12px; }
   .sec-head { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); margin: 0 0 10px; }
   .settings-search {
     width: 100%; box-sizing: border-box; margin-bottom: 14px;
@@ -1263,6 +1320,8 @@
   <canvas class="glass-blur" id="panelBlur"></canvas>
   <canvas class="glass-blur" id="transportBlur"></canvas>
   <canvas class="glass-blur" id="playlistBlur"></canvas>
+  <canvas class="glass-blur" id="topbarBlur"></canvas>
+  <canvas class="glass-blur" id="wincontrolsBlur"></canvas>
 
   <button class="update-pill hidden auto-hide" id="updatePill"></button>
 
@@ -1400,12 +1459,26 @@
             <tr><td>Toby Fox</td><td>Megalovania</td><td>undertale-style boss-fight visual &mdash; screen shake, bones, blasters</td></tr>
             <tr><td>Mili</td><td>Between Two Worlds</td><td>cascading blood-red lyrics, pale gold during the slow intro (before 2:00)</td></tr>
             <tr><td>Mili</td><td>Through Patches of Violet</td><td>cascading blood-red lyrics</td></tr>
+            <tr><td>&mdash;</td><td>Bad Apple!! (video)</td><td>visualizer bars become a perfect black/white negative over the sharp, unblurred video</td></tr>
           </tbody>
         </table>
       </div>
       <p class="note" style="margin-top:12px;">if an effect doesn't trigger on the right track, double-check the file's metadata (title/artist tags) &mdash; detection relies on those being correct.</p>
       <div class="pls-foot" style="justify-content:flex-end; margin-top:10px;">
         <button id="eeTableCloseBtn">close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="help-overlay hidden" id="patchNotesOverlay">
+    <div class="help-box patchnotes-box">
+      <div class="help-title">patch notes</div>
+      <div class="patchnotes-body">
+        <div class="patchnotes-nav" id="patchNotesNav"></div>
+        <div class="patchnotes-content" id="patchNotesContent"></div>
+      </div>
+      <div class="pls-foot" style="justify-content:flex-end; margin-top:12px;">
+        <button id="patchNotesCloseBtn">close</button>
       </div>
     </div>
   </div>
@@ -1495,7 +1568,7 @@
   </div>
 
   <div class="corner-controls">
-    <div class="topbar auto-hide">
+    <div class="topbar auto-hide" id="topbar">
       <button class="btn rec" id="recBtn" title="export video (records the full track)">
         <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg>
       </button>
@@ -1532,6 +1605,7 @@
       <button data-tab="visualizer">visualizer</button>
       <button data-tab="effects">effects</button>
       <button data-tab="audio">audio</button>
+      <button data-tab="midi">midi</button>
       <button data-tab="background">background</button>
       <button data-tab="window">window</button>
       <button data-tab="misc">misc</button>
@@ -1792,6 +1866,25 @@
       <div class="row" id="xfadeDurRow" style="margin-top:11px;"><label>crossfade duration</label><input type="range" id="xfadeDur" min="1" max="10" step="1" value="4" /><span class="val" id="xfadeDurVal">4s</span></div>
     </div>
 
+    <div class="sec" data-tab="midi">
+      <div class="row"><label>soundfont</label></div>
+      <div class="row soundfont-row" style="margin-top:8px;">
+        <span class="soundfont-name" id="soundfontName">none loaded</span>
+        <button id="soundfontBrowseBtn">browse&hellip;</button>
+        <button id="soundfontClearBtn" class="hidden">clear</button>
+      </div>
+      <input type="file" id="soundfontInput" accept=".sf2,.sf3,.dls" style="display:none" />
+      <p class="note">mediyyu doesn't ship with a built-in sound bank. load a .sf2/.sf3/.dls file here to play .mid files &mdash; without one, midi tracks won't play.</p>
+      <div class="sec-divider"></div>
+      <div class="row">
+        <label>note particles</label>
+        <div class="seg seg-sm" id="midiParticlesSeg">
+          <button data-val="off" class="on">off</button>
+          <button data-val="on">on</button>
+        </div>
+      </div>
+    </div>
+
     <div class="sec" data-tab="background">
       <div class="bg-swatches" id="bgSwatches"></div>
       <button class="bgmode" id="bgTransparent">transparent &middot; preview only</button>
@@ -1924,6 +2017,9 @@
         </div>
       </div>
       <p class="note">some tracks trigger hidden visual effects. turn this off if you'd rather never run into one, or click <span class="ee-link" id="eeLink">here</span> to see exactly what they are first.</p>
+
+      <p class="sec-head" style="margin-top:20px;">about</p>
+      <button class="btn-neutral" id="readPatchNotesBtn">read patch notes</button>
     </div>
 
     <div class="sec" data-tab="export">
@@ -2090,7 +2186,7 @@
     <div class="drop-card">
       <img class="drop-icon" src="assets/logo.png" alt="" />
       <h1>drop your audio file</h1>
-      <label class="browse">browse files<input type="file" id="fileInput" accept="audio/*,video/mp4,video/webm,video/quicktime" multiple hidden /></label>
+      <label class="browse">browse files<input type="file" id="fileInput" accept="audio/*,video/mp4,video/webm,video/quicktime,.mid,.midi" multiple hidden /></label>
     </div>
     <button class="resume-note hidden" id="resumeNote">resume previous session?</button>
   </div>
@@ -2103,6 +2199,18 @@
 
   <audio id="audio" crossorigin="anonymous"></audio>
 
+<script type="importmap">
+{
+  "imports": {
+    "spessasynth_core": "./libs/spessasynth/spessasynth_core.js",
+    "stb-vorbis": "./libs/spessasynth/stb-vorbis.js"
+  }
+}
+</script>
+<script type="module">
+  import { WorkletSynthesizer, Sequencer } from './libs/spessasynth/spessasynth_lib.js';
+  window.__spessa = { WorkletSynthesizer, Sequencer, workletUrl: 'libs/spessasynth/spessasynth_processor.min.js' };
+</script>
 <script>
 (() => {
   'use strict';
@@ -2131,6 +2239,7 @@
     bgCoverArt: false, bgCoverBlur: 46, bgCoverDim: 55,
     waveStyle: 'line', waveSmooth: 40, fallsSpeed: 50, psyPetals: 9, psySpeed: 50, psyTrail: 50,
     lyricsMode: 'compact', lyricsFx: true, lyricsSourcePref: 'lrclib',
+    soundfontPath: '', soundfontName: '', midiParticles: false,
     volume: 100, volWheelStep: 5, seekWheelStep: 5, seekBarStyle: 'thin',
     bg: '#0a0b0d',
     glassTint: '#ffffff', glassTintAuto: false, glassAlpha: 5, glassBlur: true,
@@ -2220,6 +2329,108 @@
     gainNode.disconnect();
     gainNode.connect(S.normalize ? compNode : postGain);
   }
+
+  // ===== MIDI / soundfont subsystem =====
+  const MIDI_VOLUME_BOOST = 2;
+  let midiSynth = null, midiSeq = null, midiWorkletReady = false, midiBankLoaded = false;
+  let midiActive = false, midiNotes = null;
+  let midiPrevActivePitches = new Set();
+  function isMidiFile(f) { return /\.(mid|midi)$/i.test(f.name); }
+  let midiGain = null;
+  async function ensureMidiSynth() {
+    if (midiSynth) return midiSynth;
+    ensureAudio();
+    if (!midiWorkletReady) { await actx.audioWorklet.addModule(window.__spessa.workletUrl); midiWorkletReady = true; }
+    midiSynth = new window.__spessa.WorkletSynthesizer(actx);
+    midiGain = actx.createGain();
+    midiGain.gain.value = audio.muted ? 0 : (S.volume / 100) * MIDI_VOLUME_BOOST;
+    midiSynth.connect(midiGain);
+    midiGain.connect(mainGain);
+    return midiSynth;
+  }
+  async function applySoundfontBytes(bytes) {
+    const synth = await ensureMidiSynth();
+    try { synth.soundBankManager.deleteSoundBank('main'); } catch (e) {}
+    synth.soundBankManager.addSoundBank(bytes, 'main');
+    midiBankLoaded = true;
+  }
+  async function loadSavedSoundfont() {
+    if (!S.soundfontPath || !window.winControls) return false;
+    const r = await window.winControls.soundfontRead(S.soundfontPath);
+    if (!r || !r.data) return false;
+    await applySoundfontBytes(r.data);
+    return true;
+  }
+  function makeSilentWavBlob(durationSec) {
+    const rate = 8000;
+    const n = Math.max(1, Math.ceil(durationSec * rate));
+    const buf = new ArrayBuffer(44 + n * 2);
+    const v = new DataView(buf);
+    const str = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    str(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); str(8, 'WAVE');
+    str(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+    str(36, 'data'); v.setUint32(40, n * 2, true);
+    return new Blob([buf], { type: 'audio/wav' });
+  }
+  function buildMidiNoteList(midiData) {
+    const notes = [];
+    for (const track of midiData.tracks) {
+      const active = new Map();
+      for (const ev of track.events) {
+        const status = ev.statusByte & 0xf0, ch = ev.statusByte & 0x0f;
+        if (status === 0x90 && ev.data[1] > 0) {
+          active.set(ch + ':' + ev.data[0], { startTicks: ev.ticks, velocity: ev.data[1], channel: ch });
+        } else if (status === 0x80 || (status === 0x90 && ev.data[1] === 0)) {
+          const key = ch + ':' + ev.data[0];
+          const on = active.get(key);
+          if (on) {
+            notes.push({
+              pitch: ev.data[0], channel: ch, velocity: on.velocity,
+              startTime: midiData.midiTicksToSeconds(on.startTicks),
+              endTime: midiData.midiTicksToSeconds(ev.ticks),
+            });
+            active.delete(key);
+          }
+        }
+      }
+    }
+    notes.sort((a, b) => a.startTime - b.startTime);
+    return notes;
+  }
+  function resetMidiPlayback() {
+    if (midiSeq) { try { midiSeq.pause(); } catch (e) {} }
+    midiActive = false;
+    midiNotes = null;
+    midiPrevActivePitches = new Set();
+  }
+  async function loadMidiTrackAudioSrc(file) {
+    if (!S.soundfontPath) {
+      toast('load a soundfont in settings → midi first', { error: true });
+      return false;
+    }
+    if (!midiBankLoaded) {
+      const ok = await loadSavedSoundfont();
+      if (!ok) {
+        toast('could not read the saved soundfont — check it in settings → midi', { error: true });
+        return false;
+      }
+    }
+    const synth = await ensureMidiSynth();
+    const midiBytes = await file.arrayBuffer();
+    if (!midiSeq) midiSeq = new window.__spessa.Sequencer(synth);
+    midiSeq.loadNewSongList([{ binary: midiBytes, fileName: file.name }]);
+    const midiData = await midiSeq.getMIDI();
+    midiNotes = buildMidiNoteList(midiData);
+    const dur = midiSeq.duration || 0.1;
+    audio.src = URL.createObjectURL(makeSilentWavBlob(dur));
+    audio._isTranscodedSrc = false;
+    midiActive = true;
+    return true;
+  }
+  audio.addEventListener('play', () => { if (midiActive && midiSeq) midiSeq.play(); });
+  audio.addEventListener('pause', () => { if (midiActive && midiSeq) midiSeq.pause(); });
+  audio.addEventListener('seeking', () => { if (midiActive && midiSeq) midiSeq.currentTime = audio.currentTime; });
 
   const SPEC_FFT_SIZES = [512, 1024, 2048, 4096, 8192, 16384];
   const DB_MIN = -120;
@@ -2788,7 +2999,10 @@
     for (let k = particles.length - 1; k >= 0; k--) {
       const p = particles[k];
       p.px = p.x; p.py = p.y;
-      p.x += p.vx; p.y += p.vy; p.vy += 0.06; p.age++;
+      p.x += p.vx; p.y += p.vy;
+      if (p.confetti) { p.vy += 0.14; p.vx *= 0.99; p.rot += p.rotSpeed; }
+      else p.vy += 0.06;
+      p.age++;
       if (p.age > p.life) particles.splice(k, 1);
     }
   }
@@ -2803,12 +3017,24 @@
   function drawParticles() {
     if (!particles.length) return;
     const col = accentColor();
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.strokeStyle = col;
-    ctx.fillStyle = col;
     ctx.lineCap = 'round';
     for (const p of particles) {
       const a = Math.max(0, 1 - p.age / p.life);
+      if (p.confetti) {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = a;
+        ctx.fillStyle = p.color || col;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+        continue;
+      }
+      ctx.globalCompositeOperation = 'lighter';
+      const c = p.color || col;
+      ctx.strokeStyle = c;
+      ctx.fillStyle = c;
       ctx.globalAlpha = a * 0.7;
       ctx.lineWidth = p.size;
       ctx.beginPath();
@@ -3065,12 +3291,132 @@
     ctx.drawImage(g4, 0, 0);
   }
 
+  function midiChannelColor(ch) {
+    return `hsl(${(ch * 47) % 360},70%,58%)`;
+  }
+  function isBlackKey(pitch) {
+    const m = ((pitch % 12) + 12) % 12;
+    return m === 1 || m === 3 || m === 6 || m === 8 || m === 10;
+  }
+  function drawMidiPianoRoll(loNote, hiNote, playheadX, rowH, activeByPitch) {
+    const pianoW = playheadX * 0.5;
+    const pianoX0 = playheadX - pianoW;
+    const blackW = pianoW * 0.6;
+    const blackX0 = playheadX - blackW;
+    ctx.fillStyle = '#e8e8ec';
+    ctx.fillRect(pianoX0, 0, pianoW, H);
+    ctx.strokeStyle = 'rgba(0,0,0,.18)';
+    ctx.lineWidth = 1;
+    for (let p = loNote; p <= hiNote; p++) {
+      const y = H - (p - loNote) * rowH;
+      ctx.beginPath(); ctx.moveTo(pianoX0, y + 0.5); ctx.lineTo(playheadX, y + 0.5); ctx.stroke();
+    }
+    for (let p = loNote; p <= hiNote; p++) {
+      if (!isBlackKey(p)) continue;
+      const y = H - (p - loNote + 1) * rowH;
+      const rh = Math.max(1, rowH - 1);
+      ctx.fillStyle = '#15161a';
+      ctx.fillRect(blackX0, y, blackW, rh);
+    }
+    for (const [p, color] of activeByPitch) {
+      const y = H - (p - loNote + 1) * rowH;
+      const rh = Math.max(1, rowH - 1);
+      const black = isBlackKey(p);
+      const x = black ? blackX0 : pianoX0;
+      const w = black ? blackW : pianoW;
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.92;
+      ctx.fillRect(x, y, w, rh);
+      ctx.globalAlpha = 1;
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,.14)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(pianoX0 + 0.5, 0.5, pianoW - 1, H - 1);
+  }
+  function spawnMidiConfetti(x, y, channel, velocity) {
+    const n = 6 + Math.round((velocity / 127) * 10);
+    const baseHue = (channel * 47) % 360;
+    for (let i = 0; i < n && particles.length < 400; i++) {
+      const ang = -Math.PI / 2 + (Math.random() - 0.5) * (Math.PI * 0.7);
+      const spd = 3 + Math.random() * 5;
+      const hue = (baseHue + (Math.random() - 0.5) * 80 + 360) % 360;
+      particles.push({
+        confetti: true,
+        x, y, px: x, py: y,
+        vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+        rot: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.5,
+        w: 3 + Math.random() * 3, h: 2 + Math.random() * 2.5,
+        life: 46 + Math.random() * 34, age: 0,
+        color: `hsl(${hue.toFixed(0)},75%,${(55 + Math.random() * 15).toFixed(0)}%)`,
+      });
+    }
+  }
+  function stepMidiFalling() {
+    const now = audio.currentTime || 0;
+    if (midiSeq) {
+      if (midiSeq.playbackRate !== audio.playbackRate) midiSeq.playbackRate = audio.playbackRate;
+      if (!audio.paused) {
+        const drift = Math.abs(midiSeq.currentTime - now);
+        if (drift > 0.15) midiSeq.currentTime = now;
+      }
+    }
+    const transparent = S.bg === 'transparent' || S.winTransparent;
+    if (transparent) ctx.clearRect(0, 0, W, H);
+    else { ctx.fillStyle = S.bg; ctx.fillRect(0, 0, W, H); }
+
+    const loNote = 21, hiNote = 108;
+    const playheadX = W * 0.12;
+    const pxPerSec = (W - playheadX) / 6;
+    const rowH = H / (hiNote - loNote);
+
+    const activeByPitch = new Map();
+    const nowActivePitches = new Set();
+    if (midiNotes && midiNotes.length) {
+      for (const n of midiNotes) {
+        if (n.pitch < loNote || n.pitch > hiNote) continue;
+        const xOnset = playheadX + (n.startTime - now) * pxPerSec;
+        const xRelease = playheadX + (n.endTime - now) * pxPerSec;
+        if (xRelease < 0 || xOnset > W) continue;
+        const y = H - (n.pitch - loNote + 1) * rowH;
+        const active = now >= n.startTime && now < n.endTime;
+        const w = Math.max(2, xRelease - xOnset);
+        const rh = Math.max(2, rowH - 1);
+        const color = midiChannelColor(n.channel);
+        if (active) {
+          activeByPitch.set(n.pitch, color);
+          nowActivePitches.add(n.pitch);
+          if (S.midiParticles && !midiPrevActivePitches.has(n.pitch)) {
+            spawnMidiConfetti(playheadX, y + rh / 2, n.channel, n.velocity);
+          }
+        }
+        ctx.fillStyle = color;
+        ctx.globalAlpha = active ? 1 : 0.55 + (n.velocity / 127) * 0.3;
+        ctx.beginPath();
+        ctx.roundRect(xOnset, y, w, rh, 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+    midiPrevActivePitches = nowActivePitches;
+
+    drawMidiPianoRoll(loNote, hiNote, playheadX, rowH, activeByPitch);
+    updateParticles();
+    drawParticles();
+  }
+
   const glassBlurTargets = [
     { glass: $('panel'), bcanvas: $('panelBlur') },
     { glass: $('transport'), bcanvas: $('transportBlur') },
     { glass: $('plDrawer'), bcanvas: $('playlistBlur') },
+    { glass: $('topbar'), bcanvas: $('topbarBlur') },
+    { glass: $('wincontrols'), bcanvas: $('wincontrolsBlur') },
   ];
   function updateGlassBlur() {
+    if (document.body.classList.contains('glass-native-blur')) {
+      for (const t of glassBlurTargets) t.bcanvas.style.display = 'none';
+      return;
+    }
     const stageRect = stageEl.getBoundingClientRect();
     if (stageRect.width < 1 || stageRect.height < 1) return;
     const scaleX = canvas.width / stageRect.width;
@@ -3205,6 +3551,10 @@
       megaHeart.y = 0; megaHeart.vy = 0; megaHeart.grounded = true;
     }
     megaMode = on;
+  }
+  let badAppleActive = false;
+  function checkBadApple(name) {
+    badAppleActive = S.easterEggs && curIsVideo && wordMatch(name || '', 'bad apple');
   }
   let bloodEggActive = false;
   let bloodEggTrack = null;
@@ -3699,7 +4049,7 @@
   }
   function loadWaveformFor(file) {
     currentWave = null;
-    if (S.seekBarStyle !== 'waveform') return;
+    if (S.seekBarStyle !== 'waveform' || midiActive) return;
     const waveState = { peaks: new Float32Array(WAVE_BUCKETS), done: 0 };
     currentWave = waveState;
     const start = () => { if (currentWave === waveState) computeWaveform(file, waveState); };
@@ -3771,10 +4121,18 @@
     const bassNow = bassEnergy();
     const realTransparent = S.bg === 'transparent' || S.winTransparent;
     const overCover = S.bgCoverArt && !realTransparent;
-    const transparentCanvas = realTransparent || (overCover && !recording);
+    const transparentCanvas = realTransparent || (overCover && !recording) || badAppleActive;
 
     ctx.save();
     if (S.flipH) { ctx.translate(W, 0); ctx.scale(-1, 1); }
+
+    if (midiActive) {
+      stepMidiFalling();
+      ctx.restore();
+      maybeUpdateGlassBlur();
+      requestAnimationFrame(draw);
+      return;
+    }
 
     if (S.layout === 'waterfall') {
       stepWaterfall();
@@ -3835,6 +4193,13 @@
     updateParticles();
     drawParticles();
 
+    if (badAppleActive) {
+      ctx.globalCompositeOperation = 'source-in';
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
     ctx.restore();
     if (recording && S.exportLyrics) drawExportLyrics();
     drawMegalovania(bassNow, performance.now());
@@ -3846,8 +4211,9 @@
   let playlist = [];
   let curIsVideo = false;
   let curIndex = -1;
-  function isAudioFile(f) { return f.type.startsWith('audio') || f.type.startsWith('video') || /\.(mp3|wav|ogg|m4a|flac|aac|mp4|webm|mov|m4v)$/i.test(f.name); }
+  function isAudioFile(f) { return f.type.startsWith('audio') || f.type.startsWith('video') || /\.(mp3|wav|ogg|m4a|flac|aac|mp4|webm|mov|m4v|mid|midi)$/i.test(f.name); }
   function isVideoFile(f) { return (f.type && f.type.startsWith('video')) || /\.(mp4|webm|mov|m4v)$/i.test(f.name); }
+  function isMidiFile(f) { return /\.(mid|midi)$/i.test(f.name); }
 
   function readSlice(file, start, len) {
     return new Promise((resolve, reject) => {
@@ -4277,6 +4643,7 @@
     $('nowPlaying').classList.remove('hidden');
     requestAnimationFrame(() => $('nowPlaying').classList.add('show'));
     const myFile = file;
+    const isMidiNp = isMidiFile(file);
     $('npTitle').textContent = file.name.replace(/\.[^.]+$/, '');
     $('npArtist').classList.add('hidden');
     $('npArtist').textContent = '';
@@ -4304,14 +4671,14 @@
       const tn = tags.track ? String(tags.track).match(/^\d+/) : null;
       myFile._trackNo = tn ? +tn[0] : 0;
       updateTName();
-      if (tags.album && window.winControls) {
+      if (tags.album && window.winControls && !isMidiNp) {
         window.winControls.discordLookupCover(tags.artist || '', tags.album).then(url => {
           if (playlist[curIndex] !== myFile) return;
           discordCoverUrl = url;
           sendDiscordActivity();
         });
       }
-      if (tags.cover) {
+      if (tags.cover && !isMidiNp) {
         npCoverUrl = tags.cover;
         $('npCover').style.backgroundImage = `url("${tags.cover}")`;
         $('npCover').classList.remove('empty');
@@ -4330,7 +4697,7 @@
     } else {
       coverColors = null;
     }
-    if (!tags || !tags.cover) setAmbientCover('');
+    if (!tags || !tags.cover || isMidiNp) setAmbientCover('');
     sendDiscordActivity();
     updateMediaSession(myFile, tags);
     lastfmSendNowPlaying(tags, myFile);
@@ -5290,10 +5657,10 @@
     else payload.buffer = await f.arrayBuffer();
     const r = await window.winControls.writeFileTags(payload);
     $('propSaveBtn').disabled = false;
-    if (r && r.canceled) { if (editingCurrent) { resumePos = restore.pos; loadCurrent(); if (!restore.wasPlaying) { audio.pause(); setPlay(false); } } return; }
+    if (r && r.canceled) { if (editingCurrent) { resumePos = restore.pos; await loadCurrent(); if (!restore.wasPlaying) { audio.pause(); setPlay(false); } } return; }
     if (!r || r.error) {
       toast('metadata write failed: ' + (r ? r.error : 'unknown'), { error: true, duration: 6000 });
-      if (editingCurrent) { resumePos = restore.pos; loadCurrent(); if (!restore.wasPlaying) { audio.pause(); setPlay(false); } }
+      if (editingCurrent) { resumePos = restore.pos; await loadCurrent(); if (!restore.wasPlaying) { audio.pause(); setPlay(false); } }
       return;
     }
     $('propsOverlay').classList.add('hidden');
@@ -5389,7 +5756,7 @@
     } catch (e) { try { URL.revokeObjectURL(url); } catch (e2) {} }
   }
   let resumePos = 0;
-  function loadCurrent() {
+  async function loadCurrent() {
     const file = playlist[curIndex];
     if (!file) return;
     if (!histNav && lastLoadedFile && lastLoadedFile !== file) {
@@ -5412,7 +5779,11 @@
       else if (!audio._isTranscodedSrc) URL.revokeObjectURL(audio.src);
     }
     xfadeArmed = false;
-    if (file._transcodedUrl) {
+    resetMidiPlayback();
+    if (isMidiFile(file)) {
+      const ok = await loadMidiTrackAudioSrc(file);
+      if (!ok) return;
+    } else if (file._transcodedUrl) {
       audio.src = file._transcodedUrl;
       audio._isTranscodedSrc = true;
     } else {
@@ -5422,6 +5793,7 @@
     audio.defaultPlaybackRate = S.playbackRate;
     audio.playbackRate = S.playbackRate;
     curIsVideo = isVideoFile(file);
+    checkBadApple(file.name);
     const clip = $('clipBg');
     if (curIsVideo) {
       clip.src = audio.src;
@@ -5567,6 +5939,14 @@
     const el = document.createElement('div');
     el.className = 'toast' + (opts.error ? ' err' : '');
     el.textContent = msg;
+    if (opts.actionLabel && opts.onAction) {
+      const dismiss = () => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); };
+      const action = document.createElement('span');
+      action.className = 'toast-action';
+      action.textContent = opts.actionLabel;
+      action.addEventListener('click', () => { opts.onAction(); dismiss(); });
+      el.appendChild(action);
+    }
     $('toasts').appendChild(el);
     requestAnimationFrame(() => el.classList.add('show'));
     setTimeout(() => {
@@ -5726,7 +6106,7 @@
   function syncClip() {
     if (!curIsVideo) return;
     const clip = $('clipBg');
-    if (audio.paused || !S.bgCoverArt) clip.pause();
+    if (audio.paused || !(S.bgCoverArt || badAppleActive)) clip.pause();
     else {
       clip.currentTime = Math.abs(clip.currentTime - audio.currentTime) > 0.35 ? audio.currentTime : clip.currentTime;
       clip.play().catch(() => {});
@@ -5738,7 +6118,7 @@
   audio.addEventListener('ratechange', () => { if (curIsVideo) $('clipBg').playbackRate = audio.playbackRate; });
   let clipDriftF = 0;
   function checkClipDrift() {
-    if (!curIsVideo || !S.bgCoverArt) return;
+    if (!curIsVideo || !(S.bgCoverArt || badAppleActive)) return;
     if (++clipDriftF % 120 !== 0) return;
     const clip = $('clipBg');
     if (!audio.paused && clip.readyState >= 2) {
@@ -6439,6 +6819,7 @@
     S.volume = Math.max(0, Math.min(100, Math.round(v)));
     audio.volume = S.volume / 100;
     audio.muted = S.volume === 0;
+    if (midiGain) midiGain.gain.value = audio.muted ? 0 : (S.volume / 100) * MIDI_VOLUME_BOOST;
     $('volume').value = S.volume;
     setVolIcon(audio.muted);
     flashVolPopup();
@@ -6449,6 +6830,7 @@
   $('volume').addEventListener('input', e => setVolume(+e.target.value));
   function toggleMute() {
     audio.muted = !audio.muted;
+    if (midiGain) midiGain.gain.value = audio.muted ? 0 : (S.volume / 100) * MIDI_VOLUME_BOOST;
     setVolIcon(audio.muted);
     flashVolPopup();
   }
@@ -6671,6 +7053,35 @@
     btn.addEventListener('click', () => { S.crossfade = btn.dataset.val === 'on'; syncUI(); save(); });
   });
   $('xfadeDur').addEventListener('input', (e) => { S.crossfadeDur = +e.target.value; $('xfadeDurVal').textContent = S.crossfadeDur + 's'; save(); });
+  function syncSoundfontUI() {
+    $('soundfontName').textContent = S.soundfontName || 'none loaded';
+    $('soundfontClearBtn').classList.toggle('hidden', !S.soundfontName);
+    $('midiParticlesSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.midiParticles));
+  }
+  $('midiParticlesSeg').querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => { S.midiParticles = btn.dataset.val === 'on'; syncSoundfontUI(); save(); });
+  });
+  $('soundfontBrowseBtn').addEventListener('click', () => $('soundfontInput').click());
+  $('soundfontInput').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const bytes = await file.arrayBuffer();
+    await applySoundfontBytes(bytes);
+    S.soundfontName = file.name;
+    S.soundfontPath = window.winControls ? window.winControls.getPathForFile(file) : '';
+    save();
+    syncSoundfontUI();
+    toast('soundfont loaded: ' + file.name);
+  });
+  $('soundfontClearBtn').addEventListener('click', () => {
+    S.soundfontName = ''; S.soundfontPath = '';
+    save();
+    syncSoundfontUI();
+    if (midiSynth) { try { midiSynth.soundBankManager.deleteSoundBank('main'); } catch (e) {} }
+    midiBankLoaded = false;
+    toast('soundfont cleared');
+  });
   $('miniItem').addEventListener('click', () => { closeMoreMenu(); setMiniMode(true); });
 
   let miniOn = false;
@@ -6703,7 +7114,7 @@
     const frac = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
     const tip = $('seekTip');
     tip.textContent = fmt(frac * audio.duration);
-    const rowR = seek.parentElement.getBoundingClientRect();
+    const rowR = tip.parentElement.getBoundingClientRect();
     tip.style.left = Math.max(28, Math.min(rowR.width - 28, e.clientX - rowR.left)) + 'px';
     tip.classList.add('show');
   });
@@ -7224,6 +7635,7 @@
     if (!window.winControls || !S.discordEnabled || !S.discordClientId) return;
     const file = playlist[curIndex];
     if (!file || !playing) { window.winControls.discordClearActivity(); return; }
+    const isMidiTrack = isMidiFile(file);
     const title = ($('npTitle').textContent || file.name.replace(/\.[^.]+$/, '')).slice(0, 128);
     const artist = $('npArtist').classList.contains('hidden') ? '' : $('npArtist').textContent;
     const activity = {
@@ -7231,11 +7643,16 @@
       details: title || 'listening',
       instance: false,
     };
-    if (artist) activity.state = artist.slice(0, 128);
-    const imageKey = discordCoverUrl || S.discordImageKey;
-    if (imageKey) {
-      activity.largeImageKey = imageKey;
-      if (npAlbum) activity.largeImageText = npAlbum.slice(0, 128);
+    if (isMidiTrack) activity.state = '.mid file';
+    else if (artist) activity.state = artist.slice(0, 128);
+    if (isMidiTrack) {
+      activity.largeImageKey = 'mediyyuiconnobg';
+    } else {
+      const imageKey = discordCoverUrl || S.discordImageKey;
+      if (imageKey) {
+        activity.largeImageKey = imageKey;
+        if (npAlbum) activity.largeImageText = npAlbum.slice(0, 128);
+      }
     }
     if (audio.duration) {
       const now = Date.now();
@@ -7361,6 +7778,8 @@
         bloodEggActive = false;
         bloodEggTrack = null;
         retireAllBloodLines(true);
+        badAppleActive = false;
+        applyCoverBgStyle();
       }
       syncUI(); save();
     });
@@ -7371,6 +7790,95 @@
   });
   $('eeTableCloseBtn').addEventListener('click', () => $('eeTableOverlay').classList.add('hidden'));
   $('eeTableOverlay').addEventListener('click', e => { if (e.target === $('eeTableOverlay')) $('eeTableOverlay').classList.add('hidden'); });
+
+  function escapeHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function inlineMd(s) {
+    let out = escapeHtml(s);
+    out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
+    out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" data-ext-link>$1</a>');
+    return out;
+  }
+  function renderMarkdown(md) {
+    const lines = (md || '').replace(/\r\n/g, '\n').split('\n');
+    let html = '', inList = false;
+    const closeList = () => { if (inList) { html += '</ul>'; inList = false; } };
+    for (const raw of lines) {
+      const line = raw.trimEnd();
+      if (!line.trim()) { closeList(); continue; }
+      const heading = line.match(/^(#{1,3})\s+(.*)$/);
+      if (heading) { closeList(); const lvl = heading[1].length; html += `<h${lvl}>${inlineMd(heading[2])}</h${lvl}>`; continue; }
+      const bullet = line.match(/^[-*]\s+(.*)$/);
+      if (bullet) { if (!inList) { html += '<ul>'; inList = true; } html += `<li>${inlineMd(bullet[1])}</li>`; continue; }
+      closeList();
+      html += `<p>${inlineMd(line)}</p>`;
+    }
+    closeList();
+    return html || '<p class="pls-empty">no description</p>';
+  }
+  let patchNotesData = null;
+  function stripDownloadSection(md) {
+    const lines = (md || '').replace(/\r\n/g, '\n').split('\n');
+    const markerIdx = lines.findIndex(l => /which file.*download/i.test(l));
+    if (markerIdx === -1) return md;
+    let cutAt = markerIdx;
+    for (let i = markerIdx - 1; i >= 0 && i >= markerIdx - 4; i--) {
+      if (/^-{3,}\s*$/.test(lines[i].trim())) { cutAt = i; break; }
+    }
+    return lines.slice(0, cutAt).join('\n').replace(/\n+$/, '');
+  }
+  function showPatchNote(release) {
+    $('patchNotesContent').innerHTML = renderMarkdown(stripDownloadSection(release.body));
+    $('patchNotesContent').querySelectorAll('a[data-ext-link]').forEach(a => {
+      a.addEventListener('click', e => { e.preventDefault(); if (window.winControls) window.winControls.openExternal(a.getAttribute('href')); });
+    });
+  }
+  function renderPatchNotesNav(preselectVersion) {
+    const nav = $('patchNotesNav');
+    nav.innerHTML = '';
+    if (!patchNotesData.length) { $('patchNotesContent').innerHTML = '<p class="pls-empty">could not load release notes</p>'; return; }
+    const wanted = preselectVersion ? ('v' + preselectVersion.replace(/^v/, '')) : null;
+    const selected = (wanted && patchNotesData.find(r => r.tag_name === wanted)) || patchNotesData[0];
+    for (const r of patchNotesData) {
+      const btn = document.createElement('button');
+      btn.textContent = r.tag_name || r.name || '?';
+      btn.classList.toggle('on', r === selected);
+      btn.addEventListener('click', () => {
+        nav.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+        btn.classList.add('on');
+        showPatchNote(r);
+      });
+      nav.appendChild(btn);
+    }
+    showPatchNote(selected);
+  }
+  async function openPatchNotes(preselectVersion) {
+    $('patchNotesOverlay').classList.remove('hidden');
+    if (!patchNotesData) {
+      $('patchNotesNav').innerHTML = '';
+      $('patchNotesContent').innerHTML = '<p class="pls-empty">loading&hellip;</p>';
+      if (!window.winControls) { patchNotesData = []; } else { patchNotesData = await window.winControls.fetchReleases(); }
+    }
+    renderPatchNotesNav(preselectVersion);
+  }
+  $('readPatchNotesBtn').addEventListener('click', () => openPatchNotes());
+  $('patchNotesCloseBtn').addEventListener('click', () => $('patchNotesOverlay').classList.add('hidden'));
+  $('patchNotesOverlay').addEventListener('click', e => { if (e.target === $('patchNotesOverlay')) $('patchNotesOverlay').classList.add('hidden'); });
+
+  if (window.winControls && window.winControls.appVersion) {
+    const curVer = window.winControls.appVersion;
+    let lastVer = null;
+    try { lastVer = localStorage.getItem('bbv_lastVersion'); } catch (e) {}
+    if (lastVer && lastVer !== curVer) {
+      toast(`${curVer} successfully installed`, {
+        duration: 9000,
+        actionLabel: 'Read patch note',
+        onAction: () => openPatchNotes(curVer),
+      });
+    }
+    try { localStorage.setItem('bbv_lastVersion', curVer); } catch (e) {}
+  }
+
   setInterval(() => { if (S.discordEnabled && S.discordClientId) applyDiscordConnection(); }, 20000);
   applyDiscordConnection();
 
@@ -7444,14 +7952,17 @@
     });
   }
   function applyCoverBgStyle() {
-    document.body.classList.toggle('bg-cover-art', S.bgCoverArt && !curIsVideo);
-    document.body.classList.toggle('bg-clip', S.bgCoverArt && curIsVideo);
+    document.body.classList.toggle('bg-cover-art', S.bgCoverArt && !curIsVideo && !midiActive);
+    document.body.classList.toggle('bg-clip', (S.bgCoverArt || badAppleActive) && curIsVideo && !midiActive);
+    document.body.classList.toggle('bad-apple-egg', badAppleActive && curIsVideo);
+    const realTransparent = S.bg === 'transparent' || S.winTransparent;
+    document.body.classList.toggle('glass-native-blur', S.glassBlur && S.bgCoverArt && !midiActive && !realTransparent);
     const blurPx = (S.bgCoverBlur / 100) * 80;
     const brightness = 1 - (S.bgCoverDim / 100) * 0.85;
     const filter = `blur(${blurPx}px) brightness(${brightness.toFixed(2)})`;
     $('coverBg').style.filter = filter;
     $('coverBgFade').style.filter = filter;
-    $('clipBg').style.filter = filter;
+    $('clipBg').style.filter = badAppleActive ? 'none' : filter;
   }
   function applyGlassTint() {
     let hex = /^#[0-9a-f]{6}$/i.test(S.glassTint) ? S.glassTint : DEFAULTS.glassTint;
@@ -7471,6 +7982,7 @@
     $('volume').value = S.volume;
     audio.volume = S.volume / 100;
     audio.muted = S.volume === 0;
+    if (midiGain) midiGain.gain.value = audio.muted ? 0 : (S.volume / 100) * MIDI_VOLUME_BOOST;
     setVolIcon(audio.muted);
     $('fillSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.mode === S.mode));
     $('c2Row').style.display = S.mode === 'gradient' ? '' : 'none';
@@ -7503,6 +8015,7 @@
     $('xfadeDur').value = S.crossfadeDur;
     $('xfadeDurVal').textContent = S.crossfadeDur + 's';
     $('xfadeDurRow').classList.toggle('disabled', !S.crossfade);
+    syncSoundfontUI();
     applyAudioChain();
     $('shuffleBtn').classList.toggle('tog-on', S.shuffle);
     $('repeatBtn').classList.toggle('tog-on', S.repeat !== 'off');
