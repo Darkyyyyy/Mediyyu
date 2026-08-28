@@ -732,10 +732,16 @@ ipcMain.handle('releases:fetch', async () => {
   } catch { return []; }
 });
 
-ipcMain.handle('files:scanDir', async (e, dirPath) => {
+ipcMain.handle('library:pickFolder', async (e) => {
+  const win = BrowserWindow.fromWebContents(e.sender);
+  const { canceled, filePaths } = await dialog.showOpenDialog(win, { properties: ['openDirectory'] });
+  return canceled || !filePaths.length ? null : filePaths[0];
+});
+ipcMain.handle('files:scanDir', async (e, dirPath, recursive) => {
   const out = [];
+  const maxDepth = recursive === false ? 0 : 8;
   const walk = (dir, depth) => {
-    if (depth > 8 || out.length >= 2000) return;
+    if (depth > maxDepth || out.length >= 2000) return;
     let entries;
     try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
     for (const ent of entries) {
@@ -774,6 +780,33 @@ ipcMain.handle('session:readFiles', async (e, paths) => {
   await Promise.all(Array.from({ length: Math.min(4, list.length) }, worker));
   return out.filter(Boolean);
 });
+ipcMain.handle('files:readPrefixes', async (e, paths, maxBytes) => {
+  const list = Array.isArray(paths) ? paths : [];
+  const cap = Math.min(Math.max(1, maxBytes || 262144), 4 * 1024 * 1024);
+  const out = new Array(list.length);
+  let next = 0;
+  async function worker() {
+    while (next < list.length) {
+      const idx = next++;
+      const p = list[idx];
+      let fh = null;
+      try {
+        if (!p || typeof p !== 'string') continue;
+        fh = await fs.promises.open(p, 'r');
+        const stat = await fh.stat();
+        const len = Math.min(cap, stat.size);
+        const buf = Buffer.alloc(len);
+        await fh.read(buf, 0, len, 0);
+        out[idx] = { path: p, data: buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) };
+      } catch (err) {
+      } finally {
+        if (fh) { try { await fh.close(); } catch (e2) {} }
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(6, list.length) }, worker));
+  return out.filter(Boolean);
+});
 ipcMain.handle('soundfont:read', async (e, p) => {
   try {
     if (!p || typeof p !== 'string' || !fs.existsSync(p)) return null;
@@ -791,7 +824,8 @@ ipcMain.on('discord:clearActivity', () => {
   if (!discordClient || !discordClient.isConnected) return;
   discordClient.user?.clearActivity().catch(() => {});
 });
-ipcMain.handle('discord:lookupCover', async (e, { artist, album }) => {
+const _dg = Buffer.from('eWhRdHRoTnhvRlNPQ1lFRXBjeUg6VEtiWWlDa296QnFMRHZlS0d1QVlSbHhIT0pQaHdWZkU=', 'base64').toString('utf8').split(':');
+async function lookupCoverItunes(artist, album) {
   if (!album) return null;
   const term = [artist, album].filter(Boolean).join(' ');
   try {
@@ -806,6 +840,57 @@ ipcMain.handle('discord:lookupCover', async (e, { artist, album }) => {
   } catch (err) {
     return null;
   }
+}
+async function lookupCoverDiscogs(artist, album, title) {
+  const term = [artist, album || title].filter(Boolean).join(' ');
+  if (!term) return null;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+    const url = `https://api.discogs.com/database/search?q=${encodeURIComponent(term)}&type=release&key=${_dg[0]}&secret=${_dg[1]}`;
+    const res = await fetch(url, { signal: controller.signal, headers: { 'User-Agent': lrclibUA() } });
+    clearTimeout(timeout);
+    const data = await res.json();
+    const r = data.results && data.results[0];
+    const cover = r && (r.cover_image || r.thumb);
+    return cover || null;
+  } catch (err) {
+    return null;
+  }
+}
+const COVER_CACHE_FILE = path.join(app.getPath('userData'), 'cover-cache.json');
+const COVER_CACHE_NEG_TTL = 1000 * 60 * 60 * 24 * 14;
+let coverCache = null;
+let coverCacheSaveTimer = null;
+function loadCoverCache() {
+  if (coverCache) return coverCache;
+  try { coverCache = JSON.parse(fs.readFileSync(COVER_CACHE_FILE, 'utf8')); }
+  catch { coverCache = {}; }
+  return coverCache;
+}
+function saveCoverCacheDebounced() {
+  clearTimeout(coverCacheSaveTimer);
+  coverCacheSaveTimer = setTimeout(() => {
+    try { fs.writeFileSync(COVER_CACHE_FILE, JSON.stringify(coverCache)); } catch (e) {}
+  }, 800);
+}
+function coverCacheKey(artist, album, title) {
+  return [artist, album, title].map(s => (s || '').toLowerCase().trim()).join('|');
+}
+ipcMain.handle('discord:lookupCover', async (e, { artist, album, title }) => {
+  if (!album && !title) return null;
+  const cache = loadCoverCache();
+  const key = coverCacheKey(artist, album, title);
+  const hit = cache[key];
+  if (hit) {
+    if (hit.url) return hit.url;
+    if (Date.now() - hit.ts < COVER_CACHE_NEG_TTL) return null;
+  }
+  const itunes = await lookupCoverItunes(artist, album);
+  const url = itunes || await lookupCoverDiscogs(artist, album, title);
+  cache[key] = { url: url || null, ts: Date.now() };
+  saveCoverCacheDebounced();
+  return url;
 });
 
 const _sc = Buffer.from('OTllNjhiNjhlNjNmYzBkN2E1MDZlNWY1ZDQ3YjJlYjM6MWE5MzdiYjBlYzQwNTQyNjQ5M2UwNzBmMDE3YzlhOGE=', 'base64').toString('utf8').split(':');
@@ -860,6 +945,15 @@ ipcMain.handle('scrobble:track', async (e, { sessionKey, artist, track, album, t
 });
 ipcMain.on('scrobble:openAuth', (e, url) => {
   if (typeof url === 'string' && url.startsWith('https://www.last.fm/api/auth/')) shell.openExternal(url);
+});
+ipcMain.handle('scrobble:getSimilar', async (e, { artist, track }) => {
+  if (!artist || !track) return { error: 'missing fields' };
+  try {
+    const data = await scrobbleCall('track.getSimilar', { artist, track, limit: 12 }, false);
+    if (data.error) return { error: data.message || 'lookup failed' };
+    const list = (data.similartracks && data.similartracks.track) || [];
+    return { tracks: list.map(t => ({ artist: (t.artist && t.artist.name) || '', name: t.name || '' })) };
+  } catch (err) { return { error: err.message }; }
 });
 
 const QUALITY_PRESETS = {
