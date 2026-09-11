@@ -482,26 +482,6 @@
   }
   .library-folder-sub input { cursor: pointer; }
   .library-folder-remove:hover { color: var(--txt); background: rgba(255,255,255,.12); }
-  .library-folder-row {
-    display: flex; flex-direction: column; gap: 6px; cursor: default;
-    border: 1px solid var(--line); background: rgba(255,255,255,.05); border-radius: 9px; padding: 8px 10px;
-  }
-  .library-folder-row:hover { background: rgba(255,255,255,.05); }
-  .library-folder-top { display: flex; align-items: center; gap: 8px; }
-  .library-folder-path {
-    font-size: 11.5px; color: var(--txt); flex: 1; min-width: 0;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-  .library-folder-remove {
-    border: 0; background: transparent; color: var(--dim); cursor: pointer;
-    font-size: 13px; line-height: 1; padding: 2px 4px; border-radius: 5px; flex: 0 0 auto;
-  }
-  .library-folder-remove:hover { color: var(--txt); background: rgba(255,255,255,.12); }
-  .library-folder-sub {
-    display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--dim); cursor: pointer;
-  }
-  .library-folder-sub input { cursor: pointer; }
-  .library-folder-remove:hover { color: var(--txt); background: rgba(255,255,255,.12); }
   .val { font-family: var(--mono); font-size: 11.5px; color: var(--dim); min-width: 34px; text-align: right; }
   .row select {
     border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.06); color: var(--txt);
@@ -1533,18 +1513,6 @@
     </div>
   </div>
 
-  <div class="help-overlay hidden" id="libraryOverlay">
-    <div class="help-box pls-box">
-      <div class="help-title">library folders</div>
-      <p class="note" style="margin-top:-2px;">autoplay similar searches these when it can't find a match in your current playlist.</p>
-      <div class="pls-list" id="libraryFolderList"></div>
-      <div class="pls-foot">
-        <button id="libraryAddFolderBtn">add folder&hellip;</button>
-        <button id="libraryCloseBtn">close</button>
-      </div>
-    </div>
-  </div>
-
   <div class="help-overlay hidden" id="confirmOverlay">
     <div class="help-box" style="max-width: 340px;">
       <div class="help-title" id="confirmTitle">confirm</div>
@@ -1981,16 +1949,6 @@
         </div>
       </div>
       <p class="note" id="autoplaySimilarNote">when the playlist ends, mediyyu picks a similar track from your library folders — or a random one if nothing similar is found.</p>
-      <div class="sec-divider"></div>
-      <button class="btn-neutral" id="libraryOpenBtn" style="width:100%; text-align:center;">manage library folders&hellip;</button>
-      <div class="row" style="margin-top:11px;">
-        <label>autoplay similar</label>
-        <div class="seg seg-sm" id="autoplaySimilarSeg">
-          <button data-val="off" class="on">off</button>
-          <button data-val="on">on</button>
-        </div>
-      </div>
-      <p class="note" id="autoplaySimilarNote">when the playlist ends, mediyyu picks a similar track from your library folders — or a random one if nothing similar is found.</p>
     </div>
 
     <div class="sec" data-tab="midi">
@@ -2375,7 +2333,6 @@
     discordEnabled: true, discordClientId: '1519049738224406711', discordImageKey: 'noting',
     lastfmEnabled: false, lastfmSessionKey: '', lastfmUsername: '',
     gain: 100, eq0: 0, eq1: 0, eq2: 0, eq3: 0, eq4: 0, eq5: 0, eq6: 0, eq7: 0, eq8: 0, eq9: 0,
-    shuffle: false, repeat: 'off', playbackRate: 1, drunkMode: '', normalize: false, crossfade: false, crossfadeDur: 4, autoplaySimilar: false, libraryFolders: [],
     shuffle: false, repeat: 'off', playbackRate: 1, drunkMode: '', normalize: false, crossfade: false, crossfadeDur: 4, autoplaySimilar: false, libraryFolders: [],
     notifyTrack: true, notifyEnd: true, easterEggs: true,
     specFftSize: 4096, specWindow: 'blackman', specSineExp: 3,
@@ -4883,7 +4840,6 @@
       if (tags.artist) { $('npArtist').textContent = tags.artist; $('npArtist').classList.remove('hidden'); }
       if (tags.album) npAlbum = tags.album;
       myFile._title = tags.title || '';
-      myFile._artist = tags.artist || '';
       myFile._artist = tags.artist || '';
       const tn = tags.track ? String(tags.track).match(/^\d+/) : null;
       myFile._trackNo = tn ? +tn[0] : 0;
@@ -7594,80 +7550,6 @@
     refreshLibraryHasMusic();
     save();
   });
-  $('autoplaySimilarSeg').querySelectorAll('button').forEach(btn => {
-    btn.addEventListener('click', () => { S.autoplaySimilar = btn.dataset.val === 'on'; syncUI(); save(); });
-  });
-  let libraryHasMusic = false;
-  function syncAutoplaySimilarGate() {
-    $('autoplaySimilarSeg').classList.toggle('disabled', !libraryHasMusic);
-    $('autoplaySimilarNote').textContent = libraryHasMusic
-      ? 'when the playlist ends, mediyyu picks a similar track from your library folders — or a random one if nothing similar is found.'
-      : 'add a library folder with at least one track to enable this.';
-  }
-  async function refreshLibraryHasMusic() {
-    if (!S.libraryFolders.length || !window.winControls) { libraryHasMusic = false; syncAutoplaySimilarGate(); return; }
-    for (const entry of S.libraryFolders) {
-      try {
-        const found = await window.winControls.scanDirForAudio(entry.path, entry.recursive !== false);
-        if (found && found.length) { libraryHasMusic = true; syncAutoplaySimilarGate(); return; }
-      } catch (e) {}
-    }
-    libraryHasMusic = false;
-    syncAutoplaySimilarGate();
-  }
-  function syncLibraryFolderList() {
-    const box = $('libraryFolderList');
-    box.innerHTML = '';
-    if (!S.libraryFolders.length) {
-      const empty = document.createElement('div');
-      empty.className = 'pls-empty';
-      empty.textContent = 'no folders yet — add one below.';
-      box.appendChild(empty);
-      return;
-    }
-    S.libraryFolders.forEach((entry, i) => {
-      const row = document.createElement('div');
-      row.className = 'library-folder-row';
-      const top = document.createElement('div');
-      top.className = 'library-folder-top';
-      const path = document.createElement('span');
-      path.className = 'library-folder-path';
-      path.textContent = entry.path;
-      path.title = entry.path;
-      const rm = document.createElement('button');
-      rm.className = 'library-folder-remove';
-      rm.textContent = '✕';
-      rm.title = 'remove this folder';
-      rm.addEventListener('click', () => {
-        S.libraryFolders.splice(i, 1);
-        syncLibraryFolderList();
-        refreshLibraryHasMusic();
-        save();
-      });
-      top.append(path, rm);
-      const sub = document.createElement('label');
-      sub.className = 'library-folder-sub';
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.checked = entry.recursive !== false;
-      cb.addEventListener('change', () => { entry.recursive = cb.checked; refreshLibraryHasMusic(); save(); });
-      sub.append(cb, document.createTextNode('look in subfolders'));
-      row.append(top, sub);
-      box.appendChild(row);
-    });
-  }
-  $('libraryOpenBtn').addEventListener('click', () => { $('libraryOverlay').classList.remove('hidden'); });
-  $('libraryCloseBtn').addEventListener('click', () => { $('libraryOverlay').classList.add('hidden'); });
-  $('libraryOverlay').addEventListener('click', e => { if (e.target === $('libraryOverlay')) $('libraryOverlay').classList.add('hidden'); });
-  $('libraryAddFolderBtn').addEventListener('click', async () => {
-    if (!window.winControls) return;
-    const dir = await window.winControls.libraryPickFolder();
-    if (!dir || S.libraryFolders.some(f => f.path === dir)) return;
-    S.libraryFolders.push({ path: dir, recursive: true });
-    syncLibraryFolderList();
-    refreshLibraryHasMusic();
-    save();
-  });
   function syncSoundfontUI() {
     $('soundfontName').textContent = S.soundfontName || 'none loaded';
     $('soundfontClearBtn').classList.toggle('hidden', !S.soundfontName);
@@ -7790,16 +7672,10 @@
     if (n >= 0) setTimeout(() => transitionTo(n), 400);
   });
   audio.addEventListener('ended', async () => {
-  audio.addEventListener('ended', async () => {
     setPlay(false);
     if (recording) { stopRec(); return; }
     if (S.repeat === 'one') { loadCurrent(); return; }
     const n = pickNextIndex();
-    if (n >= 0) { transitionTo(n); return; }
-    const endedFile = playlist[curIndex];
-    const simIdx = await tryAutoplaySimilar();
-    if (simIdx >= 0 && playlist[curIndex] === endedFile && !playing) { transitionTo(simIdx); return; }
-    if (S.notifyEnd) notify('playlist finished', 'all tracks played.');
     if (n >= 0) { transitionTo(n); return; }
     const endedFile = playlist[curIndex];
     const simIdx = await tryAutoplaySimilar();
@@ -7816,7 +7692,6 @@
       else if (!$('plsOverlay').classList.contains('hidden')) $('plsOverlay').classList.add('hidden');
       else if (!$('statsOverlay').classList.contains('hidden')) $('statsOverlay').classList.add('hidden');
       else if (!$('recentOverlay').classList.contains('hidden')) $('recentOverlay').classList.add('hidden');
-      else if (!$('libraryOverlay').classList.contains('hidden')) $('libraryOverlay').classList.add('hidden');
       else if (!$('libraryOverlay').classList.contains('hidden')) $('libraryOverlay').classList.add('hidden');
       else if (!$('lyricsSearchOverlay').classList.contains('hidden')) closeLyricsSearchOverlay();
       else if (!$('lyricsUrlOverlay').classList.contains('hidden')) closeLyricsUrlOverlay();
@@ -8655,9 +8530,6 @@
     $('autoplaySimilarSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.autoplaySimilar));
     syncAutoplaySimilarGate();
     syncLibraryFolderList();
-    $('autoplaySimilarSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.autoplaySimilar));
-    syncAutoplaySimilarGate();
-    syncLibraryFolderList();
     syncSoundfontUI();
     applyAudioChain();
     $('shuffleBtn').classList.toggle('tog-on', S.shuffle);
@@ -8748,7 +8620,6 @@
   }
   ensureBufs(S.count);
   syncUI();
-  refreshLibraryHasMusic();
   refreshLibraryHasMusic();
 
   let recorder = null, recording = false, exporting = false, recChunks = [], recStart = 0, recTimer = null;
