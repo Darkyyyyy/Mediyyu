@@ -40,6 +40,7 @@ contextBridge.exposeInMainWorld('winControls', {
   discordSetActivity: (activity) => ipcRenderer.send('discord:setActivity', activity),
   discordClearActivity: () => ipcRenderer.send('discord:clearActivity'),
   discordLookupCover: (artist, album, title) => ipcRenderer.invoke('discord:lookupCover', { artist, album, title }),
+  onDiscordLog: (cb) => ipcRenderer.on('discord:log', (e, payload) => cb(payload)),
   lyricsFindLocal: (p) => ipcRenderer.invoke('lyrics:findLocal', p),
   lyricsFetch: (meta) => ipcRenderer.invoke('lyrics:fetch', meta),
   lyricsFetchById: (id) => ipcRenderer.invoke('lyrics:fetchById', id),

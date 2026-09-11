@@ -280,6 +280,9 @@ async function discordDisconnect() {
   if (client) { try { await client.destroy(); } catch {} }
 }
 
+function discordLog(msg) {
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('discord:log', { ts: Date.now(), msg });
+}
 async function discordConnect(clientId) {
   if (!clientId) { await discordDisconnect(); return; }
   if (discordClient && discordClientId === clientId && discordClient.isConnected) return;
@@ -289,8 +292,10 @@ async function discordConnect(clientId) {
   discordClient = client;
   try {
     await client.login();
+    discordLog(`connected to discord (client id ${clientId})`);
   } catch (err) {
     console.error('[discord]', err.message);
+    discordLog(`discord login failed: ${err.message}`);
     if (discordClient === client) discordClient = null;
   }
 }
@@ -817,17 +822,48 @@ ipcMain.handle('soundfont:read', async (e, p) => {
 ipcMain.on('discord:connect', (e, clientId) => { discordConnect(clientId); });
 ipcMain.on('discord:disconnect', () => { discordDisconnect(); });
 ipcMain.on('discord:setActivity', (e, activity) => {
-  if (!discordClient || !discordClient.isConnected) return;
-  discordClient.user?.setActivity(activity).catch(() => {});
+  if (!discordClient || !discordClient.isConnected) {
+    discordLog('activity NOT sent — discord rpc not connected (is discord running?)');
+    return;
+  }
+  const key = activity && activity.largeImageKey;
+  if (!key) discordLog('activity sent WITHOUT any image (no cover url, no fallback asset key)');
+  else if (/^https?:\/\//i.test(key)) discordLog(`activity sent with image URL → ${key}`);
+  else discordLog(`activity sent with discord asset key → "${key}"`);
+  discordClient.user?.setActivity(activity)
+    .then(() => discordLog('discord accepted the activity payload ✓'))
+    .catch(err => discordLog(`discord REJECTED the activity: ${err && err.message ? err.message : err}`));
 });
 ipcMain.on('discord:clearActivity', () => {
   if (!discordClient || !discordClient.isConnected) return;
   discordClient.user?.clearActivity().catch(() => {});
 });
 const _dg = Buffer.from('eWhRdHRoTnhvRlNPQ1lFRXBjeUg6VEtiWWlDa296QnFMRHZlS0d1QVlSbHhIT0pQaHdWZkU=', 'base64').toString('utf8').split(':');
+// strip punctuation, symbols and any "feat. X" credit that only confuse the cover databases.
+// letters (every script), digits, spaces, hyphens and apostrophes are kept.
+function cleanSearchTerm(s) {
+  const raw = String(s || '').trim();
+  const B = String.fromCharCode(92);
+  const featBracket = new RegExp('[(' + B + '[{][^)' + B + ']}]*?(?:feat|ft|featuring)[.]?[^)' + B + ']}]*[)' + B + ']}]', 'gi');
+  const featTail = new RegExp('[ ,;-]+(?:feat|ft|featuring)[.]?[ ].*$', 'i');
+  const drop = new RegExp('[^' + B + 'p{L}' + B + 'p{N}' + B + "s'’-]+", 'gu');
+  const cleaned = raw.normalize('NFKC')
+    .replace(featBracket, ' ')
+    .replace(featTail, '')
+    .replace(drop, ' ')
+    .replace(/  +/g, ' ')
+    .trim()
+    .replace(/^-+|-+$/g, '')
+    .trim();
+  return cleaned || raw;
+}
 async function lookupCoverItunes(artist, album) {
-  if (!album) return null;
+  if (!album) {
+    discordLog('itunes: SKIPPED — track has no album tag (itunes search needs one)');
+    return null;
+  }
   const term = [artist, album].filter(Boolean).join(' ');
+  discordLog(`itunes: searching "${term}"…`);
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
@@ -835,26 +871,136 @@ async function lookupCoverItunes(artist, album) {
     const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timeout);
     const data = await res.json();
-    const art = data.results && data.results[0] && data.results[0].artworkUrl100;
-    return art ? art.replace('100x100bb.jpg', '512x512bb.jpg') : null;
+    const first = data.results && data.results[0];
+    const art = first && first.artworkUrl100;
+    if (!art) {
+      discordLog(`itunes: NO MATCH for "${term}"`);
+      return null;
+    }
+    const full = art.replace('100x100bb.jpg', '512x512bb.jpg');
+    discordLog(`itunes: FOUND "${first.artistName || '?'} — ${first.collectionName || '?'}"`);
+    discordLog(`  └ ${full}`);
+    return full;
   } catch (err) {
+    discordLog(`itunes: ERROR — ${err && err.name === 'AbortError' ? 'timed out after 5s' : (err && err.message) || err}`);
     return null;
   }
 }
 async function lookupCoverDiscogs(artist, album, title) {
   const term = [artist, album || title].filter(Boolean).join(' ');
-  if (!term) return null;
+  if (!term) {
+    discordLog('discogs: SKIPPED — no artist and no album/title to search with');
+    return null;
+  }
+  discordLog(`discogs: searching "${term}"…`);
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6000);
     const url = `https://api.discogs.com/database/search?q=${encodeURIComponent(term)}&type=release&key=${_dg[0]}&secret=${_dg[1]}`;
     const res = await fetch(url, { signal: controller.signal, headers: { 'User-Agent': lrclibUA() } });
     clearTimeout(timeout);
+    if (!res.ok) {
+      discordLog(`discogs: HTTP ${res.status} ${res.statusText || ''}`.trim() + (res.status === 429 ? ' (rate limited)' : ''));
+      return null;
+    }
     const data = await res.json();
     const r = data.results && data.results[0];
     const cover = r && (r.cover_image || r.thumb);
-    return cover || null;
+    if (!cover) {
+      discordLog(`discogs: NO MATCH for "${term}" (${(data.results || []).length} results, none with art)`);
+      return null;
+    }
+    discordLog(`discogs: FOUND "${r.title || '?'}"${r.year ? ` (${r.year})` : ''}`);
+    discordLog(`  └ ${cover}`);
+    return cover;
   } catch (err) {
+    discordLog(`discogs: ERROR — ${err && err.name === 'AbortError' ? 'timed out after 6s' : (err && err.message) || err}`);
+    return null;
+  }
+}
+// musicbrainz allows about one request per second, and it is now the first source we hit
+let mbGate = Promise.resolve();
+let mbLastCall = 0;
+function mbThrottle() {
+  const next = mbGate.then(async () => {
+    const wait = 1500 - (Date.now() - mbLastCall);
+    if (wait > 0) await new Promise(r => setTimeout(r, wait));
+    mbLastCall = Date.now();
+  });
+  mbGate = next.catch(() => {});
+  return next;
+}
+async function lookupCoverMusicBrainz(artist, album, title) {
+  if (!album && !title) {
+    discordLog('musicbrainz: SKIPPED — no album and no title');
+    return null;
+  }
+  const esc = s => String(s).replace(/(["\\])/g, '\\$1');
+  const useRelease = !!album;
+  const parts = [`${useRelease ? 'release' : 'recording'}:"${esc(album || title)}"`];
+  if (artist) parts.push(`artist:"${esc(artist)}"`);
+  const query = parts.join(' AND ');
+  const entity = useRelease ? 'release' : 'recording';
+  discordLog(`musicbrainz: searching ${entity} ${query}…`);
+  try {
+    await mbThrottle();
+    const headers = { 'User-Agent': lrclibUA() };
+    const searchUrl = `https://musicbrainz.org/ws/2/${entity}/?query=${encodeURIComponent(query)}&fmt=json&limit=3`;
+    const backoff = [1500, 3000, 5000];
+    let res = null;
+    for (let attempt = 0; ; attempt++) {
+      const c = new AbortController();
+      const tt = setTimeout(() => c.abort(), 6000);
+      try { res = await fetch(searchUrl, { signal: c.signal, headers }); } finally { clearTimeout(tt); }
+      if (res.status !== 503 || attempt >= backoff.length) break;
+      discordLog(`musicbrainz: HTTP 503 (rate limited) — retry ${attempt + 1}/${backoff.length} in ${backoff[attempt] / 1000}s`);
+      await new Promise(r => setTimeout(r, backoff[attempt]));
+      mbLastCall = Date.now();
+    }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    if (!res.ok) {
+      clearTimeout(timeout);
+      discordLog(`musicbrainz: HTTP ${res.status}${res.status === 503 ? ' (rate limited)' : ''}`);
+      return null;
+    }
+    const data = await res.json();
+    const candidates = [];
+    if (useRelease) {
+      for (const r of data.releases || []) if (r.id) candidates.push({ id: r.id, label: `${(r['artist-credit'] || [{}])[0].name || '?'} — ${r.title || '?'}` });
+    } else {
+      for (const rec of data.recordings || []) {
+        for (const rel of rec.releases || []) if (rel.id) candidates.push({ id: rel.id, label: `${(rec['artist-credit'] || [{}])[0].name || '?'} — ${rel.title || rec.title || '?'}` });
+      }
+    }
+    if (!candidates.length) {
+      clearTimeout(timeout);
+      discordLog(`musicbrainz: NO MATCH for ${query}`);
+      return null;
+    }
+    for (const cand of candidates.slice(0, 3)) {
+      const caaRes = await fetch(`https://coverartarchive.org/release/${cand.id}`, { signal: controller.signal, headers });
+      if (!caaRes.ok) {
+        discordLog(`musicbrainz: "${cand.label}" has no art in cover art archive (HTTP ${caaRes.status})`);
+        continue;
+      }
+      const caa = await caaRes.json();
+      const img = (caa.images || []).find(i => i.front) || (caa.images || [])[0];
+      const url = img && ((img.thumbnails && (img.thumbnails['500'] || img.thumbnails.large)) || img.image);
+      if (!url) {
+        discordLog(`musicbrainz: "${cand.label}" art entry has no usable image url`);
+        continue;
+      }
+      clearTimeout(timeout);
+      discordLog(`musicbrainz: FOUND "${cand.label}"`);
+      discordLog(`  └ ${url}`);
+      return url;
+    }
+    clearTimeout(timeout);
+    discordLog(`musicbrainz: matched ${candidates.length} release(s) but none had cover art`);
+    return null;
+  } catch (err) {
+    discordLog(`musicbrainz: ERROR — ${err && err.name === 'AbortError' ? 'timed out after 7s' : (err && err.message) || err}`);
     return null;
   }
 }
@@ -878,19 +1024,42 @@ function coverCacheKey(artist, album, title) {
   return [artist, album, title].map(s => (s || '').toLowerCase().trim()).join('|');
 }
 ipcMain.handle('discord:lookupCover', async (e, { artist, album, title }) => {
-  if (!album && !title) return null;
+  discordLog(`── cover lookup: artist="${artist || '(none)'}" album="${album || '(none)'}" title="${title || '(none)'}"`);
+  if (!album && !title) {
+    discordLog('ABORTED — no album and no title tag, nothing to search with');
+    return { url: null, source: null };
+  }
   const cache = loadCoverCache();
   const key = coverCacheKey(artist, album, title);
   const hit = cache[key];
   if (hit) {
-    if (hit.url) return hit.url;
-    if (Date.now() - hit.ts < COVER_CACHE_NEG_TTL) return null;
+    if (hit.url) {
+      discordLog(`cache: HIT (local cache, from ${hit.source || 'an earlier lookup'}) → ${hit.url}`);
+      return { url: hit.url, source: hit.source || 'cache' };
+    }
+    if (Date.now() - hit.ts < COVER_CACHE_NEG_TTL) {
+      const days = Math.ceil((COVER_CACHE_NEG_TTL - (Date.now() - hit.ts)) / 86400000);
+      discordLog(`cache: HIT but it's a remembered FAILURE (no cover found before, retry in ${days}d) — skipping apis`);
+      return { url: null, source: null };
+    }
+    discordLog('cache: stale failure, retrying the apis');
+  } else {
+    discordLog('cache: miss, querying apis');
   }
-  const itunes = await lookupCoverItunes(artist, album);
-  const url = itunes || await lookupCoverDiscogs(artist, album, title);
-  cache[key] = { url: url || null, ts: Date.now() };
+  const qArtist = cleanSearchTerm(artist), qAlbum = cleanSearchTerm(album), qTitle = cleanSearchTerm(title);
+  if (qArtist !== (artist || '').trim() || qAlbum !== (album || '').trim() || qTitle !== (title || '').trim()) {
+    discordLog(`search terms cleaned → artist="${qArtist || '(none)'}" album="${qAlbum || '(none)'}" title="${qTitle || '(none)'}"`);
+  }
+  let source = null;
+  let url = await lookupCoverMusicBrainz(qArtist, qAlbum, qTitle);
+  if (url) source = 'MusicBrainz';
+  if (!url) { url = await lookupCoverItunes(qArtist, qAlbum); if (url) source = 'iTunes'; }
+  if (!url) { url = await lookupCoverDiscogs(qArtist, qAlbum, qTitle); if (url) source = 'Discogs'; }
+  if (url) discordLog(`RESULT: cover from ${source}`);
+  else discordLog('RESULT: no cover found in MusicBrainz, iTunes or Discogs for this track');
+  cache[key] = { url: url || null, source: source, ts: Date.now() };
   saveCoverCacheDebounced();
-  return url;
+  return { url: url || null, source: source };
 });
 
 const _sc = Buffer.from('OTllNjhiNjhlNjNmYzBkN2E1MDZlNWY1ZDQ3YjJlYjM6MWE5MzdiYjBlYzQwNTQyNjQ5M2UwNzBmMDE3YzlhOGE=', 'base64').toString('utf8').split(':');
