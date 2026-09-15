@@ -1,9 +1,14 @@
-# mediyyu  
+<div align="center">
+
+<img src="https://files.catbox.moe/g211f4.png" alt="mediyyu" width="400">
+
 */mɪdijuː/*
 
 a music player + audio visualizer for windows, built with electron.
 
 ![version](https://img.shields.io/badge/version-1.3.1-blue)
+
+</div>
 
 ## features
 
