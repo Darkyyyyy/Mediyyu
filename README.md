@@ -1,9 +1,14 @@
-# mediyyu  
+<div align="center">
+
+<img src="https://files.catbox.moe/g211f4.png" alt="mediyyu" width="400">
+
 */mɪdijuː/*
 
 a music player + audio visualizer for windows, built with electron.
 
-![version](https://img.shields.io/badge/version-1.3.0-blue)
+![version](https://img.shields.io/badge/version-1.3.1-blue)
+
+</div>
 
 ## features
 
@@ -21,9 +26,9 @@ a music player + audio visualizer for windows, built with electron.
 
 ### Windows :
 
-Installer version: [Mediyyu-Setup-1.3.0.exe](https://github.com/Darkyyyyy/Mediyyu/releases/download/v1.3.0/Mediyyu-Setup-1.3.0.exe)
+Installer version: [Mediyyu-Setup-1.3.1.exe](https://github.com/Darkyyyyy/Mediyyu/releases/download/v1.3.1/Mediyyu-Setup-1.3.1.exe)
 
-Portable version: [Mediyyu-1.3.0.exe](https://github.com/Darkyyyyy/Mediyyu/releases/download/v1.3.0/Mediyyu-1.3.0.exe)
+Portable version: [Mediyyu-1.3.1.exe](https://github.com/Darkyyyyy/Mediyyu/releases/download/v1.3.1/Mediyyu-1.3.1.exe)
 
 
 ### Linux :
