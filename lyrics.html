@@ -25,11 +25,17 @@
   }
   .bgpane {
     position: absolute; inset: 0;
-    background: rgba(12,13,16,.92);
+    background: rgba(12,13,16, var(--bgop, .92));
     border-radius: 14px;
-    border: 1px solid rgba(255,255,255,.14);
+    /* the edge fades with the panel, so fully transparent really is invisible */
+    border: 1px solid rgba(255,255,255, calc(var(--bgop, .92) * .15));
+    transition: border-color .18s ease;
   }
-  body.solid .bgpane { background: #0c0d10; }
+  /* ...but hovering always outlines it, so an invisible window can still be found */
+  body:not(.idle) .bgpane { border-color: rgba(255,255,255,.3); }
+  /* the title bar steps aside once the cursor leaves the window */
+  .bar { transition: opacity .28s ease; }
+  body.idle .bar { opacity: 0; }
   .bar {
     position: absolute; top: 0; left: 0; right: 0; height: 40px;
     display: flex; align-items: center; gap: 4px; padding: 0 8px 0 14px;
@@ -48,6 +54,18 @@
     display: flex; align-items: center; justify-content: center;
   }
   .bar button:hover { background: rgba(255,255,255,.16); color: #fff; }
+  .bar input[type=range] {
+    -webkit-app-region: no-drag; -webkit-appearance: none; appearance: none;
+    width: 62px; height: 26px; margin: 0 2px; background: transparent; cursor: pointer;
+  }
+  .bar input[type=range]::-webkit-slider-runnable-track {
+    height: 4px; border-radius: 4px; background: rgba(255,255,255,.18);
+  }
+  .bar input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; border: 0; margin-top: -3.5px;
+    width: 11px; height: 11px; border-radius: 50%; background: rgba(255,255,255,.8);
+  }
+  .bar input[type=range]:hover::-webkit-slider-thumb { background: #fff; }
   .bar button.on { background: rgba(255,255,255,.85); color: #111; }
   .bar #closeBtn:hover { background: #e81123; color: #fff; }
   .stage {
@@ -67,11 +85,21 @@
     line-height: 1.4;
     color: rgba(255,255,255,.34);
     cursor: pointer;
-    transition: color .3s ease, opacity .3s ease;
+    transition: color .3s ease, opacity .3s ease, filter .4s ease;
   }
   .line:hover { color: rgba(255,255,255,.6); }
   .line.cur { color: #fff; font-weight: 700; }
+  .line.cur .w { opacity: .42; transition: opacity .14s linear; }
+  .line.cur .w.sung { opacity: 1; }
   .line.gap { font-size: calc(var(--fs) * .6); letter-spacing: 4px; color: rgba(255,255,255,.22); cursor: default; }
+  /* the dots give way to a countdown while an instrumental stretch plays */
+  .line.gap .gapbar {
+    display: none; width: 110px; height: 3px; margin: 3px auto;
+    background: rgba(255,255,255,.15); border-radius: 3px; overflow: hidden;
+  }
+  .line.gap.counting .gapbar { display: block; }
+  .line.gap.counting .dots { display: none; }
+  .line.gap .gapfill { height: 100%; width: 0%; background: rgba(255,255,255,.7); border-radius: 3px; }
   .empty {
     position: absolute; inset: 40px 0 0 0;
     display: flex; align-items: center; justify-content: center;
@@ -87,7 +115,7 @@
     <button id="fontMinus" title="smaller text">a-</button>
     <button id="fontPlus" title="bigger text">a+</button>
     <button id="topBtn" title="always on top">📌</button>
-    <button id="bgBtn" title="solid background">▩</button>
+    <input type="range" id="bgRange" min="0" max="100" step="1" title="background opacity" />
     <button id="closeBtn" title="close">✕</button>
   </div>
   <div class="stage">
@@ -97,28 +125,70 @@
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
-  let prefs = { fs: 20, top: false, solid: false };
-  try { prefs = Object.assign(prefs, JSON.parse(localStorage.getItem('bbv_lyrwin') || '{}')); } catch (e) {}
+  let prefs = { fs: 20, top: false, bg: 92 };
+  try {
+    const saved = JSON.parse(localStorage.getItem('bbv_lyrwin') || '{}');
+    // the old build stored a solid true/false, which was really 100% or 92%
+    if (saved.bg === undefined && saved.solid !== undefined) saved.bg = saved.solid ? 100 : 92;
+    prefs = Object.assign(prefs, saved);
+  } catch (e) {}
   const savePrefs = () => { try { localStorage.setItem('bbv_lyrwin', JSON.stringify(prefs)); } catch (e) {} };
 
   const applyPrefs = () => {
     document.documentElement.style.setProperty('--fs', prefs.fs + 'px');
-    document.body.classList.toggle('solid', prefs.solid);
+    const bg = Math.max(0, Math.min(100, Number(prefs.bg)));
+    prefs.bg = bg;
+    document.documentElement.style.setProperty('--bgop', (bg / 100).toFixed(3));
+    $('bgRange').value = bg;
+    $('bgRange').title = 'background opacity — ' + bg + '%';
     $('topBtn').classList.toggle('on', prefs.top);
-    $('bgBtn').classList.toggle('on', prefs.solid);
     if (window.winControls) window.winControls.lyricsWinSetTop(prefs.top);
   };
 
   $('fontMinus').addEventListener('click', () => { prefs.fs = Math.max(12, prefs.fs - 2); applyPrefs(); savePrefs(); });
   $('fontPlus').addEventListener('click', () => { prefs.fs = Math.min(40, prefs.fs + 2); applyPrefs(); savePrefs(); });
   $('topBtn').addEventListener('click', () => { prefs.top = !prefs.top; applyPrefs(); savePrefs(); });
-  $('bgBtn').addEventListener('click', () => { prefs.solid = !prefs.solid; applyPrefs(); savePrefs(); });
+  $('bgRange').addEventListener('input', () => { prefs.bg = +$('bgRange').value; applyPrefs(); savePrefs(); });
   $('closeBtn').addEventListener('click', () => { if (window.winControls) window.winControls.lyricsWinClose(); });
 
   let lines = [];
   let sync = { t: 0, playing: false, rate: 1, at: performance.now() };
   let curIdx = -2;
 
+  // lines arrive parsed. real per-word timings ride along when the source had them.
+  // otherwise the line is split across its own duration, weighted by word length —
+  // an estimate the main window can switch off.
+  let guessWords = true;
+  function lyricWords(list, i) {
+    const ln = list && list[i];
+    if (!ln || !ln.text) return null;
+    if (ln._w !== undefined) return ln._w;
+    if (ln.words && ln.words.length) { ln._w = ln.words; return ln._w; }
+    if (!guessWords) { ln._w = null; return null; }
+    const parts = ln.text.split(/(\s+)/).filter(x => x.length);
+    if (parts.length < 2) { ln._w = null; return null; }
+    const next = list[i + 1];
+    const start = ln.t;
+    const span = next && next.t > start ? next.t - start : 3.5;
+    const dur = Math.min(12, Math.max(0.5, span));
+    let total = 0;
+    const weight = parts.map(x => { const v = /^\s+$/.test(x) ? 0.4 : Math.max(1, x.length); total += v; return v; });
+    let acc = 0;
+    ln._w = parts.map((x, k) => { const t0 = start + (acc / total) * dur; acc += weight[k]; return { t: t0, text: x }; });
+    return ln._w;
+  }
+  function paintWords() {
+    if (curIdx < 0 || curIdx >= lines.length || !lines[curIdx].text) return;
+    const el = $('lines').children[curIdx];
+    if (!el) return;
+    const t = now();
+    const kids = el.children;
+    for (let i = 0; i < kids.length; i++) {
+      if (kids[i]._t === undefined) continue;
+      const on = kids[i]._t <= t;
+      if (kids[i]._on !== on) { kids[i]._on = on; kids[i].classList.toggle('sung', on); }
+    }
+  }
   function rebuild() {
     const box = $('lines');
     box.innerHTML = '';
@@ -126,7 +196,30 @@
       const el = document.createElement('div');
       const gap = !lines[i].text;
       el.className = 'line' + (gap ? ' gap' : '');
-      el.textContent = gap ? '· · ·' : lines[i].text;
+      if (gap) {
+        const dots = document.createElement('span');
+        dots.className = 'dots';
+        dots.textContent = '· · ·';
+        const bar = document.createElement('div');
+        bar.className = 'gapbar';
+        const fill = document.createElement('div');
+        fill.className = 'gapfill';
+        bar.appendChild(fill);
+        el.append(dots, bar);
+      } else {
+        const ws = lyricWords(lines, i);
+        if (ws) {
+          for (const w of ws) {
+            const sp = document.createElement('span');
+            sp.className = 'w';
+            sp._t = w.t;
+            sp.textContent = w.text;
+            el.appendChild(sp);
+          }
+        } else {
+          el.textContent = lines[i].text;
+        }
+      }
       if (!gap) {
         const t = lines[i].t;
         el.addEventListener('click', () => { if (window.winControls) window.winControls.lyricsWinSeek(t); });
@@ -152,7 +245,13 @@
       if (idx !== curIdx) {
         curIdx = idx;
         const kids = $('lines').children;
-        for (let i = 0; i < kids.length; i++) kids[i].classList.toggle('cur', i === idx);
+        for (let i = 0; i < kids.length; i++) {
+          kids[i].classList.toggle('cur', i === idx);
+          kids[i].classList.remove('counting');
+          // lines already sung drift out of focus, the further back the softer
+          const back = idx - i;
+          kids[i].style.filter = back > 0 ? 'blur(' + Math.min(6.4, 1.2 + back).toFixed(2) + 'px)' : '';
+        }
         const stage = document.querySelector('.stage');
         const target = idx >= 0 ? kids[idx] : kids[0];
         if (target) {
@@ -160,14 +259,36 @@
           $('lines').style.transform = `translateY(${Math.round(stage.clientHeight / 2 - offset)}px)`;
         }
       }
+      updateGapBar();
+      paintWords();
     }
     requestAnimationFrame(tick);
   }
+  // a long instrumental stretch gets a progress bar rather than three static dots
+  function updateGapBar() {
+    if (curIdx < 0 || curIdx >= lines.length) return;
+    const line = lines[curIdx];
+    const el = $('lines').children[curIdx];
+    if (!el || line.text) return;
+    const next = lines[curIdx + 1];
+    const dur = next ? next.t - line.t : 0;
+    if (!(dur >= 5)) return;
+    const progress = Math.max(0, Math.min(1, (now() - line.t) / dur));
+    el.classList.add('counting');
+    const fill = el.querySelector('.gapfill');
+    if (fill) fill.style.width = (progress * 100) + '%';
+  }
 
+  if (window.winControls && window.winControls.onLyricsWinHover) {
+    window.winControls.onLyricsWinHover((over) => document.body.classList.toggle('idle', !over));
+  }
   if (window.winControls && window.winControls.onLyricsWinSync) {
     window.winControls.onLyricsWinSync((p) => {
+      if (p.guessWords !== undefined) guessWords = !!p.guessWords;
       if (p.lines !== undefined) {
         lines = Array.isArray(p.lines) ? p.lines : [];
+        // the same line objects can come back after the setting changed
+        for (const ln of lines) delete ln._w;
         const t = (p.title || '').trim();
         const a = (p.artist || '').trim();
         $('trackTitle').textContent = t ? (a ? `${t} — ${a}` : t) : 'mediyyu lyrics';

@@ -30,6 +30,7 @@
     --glass-rgb-hover: 62, 65, 72;
     --glass-alpha-mult: 1;
     --line: rgba(255, 255, 255, 0.14);
+    --focus: rgba(130, 180, 255, 0.9);
     --txt: rgba(255, 255, 255, 0.92);
     --dim: rgba(255, 255, 255, 0.5);
     --liquid-sheen: linear-gradient(180deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,.03) 14%, rgba(255,255,255,.01) 55%, rgba(255,255,255,.05) 100%);
@@ -203,6 +204,8 @@
     font-size: 22px; font-weight: 700; color: #fff; line-height: 1.35;
     text-shadow: 0 2px 14px rgba(0,0,0,.85), 0 0 2px rgba(0,0,0,.9);
   }
+  .lyric-cur .w { opacity: .4; transition: opacity .14s linear; }
+  .lyric-cur .w.sung { opacity: 1; }
   .lyric-cur.pop { animation: lyricPop .38s ease; }
   @keyframes lyricPop { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
   .lyric-cur.rise { animation: lyricRise .38s cubic-bezier(.25,.7,.3,1); }
@@ -481,7 +484,182 @@
     display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--dim); cursor: pointer;
   }
   .library-folder-sub input { cursor: pointer; }
+  /* .pls-box sets 420px further down the sheet, so this needs the extra specificity */
+  .help-box.repair-box { width: min(720px, 92vw); }
+  /* .seg-sm pins the container to 104px, too narrow for these two labels */
+  .repair-box #repairScopeSeg { width: auto; }
+  .repair-box #repairScopeSeg button { white-space: nowrap; flex: 0 0 auto; }
+  .repair-list { max-height: 320px; overflow-y: auto; }
+  .repair-row { display: flex; gap: 9px; align-items: flex-start; padding: 7px 9px; border-bottom: 1px solid var(--line); }
+  .repair-row:last-child { border-bottom: 0; }
+  .repair-row .repair-rowbox { margin-top: 3px; flex: 0 0 auto; cursor: pointer; }
+  .repair-fields { display: flex; align-items: center; gap: 14px; margin-top: 10px; font-size: 11.5px; color: var(--dim); }
+  .repair-fields > span { text-transform: uppercase; letter-spacing: .05em; font-size: 10px; }
+  .repair-fields label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+  .repair-fields label.dim { opacity: .35; cursor: default; }
+  .repair-change .repair-fieldbox { margin-right: 6px; cursor: pointer; vertical-align: -1px; }
+  label.repair-change { display: block; cursor: pointer; }
+  .repair-main { min-width: 0; flex: 1; }
+  .repair-name { font-size: 11px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .repair-change { font-size: 11.5px; color: var(--txt); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .repair-change .was { color: var(--dim); text-decoration: line-through; }
+  .repair-field { display: inline-block; min-width: 46px; color: var(--dim); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+  .repair-status { font-size: 11px; color: var(--dim); margin-top: 8px; min-height: 15px; }
+  .repair-opt { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--dim); margin-top: 10px; cursor: pointer; }
+  .repair-done { color: #5fd48a; }
+  .repair-fail { color: #ff6b6b; }
   .library-folder-remove:hover { color: var(--txt); background: rgba(255,255,255,.12); }
+  .props-head { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; }
+  .props-head-cover {
+    width: 96px; height: 96px; flex: 0 0 auto; border-radius: 10px;
+    border: 1px solid var(--line); background: rgba(255,255,255,.05);
+    background-size: cover; background-position: center;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: var(--dim); text-align: center;
+  }
+  .props-head-cover.has-img span { display: none; }
+  .props-head-text { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 3px; padding-top: 2px; }
+  .props-head-text > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .props-head-file { font-size: 10.5px; color: var(--dim); font-family: var(--mono); }
+  .props-head-title { font-size: 16px; font-weight: 600; color: var(--txt); }
+  .props-head-artist { font-size: 12.5px; color: var(--txt); opacity: .85; }
+  .props-head-album { font-size: 11.5px; color: var(--dim); }
+  .props-tabs {
+    display: flex; flex-wrap: wrap; gap: 4px; align-items: flex-end;
+    border-bottom: 1px solid var(--line); margin-bottom: 12px;
+  }
+  .props-tabs button[data-ptab] {
+    border: 0; background: transparent; color: var(--dim); cursor: pointer;
+    font-family: var(--ui); font-size: 12px; padding: 7px 13px; border-radius: 8px 8px 0 0;
+    border-bottom: 2px solid transparent; transition: color .15s ease, border-color .15s ease;
+  }
+  .props-tabs button[data-ptab]:hover { color: var(--txt); }
+  .props-tabs button[data-ptab].on { color: var(--txt); border-bottom-color: var(--txt); font-weight: 600; }
+  .props-meta-btn {
+    margin-left: auto; margin-bottom: 5px; flex: 0 0 auto; white-space: nowrap;
+    border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--txt);
+    cursor: pointer; font-family: var(--ui); font-size: 11.5px;
+    border-radius: 8px; padding: 5px 11px; transition: background .15s ease;
+  }
+  .props-meta-btn:hover { background: rgba(255,255,255,.16); }
+  /* one height for all three tabs: the box stops jumping and long tabs scroll */
+  .props-pane { height: clamp(180px, 44vh, 400px); overflow-y: auto; padding-right: 4px; }
+  /* same 7px thumb the rest of the app uses */
+  .props-pane::-webkit-scrollbar, .props-lyr-results::-webkit-scrollbar { width: 7px; }
+  .props-pane::-webkit-scrollbar-thumb, .props-lyr-results::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 7px; }
+  .props-pane.hidden { display: none; }
+  .props-art-grid { display: flex; flex-wrap: wrap; gap: 10px; min-height: 120px; align-content: flex-start; }
+  .props-art-cell {
+    width: 104px; border-radius: 9px; border: 1px solid var(--line); overflow: hidden;
+    background: rgba(255,255,255,.04); cursor: pointer; transition: border-color .15s ease;
+  }
+  .props-art-cell.on { border-color: var(--txt); }
+  .props-art-thumb { height: 104px; background-size: cover; background-position: center; }
+  .props-art-meta { padding: 5px 7px; font-size: 10px; color: var(--dim); line-height: 1.35; }
+  .props-art-meta b { display: block; color: var(--txt); font-weight: 600; font-size: 10.5px; }
+  .props-art-cell input {
+    width: 100%; border: 0; border-top: 1px solid var(--line); background: transparent;
+    color: var(--txt); font-family: var(--ui); font-size: 10.5px; padding: 4px 7px;
+  }
+  .props-art-role {
+    width: 100%; box-sizing: border-box; border: 0; border-top: 1px solid var(--line);
+    background: rgba(255,255,255,.05); color: var(--txt); cursor: pointer;
+    font-family: var(--ui); font-size: 10px; padding: 4px 5px;
+  }
+  .props-art-role option { background: #16171b; color: var(--txt); }
+  .props-art-empty { font-size: 11.5px; color: var(--dim); padding: 24px 0; }
+  .props-art-note { font-size: 11px; color: var(--dim); margin: 10px 0 0; }
+  .props-art-foot { display: flex; gap: 8px; margin-top: 12px; }
+  .meta-box { width: min(560px, 92vw); display: flex; flex-direction: column; max-height: calc(100vh - 48px); }
+  .meta-groups {
+    flex: 1 1 auto; min-height: 140px; max-height: clamp(180px, 52vh, 440px);
+    overflow-y: auto; margin: 10px 0 12px; padding-bottom: 18px;
+    display: flex; flex-direction: column; gap: 15px;
+  }
+  .meta-groups::-webkit-scrollbar { width: 7px; }
+  .meta-groups::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 7px; }
+  .meta-empty { display: flex; align-items: center; gap: 9px; font-size: 12px; color: var(--dim); padding: 22px 2px; }
+  .meta-spin, .meta-cover.loading .meta-cover-thumb::after {
+    content: ''; flex: 0 0 auto; width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.16); border-top-color: rgba(255,255,255,.65);
+    animation: meta-spin .7s linear infinite;
+  }
+  .meta-cover.loading .meta-cover-thumb { display: flex; align-items: center; justify-content: center; }
+  @keyframes meta-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    .meta-spin, .meta-cover.loading .meta-cover-thumb::after { animation-duration: 2.4s; }
+  }
+  .meta-group-head {
+    font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--dim);
+    border-bottom: 1px solid var(--line); padding-bottom: 5px; margin-bottom: 5px;
+  }
+  .meta-opt {
+    display: flex; gap: 9px; align-items: baseline; padding: 5px 8px; border-radius: 7px;
+    cursor: pointer; font-size: 12px; color: var(--txt); text-align: left;
+  }
+  .meta-opt:hover { background: rgba(255,255,255,.07); }
+  .meta-opt input { flex: 0 0 auto; margin: 0; accent-color: #6aa0ff; }
+  .meta-val, .meta-keep { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .meta-keep { color: var(--dim); font-style: italic; }
+  .meta-src { flex: 0 0 auto; font-size: 9.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--dim); }
+  .meta-covers { display: flex; flex-wrap: wrap; gap: 9px; padding-top: 2px; }
+  .meta-cover {
+    width: 88px; min-height: 136px; display: flex; flex-direction: column; gap: 5px;
+    align-items: center; justify-content: center; padding: 7px 6px; cursor: pointer;
+    border: 1px solid var(--line); border-radius: 10px; text-align: center;
+    font-size: 9.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--dim);
+  }
+  .meta-cover:hover { background: rgba(255,255,255,.06); }
+  .meta-cover input { margin: 0; accent-color: #6aa0ff; }
+  .meta-cover-size {
+    font-size: 8.5px; letter-spacing: 0; text-transform: none; text-align: center;
+    color: rgba(255,255,255,.4); white-space: pre-line; line-height: 1.45;
+  }
+  .meta-cover.dead { opacity: .3; cursor: default; }
+  .meta-cover.dead:hover { background: none; }
+  .meta-cover-thumb {
+    width: 72px; height: 72px; border-radius: 6px; background: rgba(255,255,255,.05);
+    background-size: cover; background-position: center;
+  }
+  .meta-preview {
+    position: fixed; z-index: 1200; width: 220px; height: 220px; border-radius: 12px;
+    border: 1px solid var(--line); background: #0d0e11 center/cover no-repeat;
+    box-shadow: 0 14px 44px rgba(0,0,0,.6); pointer-events: none;
+    opacity: 0; transform: scale(.95); transition: opacity .12s ease, transform .12s ease;
+  }
+  .meta-preview.show { opacity: 1; transform: scale(1); }
+  .meta-foot { display: flex; gap: 12px; align-items: center; }
+  .meta-note { flex: 1; min-width: 0; font-size: 10.5px; color: var(--dim); line-height: 1.4; }
+  .props-lyr-state { font-size: 11.5px; color: var(--dim); margin-bottom: 10px; }
+  .props-lyr-state b { color: var(--txt); font-weight: 600; }
+  .props-lyr-tools { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+  /* .seg-sm pins 104px further down the sheet, so this needs to outrank it */
+  .props-lyr-tools .props-lyr-src { width: auto; flex: 0 0 auto; }
+  .props-lyr-tools .props-lyr-src button { white-space: nowrap; flex: 0 0 auto; }
+  .props-lyr-tools button:not(.props-lyr-src button) { padding: 7px 12px; white-space: nowrap; }
+  .props-lyr-tools input {
+    flex: 1 1 130px; min-width: 0; border: 1px solid var(--line); border-radius: 8px;
+    background: rgba(255,255,255,.06); color: var(--txt);
+    font-family: var(--ui); font-size: 12px; padding: 7px 10px;
+  }
+  .props-lyr-results { max-height: 168px; overflow-y: auto; margin-top: 10px; display: flex; flex-direction: column; gap: 3px; }
+  .props-lyr-results.hidden { display: none; }
+  .props-lyr-hit {
+    display: flex; gap: 8px; align-items: baseline; padding: 6px 9px; border-radius: 8px;
+    background: rgba(255,255,255,.04); cursor: pointer; font-size: 11.5px;
+  }
+  .props-lyr-hit:hover { background: rgba(255,255,255,.09); }
+  .props-lyr-hit b { color: var(--txt); font-weight: 600; }
+  .props-lyr-hit span { color: var(--dim); font-size: 10.5px; }
+  .props-lyr-hit .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .props-lyr-view { margin-top: 10px; }
+  .props-lyr-line { display: flex; gap: 10px; align-items: baseline; padding: 1px 0; font-size: 12px; color: var(--txt); }
+  .props-lyr-line .t {
+    flex: 0 0 46px; text-align: right; font-family: var(--mono); font-size: 9.5px;
+    color: var(--dim); opacity: .7; font-variant-numeric: tabular-nums;
+  }
+  .props-lyr-line .x { flex: 1; min-width: 0; }
+  .props-lyr-line.blank .x { opacity: .3; }
   .val { font-family: var(--mono); font-size: 11.5px; color: var(--dim); min-width: 34px; text-align: right; }
   .row select {
     border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.06); color: var(--txt);
@@ -744,7 +922,7 @@
     padding: 7px 10px; border-radius: 7px;
   }
   .submenu button:hover { background: rgba(255,255,255,.1); }
-  #lyricsFxItem { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  #lyricsFxItem, #lyricsGuessItem { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .submenu button.on { background: rgba(255,255,255,.16); color: #fff; }
   .submenu .seg { display: flex; padding: 3px; gap: 3px; }
   .submenu .seg button {
@@ -1241,7 +1419,11 @@
   .help-grid { display: grid; grid-template-columns: auto 1fr; gap: 7px 18px; font-size: 12.5px; color: rgba(255,255,255,.85); }
   .help-grid span:nth-child(odd) { font-family: var(--mono); font-size: 11.5px; color: #fff; background: rgba(255,255,255,.09); border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; text-align: center; }
 
-  .props-box { max-width: min(560px, 92vw); width: 560px; padding: 0; overflow: hidden; }
+  .props-box {
+    max-width: min(620px, 92vw); width: 620px; padding: 18px 20px;
+    max-height: calc(100vh - 48px); display: flex; flex-direction: column; overflow: hidden;
+  }
+  .props-head, .props-tabs, .props-foot { flex: 0 0 auto; }
   .props-title-row { display: flex; align-items: center; gap: 9px; padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,.08); }
   .props-icon { font-size: 15px; color: rgba(255,255,255,.8); }
   .props-body { display: flex; gap: 20px; padding: 18px 20px 6px; }
@@ -1279,20 +1461,42 @@
   .props-file-grid span:nth-child(odd) { color: var(--dim); }
   .props-file-grid span:nth-child(even) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .props-foot {
-    display: flex; align-items: center; gap: 10px; margin-top: 14px; padding: 13px 20px;
+    display: flex; align-items: center; gap: 10px; margin-top: 14px; padding: 13px 0 0;
     border-top: 1px solid rgba(255,255,255,.08);
   }
   .props-note { flex: 1; font-size: 11px; color: var(--dim); }
-  .props-foot button {
+  .props-art-foot button, .props-lyr-tools button:not(.props-lyr-src button), .props-foot button {
     border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--txt); cursor: pointer;
     font-family: var(--ui); font-size: 12px; border-radius: 8px; padding: 7px 15px;
   }
-  .props-foot button:hover { background: rgba(255,255,255,.16); }
+  .props-art-foot button:hover, .props-lyr-tools button:not(.props-lyr-src button):hover, .props-foot button:hover { background: rgba(255,255,255,.16); }
   .props-foot button.primary { background: rgba(90,150,255,.25); border-color: rgba(120,170,255,.5); color: #fff; }
   .props-foot button.primary:hover { background: rgba(90,150,255,.4); }
-  .props-foot button:disabled { opacity: .4; cursor: default; }
+  .props-art-foot button:disabled, .props-lyr-tools button:disabled, .props-foot button:disabled { opacity: .4; cursor: default; }
   .menu-item.disabled { opacity: .35; pointer-events: none; }
   .confirm-msg { font-size: 12.5px; color: rgba(255,255,255,.85); line-height: 1.5; margin-bottom: 16px; }
+  .confirm-box { max-width: 340px; }
+  .confirm-box.wide { max-width: min(520px, 92vw); width: 520px; }
+  .confirm-details {
+    display: flex; flex-direction: column; gap: 4px; margin: -8px 0 16px;
+    max-height: clamp(140px, 40vh, 300px); overflow-y: auto;
+  }
+  .confirm-details.hidden { display: none; }
+  .confirm-details::-webkit-scrollbar { width: 7px; }
+  .confirm-details::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 7px; }
+  .confirm-diff {
+    display: flex; gap: 8px; align-items: baseline; font-size: 11.5px;
+    padding: 4px 9px; border-radius: 7px; background: rgba(255,255,255,.04);
+  }
+  .confirm-diff .k {
+    flex: 0 0 72px; color: var(--dim); font-size: 9.5px;
+    text-transform: uppercase; letter-spacing: .05em;
+  }
+  .confirm-diff .from, .confirm-diff .to { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .confirm-diff .from { flex: 0 1 auto; max-width: 42%; color: var(--dim); text-decoration: line-through; }
+  .confirm-diff .to { flex: 1 1 auto; }
+  .confirm-diff .arrow { flex: 0 0 auto; color: var(--dim); }
+  .confirm-diff .to { color: var(--txt); }
   .confirm-actions { display: flex; justify-content: flex-end; gap: 10px; }
   .confirm-actions button {
     border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--txt); cursor: pointer;
@@ -1345,6 +1549,31 @@
   .playmini { width: 30px; height: 30px; background: rgba(255,255,255,.1); color: #fff; }
   .playmini svg { width: 13px; height: 13px; }
   .playmini.disabled { opacity: .3; pointer-events: none; }
+  /* ── keyboard focus ──────────────────────────────────────────────────────
+     the dialogs, the menus and the metadata picker are all driven by tab and the
+     arrow keys, so focus has to be visible. :focus-visible keeps it off the mouse. */
+  :focus { outline: none; }
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  .pl-search:focus-visible, .settings-search:focus-visible, .lyr-search-row input:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 1px;
+  }
+  /* a radio is a tiny circle, so the whole row carries the ring instead */
+  .meta-opt:has(input:focus-visible),
+  .meta-cover:has(input:focus-visible),
+  .repair-row:has(input:focus-visible) {
+    outline: 2px solid var(--focus);
+    outline-offset: -1px;
+    border-radius: 8px;
+  }
+  .meta-opt input:focus-visible, .meta-cover input:focus-visible { outline: none; }
+  /* rows and cells that sit flush against their container keep the ring inside */
+  .props-tabs button:focus-visible, .menu-item:focus-visible,
+  .pls-row:focus-visible, .props-art-cell:focus-visible { outline-offset: -2px; }
 </style>
 </head>
 <body>
@@ -1427,12 +1656,24 @@
 
   <div class="help-overlay hidden" id="propsOverlay">
     <div class="help-box props-box">
-      <div class="props-title-row"><span class="props-icon">&#9835;</span><span class="help-title" style="margin:0;">track info</span></div>
-      <div class="props-body">
-        <div class="props-cover-col">
-          <div class="props-cover" id="propCover"><span>no cover</span></div>
-          <button id="propSaveCover" disabled>&darr; save cover</button>
+      <div class="props-head">
+        <div class="props-head-cover" id="propHeadCover"><span>no cover</span></div>
+        <div class="props-head-text">
+          <div class="props-head-file" id="propHeadFile">&mdash;</div>
+          <div class="props-head-title" id="propHeadTitle">&mdash;</div>
+          <div class="props-head-artist" id="propHeadArtist"></div>
+          <div class="props-head-album" id="propHeadAlbum"></div>
         </div>
+      </div>
+
+      <div class="props-tabs" id="propsTabs">
+        <button type="button" class="on" data-ptab="details">details</button>
+        <button type="button" data-ptab="artwork">artwork</button>
+        <button type="button" data-ptab="lyrics">lyrics</button>
+        <button type="button" id="propMetaBtn" class="props-meta-btn">fill from discogs / musicbrainz</button>
+      </div>
+
+      <div class="props-pane" data-ptab="details">
         <div class="props-fields" id="propsFields">
           <label>title</label><input type="text" id="propTitle" placeholder="unknown title" />
           <label>artist</label><input type="text" id="propArtist" placeholder="unknown artist" />
@@ -1445,11 +1686,38 @@
           <label>genre</label><input type="text" id="propGenre" />
           <label>bpm</label><input type="text" id="propBpm" />
           <label>key</label><input type="text" id="propKey" placeholder="e.g. A minor" />
-          <label></label><button type="button" id="propDetectBtn" class="prop-detect-btn" title="analyzes the audio directly — both values are approximate">auto-detect bpm &amp; key</button>
+          <label></label><button type="button" id="propDetectBtn" class="prop-detect-btn" title="analyzes the audio directly &mdash; both values are approximate">auto-detect bpm &amp; key</button>
           <label>comment</label><input type="text" id="propComment" />
         </div>
+        <div class="props-file-grid" id="propsFileGrid"></div>
       </div>
-      <div class="props-file-grid" id="propsFileGrid"></div>
+
+      <div class="props-pane hidden" data-ptab="artwork">
+        <div class="props-art-grid" id="propArtGrid"></div>
+        <p class="props-art-note" id="propArtNote"></p>
+        <div class="props-art-foot">
+          <button type="button" id="propArtAddBtn">add image&hellip;</button>
+          <button type="button" id="propSaveCover" disabled>&darr; save selected</button>
+          <button type="button" id="propArtRemoveBtn" disabled>remove selected</button>
+        </div>
+      </div>
+
+      <div class="props-pane hidden" data-ptab="lyrics">
+        <div class="props-lyr-state" id="propLyrState">nothing linked to this track yet.</div>
+        <div class="props-lyr-tools">
+          <div class="seg seg-sm props-lyr-src" id="propLyrSrcSeg">
+            <button type="button" data-val="lrclib" class="on">lrclib</button>
+            <button type="button" data-val="netease">netease</button>
+          </div>
+          <input type="text" id="propLyrQuery" placeholder="artist and title&hellip;" spellcheck="false" />
+          <button type="button" id="propLyrSearchBtn">search</button>
+          <button type="button" id="propLyrFileBtn">link a file&hellip;</button>
+          <button type="button" id="propLyrUnlinkBtn" disabled>unlink</button>
+        </div>
+        <div class="props-lyr-results hidden" id="propLyrResults"></div>
+        <div class="props-lyr-view" id="propLyrView"></div>
+      </div>
+
       <div class="props-foot">
         <span class="props-note" id="propsNote">&#9888; save writes the metadata into a copy of the file.</span>
         <button id="propCancelBtn">cancel</button>
@@ -1513,10 +1781,60 @@
     </div>
   </div>
 
+  <div class="help-overlay hidden" id="repairOverlay">
+    <div class="help-box pls-box repair-box">
+      <div class="help-title">repair tags</div>
+      <p class="note" style="margin-top:-2px;">rebuilds artist, title and album from the tags a file already has plus its filename, and writes them back into the file. nothing is written until you press apply.</p>
+      <div class="row" style="margin-top:10px;">
+        <label>scope</label>
+        <div class="seg seg-sm" id="repairScopeSeg">
+          <button data-val="playlist" class="on">current playlist</button>
+          <button data-val="library">library folders</button>
+        </div>
+      </div>
+      <label class="repair-opt"><input type="checkbox" id="repairCoverChk" /> also fetch and embed a cover where one is missing (slower, audio files only)</label>
+      <div class="repair-fields" id="repairFieldToggles">
+        <span>write</span>
+        <label><input type="checkbox" data-field="artist" /> artist</label>
+        <label><input type="checkbox" data-field="title" /> title</label>
+        <label><input type="checkbox" data-field="album" /> album</label>
+        <label><input type="checkbox" data-field="cover" /> cover</label>
+      </div>
+      <div class="pls-list repair-list" id="repairList"><div class="playlist-empty">press scan to see what would change.</div></div>
+      <div class="repair-status" id="repairStatus"></div>
+      <div class="pls-foot">
+        <button id="repairScanBtn">scan</button>
+        <button id="repairApplyBtn" disabled>apply</button>
+        <button id="repairCloseBtn">close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="meta-preview" id="metaPreview"></div>
+
+  <div class="help-overlay hidden" id="metaOverlay">
+    <div class="help-box meta-box">
+      <div class="help-title">fill from discogs / musicbrainz</div>
+      <div class="lyr-search-row">
+        <input type="text" id="propMetaQuery" placeholder="artist and title&hellip;" spellcheck="false" />
+        <button type="button" id="metaSearchBtn">search</button>
+      </div>
+      <div class="meta-groups" id="metaGroups"></div>
+      <div class="meta-foot">
+        <div class="meta-note" id="metaNote"></div>
+        <div class="confirm-actions">
+          <button type="button" id="metaCancelBtn">cancel</button>
+          <button type="button" id="metaApplyBtn" class="primary">save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="help-overlay hidden" id="confirmOverlay">
-    <div class="help-box" style="max-width: 340px;">
+    <div class="help-box confirm-box" id="confirmBox">
       <div class="help-title" id="confirmTitle">confirm</div>
       <div class="confirm-msg" id="confirmMsg"></div>
+      <div class="confirm-details hidden" id="confirmDetails"></div>
       <div class="confirm-actions">
         <button id="confirmCancelBtn">cancel</button>
         <button id="confirmOkBtn" class="primary">continue</button>
@@ -1587,6 +1905,8 @@
     </div>
   </div>
   <input type="file" id="lyricsFileInput" accept=".lrc,.vtt" style="display:none" />
+  <input type="file" id="propArtInput" accept="image/*" multiple style="display:none" />
+  <input type="file" id="propLyrFileInput" accept=".lrc,.vtt" style="display:none" />
 
   <div class="help-overlay hidden" id="helpOverlay">
     <div class="help-box">
@@ -1941,6 +2261,7 @@
       <div class="row" id="xfadeDurRow" style="margin-top:11px;"><label>crossfade duration</label><input type="range" id="xfadeDur" min="1" max="10" step="1" value="4" /><span class="val" id="xfadeDurVal">4s</span></div>
       <div class="sec-divider"></div>
       <button class="btn-neutral" id="libraryOpenBtn" style="width:100%; text-align:center;">manage library folders&hellip;</button>
+      <button class="btn-neutral" id="repairOpenBtn" style="width:100%; text-align:center; margin-top:8px;">repair tags&hellip;</button>
       <div class="row" style="margin-top:11px;">
         <label>autoplay similar</label>
         <div class="seg seg-sm" id="autoplaySimilarSeg">
@@ -2075,6 +2396,14 @@
         </div>
       </div>
       <div class="row lastfm-connect-row" id="lastfmConnectRow" style="margin-top:8px;"></div>
+      <div class="row" style="margin-top:13px;">
+        <label>corsair icue lighting</label>
+        <div class="seg seg-sm" id="icueSeg">
+          <button data-val="off" class="on">off</button>
+          <button data-val="on">on</button>
+        </div>
+      </div>
+      <p class="note" id="icueNote" style="margin-top:6px;">mirrors the visualizer on your corsair keyboard. needs icue running with its sdk enabled.</p>
 
       <p class="sec-head" style="margin-top:20px;">notifications</p>
       <div class="row">
@@ -2252,6 +2581,7 @@
         </div>
         <div class="menu-sep"></div>
         <button id="lyricsFxItem"><span>visualizer fx on lyrics</span><span class="menu-side" id="lyricsFxCheck"></span></button>
+        <button id="lyricsGuessItem" title="lines that carry no real word timings get them estimated from the line's own duration"><span>estimate word timing</span><span class="menu-side" id="lyricsGuessCheck"></span></button>
       </div>
     </div>
     <div class="menu-sep"></div>
@@ -2323,17 +2653,19 @@
     winTransparent: false, alwaysOnTop: false,
     bgCoverArt: false, bgCoverBlur: 46, bgCoverDim: 55,
     waveStyle: 'line', waveSmooth: 40, fallsSpeed: 50, psyPetals: 9, psySpeed: 50, psyTrail: 50,
-    lyricsMode: 'compact', lyricsFx: true, lyricsSourcePref: 'lrclib',
+    lyricsMode: 'compact', lyricsFx: true, lyricsGuessWords: true, lyricsSourcePref: 'lrclib',
     soundfontPath: '', soundfontName: '', midiParticles: false,
     volume: 100, volWheelStep: 5, seekWheelStep: 5, seekBarStyle: 'thin',
     bg: '#0a0b0d',
     glassTint: '#ffffff', glassTintAuto: false, glassAlpha: 5, glassBlur: true,
     lockResize: false, exportFps: 60, exportQuality: 'balanced', exportRes: 'window', exportLyrics: false,
     displayMode: 'windowed', fullscreenRes: 'native',
-    discordEnabled: true, discordClientId: '1519049738224406711', discordImageKey: 'noting',
+    // the discord application id comes from MEDIYYU_DISCORD_CLIENT_ID at build
+    // time, so there is none in the source. rich presence stays off without it.
+    discordEnabled: true, discordClientId: '', discordImageKey: 'noting',
     lastfmEnabled: false, lastfmSessionKey: '', lastfmUsername: '',
     gain: 100, eq0: 0, eq1: 0, eq2: 0, eq3: 0, eq4: 0, eq5: 0, eq6: 0, eq7: 0, eq8: 0, eq9: 0,
-    shuffle: false, repeat: 'off', playbackRate: 1, drunkMode: '', normalize: false, crossfade: false, crossfadeDur: 4, autoplaySimilar: false, libraryFolders: [],
+    shuffle: false, repeat: 'off', playbackRate: 1, drunkMode: '', normalize: false, crossfade: false, crossfadeDur: 4, autoplaySimilar: false, libraryFolders: [], icueEnabled: false,
     notifyTrack: true, notifyEnd: true, easterEggs: true,
     specFftSize: 4096, specWindow: 'blackman', specSineExp: 3,
     specLogScale: true, specMirror: false, specChannel: 'mono',
@@ -2349,6 +2681,9 @@
   if (!S.lyricsMode) S.lyricsMode = S.lyricsOn === false ? 'off' : 'compact';
   delete S.lyricsOn;
   const save = () => { try { localStorage.setItem('bbv_settings', JSON.stringify(S)); } catch (e) {} };
+  // the separated window does not come back on its own after a restart, so start
+  // from compact rather than leaving the mode pointing at a window that is gone
+  if (S.lyricsMode === 'separated') { S.lyricsMode = 'compact'; save(); }
 
   const EQ_FREQS = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
   const EQ_PRESETS = {
@@ -2495,9 +2830,10 @@
       return false;
     }
     if (!midiBankLoaded) {
-      const ok = await loadSavedSoundfont();
+      let ok = false, why = ""; 
+      try { ok = await loadSavedSoundfont(); } catch (err) { why = (err && err.message) || String(err); }
       if (!ok) {
-        toast('could not read the saved soundfont — check it in settings → midi', { error: true });
+        toast(why || "could not read the saved soundfont — check it in settings → midi", { error: true, duration: 7000 });
         return false;
       }
     }
@@ -3279,7 +3615,7 @@
   }
 
   function stepWaterfall() {
-    const transparent = S.bg === 'transparent' || S.winTransparent || S.bgCoverArt;
+    const transparent = S.bg === 'transparent' || S.winTransparent || ambientBgActive();
     if (!waterfallInit || waterfallTransp !== transparent) {
       waterfallTransp = transparent;
       if (transparent) {
@@ -3307,7 +3643,7 @@
   }
 
   function stepPsychedelic() {
-    const transparent = S.bg === 'transparent' || S.winTransparent || S.bgCoverArt;
+    const transparent = S.bg === 'transparent' || S.winTransparent || ambientBgActive();
     if (!plasmaInit || plasmaTransp !== transparent) {
       plasmaTransp = transparent;
       if (transparent) {
@@ -3981,7 +4317,17 @@
   }
 
   let coverSwapTimer = 0;
+  // true only while a cover is actually painted behind the visualizer. without it the
+  // canvas would still go transparent and the window would fall through to black.
+  let ambientCoverShown = false;
+  function ambientBgActive() {
+    return S.bgCoverArt && (ambientCoverShown || curIsVideo) && !midiActive;
+  }
   function setAmbientCover(url) {
+    ambientCoverShown = !!url;
+    // the backdrop layer is only shown when it has something to show, so re-evaluate
+    // it here rather than waiting for the next settings sync, which lags a track behind
+    applyCoverBgStyle();
     const base = $('coverBg');
     const fade = $('coverBgFade');
     const next = url ? `url("${url}")` : '';
@@ -4240,6 +4586,427 @@
     }
   }
 
+  const ICUE_BANDS = 32;
+  const icueBuf = new Uint8Array(ICUE_BANDS * 4);
+  let icueLastSend = 0;
+  function icueHexToRgb(h) {
+    let s = String(h || '#ffffff').replace('#', '');
+    if (s.length === 3) s = s[0] + s[0] + s[1] + s[1] + s[2] + s[2];
+    const n = parseInt(s, 16);
+    if (!isFinite(n)) return [255, 255, 255];
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  function icueMix(a, b, t) {
+    return [
+      Math.round(a[0] + (b[0] - a[0]) * t),
+      Math.round(a[1] + (b[1] - a[1]) * t),
+      Math.round(a[2] + (b[2] - a[2]) * t),
+    ];
+  }
+  function icueHsl(h, s, l) {
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    const m = l - c / 2;
+    let r = 0, g = 0, b = 0;
+    if (h < 60) { r = c; g = x; }
+    else if (h < 120) { r = x; g = c; }
+    else if (h < 180) { g = c; b = x; }
+    else if (h < 240) { g = x; b = c; }
+    else if (h < 300) { r = x; b = c; }
+    else { r = c; b = x; }
+    return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
+  }
+  // mirrors makeFill(), so the keyboard wears the same palette as the canvas
+  function icueColorAt(t) {
+    if (megaMode) {
+      return t < 0.5
+        ? icueMix(icueHexToRgb('#eaf6ff'), icueHexToRgb('#37d8ff'), t * 2)
+        : icueMix(icueHexToRgb('#37d8ff'), icueHexToRgb('#1f5eff'), (t - 0.5) * 2);
+    }
+    if (bloodEggActive && bloodEggTrack === 'btw') return icueMix(icueHexToRgb('#f7c948'), icueHexToRgb('#e8820c'), t);
+    if (S.rainbow) return icueHsl((((t + (performance.now() / 4000)) % 1) * 360), 0.85, 0.6);
+    if (S.mode === 'gradient') return icueMix(icueHexToRgb(S.color1), icueHexToRgb(S.color2), t);
+    if (S.mode === 'split') {
+      return t < 0.5
+        ? icueMix(icueHexToRgb('#ff3b5b'), icueHexToRgb('#ffd23b'), t * 2)
+        : icueMix(icueHexToRgb('#ffd23b'), icueHexToRgb('#3bb2ff'), (t - 0.5) * 2);
+    }
+    if (S.mode === 'cover') return coverColors ? icueMix(icueHexToRgb(coverColors.c1), icueHexToRgb(coverColors.c2), t) : icueHexToRgb(S.color1);
+    return icueHexToRgb(S.color1);
+  }
+  function sendIcueFrame(now) {
+    if (now - icueLastSend < 33) return;
+    icueLastSend = now;
+    for (let b = 0; b < ICUE_BANDS; b++) {
+      const i0 = Math.floor(b * NUM / ICUE_BANDS);
+      const i1 = Math.max(i0 + 1, Math.floor((b + 1) * NUM / ICUE_BANDS));
+      let v = 0;
+      for (let i = i0; i < i1 && i < NUM; i++) if (bars[i] > v) v = bars[i];
+      if (v > 1) v = 1; else if (v < 0) v = 0;
+      const c = icueColorAt(ICUE_BANDS > 1 ? b / (ICUE_BANDS - 1) : 0);
+      const k = b * 4;
+      icueBuf[k] = Math.round(v * 255);
+      icueBuf[k + 1] = c[0];
+      icueBuf[k + 2] = c[1];
+      icueBuf[k + 3] = c[2];
+    }
+    window.winControls.icueFrame(icueBuf);
+  }
+  const ICUE_REASONS = {
+    module: 'the icue sdk could not be loaded',
+    timeout: 'icue did not answer — is it running, with the sdk enabled in its settings?',
+    refused: 'icue refused the connection — enable the sdk in icue settings',
+    'no-devices': 'connected, but icue reports no lightable device',
+    error: 'the sdk returned an error',
+  };
+  async function applyIcue() {
+    const note = $('icueNote');
+    if (!window.winControls || !window.winControls.icueEnable) { if (note) note.textContent = ''; return; }
+    if (!S.icueEnabled) {
+      await window.winControls.icueDisable();
+      if (note) note.textContent = 'your keyboard keeps its normal icue profile.';
+      return;
+    }
+    if (note) note.textContent = 'connecting to icue…';
+    let res = null;
+    try { res = await window.winControls.icueEnable(); } catch (e) {}
+    if (res && res.ok) {
+      if (note) note.textContent = 'lighting ' + res.devices.map(d => d.model + ' (' + d.ledCount + ' leds)').join(', ') + '.';
+    } else {
+      S.icueEnabled = false;
+      syncUI();
+      save();
+      if (note) note.textContent = (ICUE_REASONS[res && res.reason] || 'icue is not reachable') + '.';
+    }
+  }
+  // works out what a file’s tags should be, from the tags it has plus its filename.
+  // returns the repaired tags, whether anything changed, and a human readable trail.
+  function repairTagsFor(name, filePath, rawTags) {
+    const guess = guessArtistTitleFromName(name, filePath);
+    const t = Object.assign({}, rawTags);
+    const notes = [];
+    let patched = false;
+    if (t.title) {
+      const inner = guessArtistTitleFromName(t.title, '', false);
+      const innerKey = normNameKey(inner.artist), tagKey = normNameKey(t.artist || '');
+      const corroborated = innerKey && (innerKey === tagKey || (guess.artist && innerKey === normNameKey(guess.artist)));
+      if (corroborated && inner.title && normNameKey(inner.title) !== normNameKey(t.title)) {
+        notes.push(`tag title is a raw video title — cleaned to "${inner.title}"`);
+        t._rawTitle = t.title;
+        t.title = inner.title;
+        t._titleQuery = inner.titleQuery;
+        if (!t.artist) { t.artist = inner.artist; t._artistFromName = true; t._nameConfidence = inner.confidence; }
+        patched = true;
+      }
+    }
+    if (!t.artist && guess.artist) { t.artist = guess.artist; t._artistFromName = true; t._nameConfidence = guess.confidence; patched = true; }
+    if (!t.title && guess.title) { t.title = guess.title; t._titleFromName = true; t._titleQuery = guess.titleQuery; patched = true; }
+    return { tags: t, patched: patched, guess: guess, notes: notes };
+  }
+  // batch tag repair
+  let repairRows = [];
+  let repairBusy = false;
+  const REPAIR_AUDIO_RE = /[.](mp3|m4a|flac|ogg|oga|aac|wav)$/i;
+  const REPAIR_FIELDS = ['artist', 'title', 'album', 'cover'];
+  function repairStatus(msg, cls) {
+    const el = $('repairStatus');
+    el.className = 'repair-status' + (cls ? ' ' + cls : '');
+    el.textContent = msg || '';
+  }
+  function repairScope() {
+    const on = $('repairScopeSeg').querySelector('button.on');
+    return on ? on.dataset.val : 'playlist';
+  }
+  // every selectable change lives in row.fields, so the row checkbox, the column
+  // toggles and the apply step all read from one place.
+  function repairRowPending(r) {
+    return !r.result && REPAIR_FIELDS.some(f => r.fields[f] === true);
+  }
+  function repairSetRow(r, on) {
+    for (const f of REPAIR_FIELDS) if (f in r.fields) r.fields[f] = on;
+  }
+  function repairFieldState(field) {
+    let total = 0, on = 0;
+    for (const r of repairRows) {
+      if (r.result || !(field in r.fields)) continue;
+      total++;
+      if (r.fields[field]) on++;
+    }
+    return { total: total, on: on };
+  }
+  function syncRepairFieldToggles() {
+    for (const f of REPAIR_FIELDS) {
+      const box = $('repairFieldToggles').querySelector('input[data-field="' + f + '"]');
+      if (!box) continue;
+      const st = repairFieldState(f);
+      box.disabled = repairBusy || st.total === 0;
+      box.checked = st.total > 0 && st.on === st.total;
+      box.indeterminate = st.on > 0 && st.on < st.total;
+      box.parentElement.classList.toggle('dim', st.total === 0);
+    }
+  }
+  function repairSyncApply() {
+    const n = repairRows.filter(repairRowPending).length;
+    $('repairApplyBtn').disabled = repairBusy || n === 0;
+    $('repairApplyBtn').textContent = n ? 'apply to ' + n + ' file' + (n > 1 ? 's' : '') : 'apply';
+    syncRepairFieldToggles();
+  }
+  function repairFieldLine(r, field) {
+    const line = document.createElement('label');
+    line.className = 'repair-change';
+    const box = document.createElement('input');
+    box.type = 'checkbox';
+    box.className = 'repair-fieldbox';
+    box.checked = !!r.fields[field];
+    box.disabled = repairBusy || !!r.result;
+    box.addEventListener('change', () => { r.fields[field] = box.checked; renderRepairList(); repairSyncApply(); });
+    line.appendChild(box);
+    const lab = document.createElement('span');
+    lab.className = 'repair-field';
+    lab.textContent = field;
+    line.appendChild(lab);
+    if (field === 'cover') {
+      line.appendChild(document.createTextNode('look one up and embed it'));
+      return line;
+    }
+    if (r.before[field]) {
+      const was = document.createElement('span');
+      was.className = 'was';
+      was.textContent = r.before[field];
+      line.appendChild(was);
+      line.appendChild(document.createTextNode('  '));
+    }
+    const now = document.createElement('span');
+    now.className = 'now';
+    now.textContent = r.after[field] || '(cleared)';
+    line.appendChild(now);
+    return line;
+  }
+  function renderRepairList() {
+    const list = $('repairList');
+    list.innerHTML = '';
+    if (!repairRows.length) {
+      const empty = document.createElement('div');
+      empty.className = 'playlist-empty';
+      empty.textContent = 'press scan to see what would change.';
+      list.appendChild(empty);
+      return;
+    }
+    repairRows.forEach(r => {
+      const row = document.createElement('div');
+      row.className = 'repair-row';
+      const present = REPAIR_FIELDS.filter(f => f in r.fields);
+      const on = present.filter(f => r.fields[f]).length;
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      box.className = 'repair-rowbox';
+      box.checked = present.length > 0 && on === present.length;
+      box.indeterminate = on > 0 && on < present.length;
+      box.disabled = repairBusy || !!r.result;
+      box.addEventListener('change', () => { repairSetRow(r, box.checked); renderRepairList(); repairSyncApply(); });
+      const main = document.createElement('div');
+      main.className = 'repair-main';
+      const name = document.createElement('div');
+      name.className = 'repair-name';
+      name.textContent = r.name;
+      main.appendChild(name);
+      for (const f of present) main.appendChild(repairFieldLine(r, f));
+      if (r.result) {
+        const line = document.createElement('div');
+        line.className = 'repair-change ' + (r.result === 'ok' ? 'repair-done' : 'repair-fail');
+        line.textContent = r.result === 'ok' ? 'written' : 'failed: ' + r.result;
+        main.appendChild(line);
+      }
+      row.appendChild(box);
+      row.appendChild(main);
+      list.appendChild(row);
+    });
+  }
+  async function repairCollectItems() {
+    if (repairScope() === 'playlist') {
+      return playlist
+        .filter(f => f && f._path && !isMidiFile(f))
+        .map(f => ({ name: f.name, path: f._path, file: f }));
+    }
+    const folders = S.libraryFolders || [];
+    if (!folders.length || !window.winControls) return [];
+    const lists = await Promise.all(folders.map(e => window.winControls.scanDirForAudio(e.path, e.recursive !== false)));
+    const seen = new Set();
+    const out = [];
+    for (const p of lists.flat()) {
+      if (seen.has(p)) continue;
+      seen.add(p);
+      if (/[.](mid|midi)$/i.test(p)) continue;
+      out.push({ name: p.split(PATH_SPLIT_RE).pop(), path: p });
+    }
+    return out;
+  }
+  async function repairScan() {
+    if (repairBusy) return;
+    repairBusy = true;
+    repairRows = [];
+    renderRepairList();
+    $('repairScanBtn').disabled = true;
+    $('repairApplyBtn').disabled = true;
+    try {
+      repairStatus('listing files...');
+      const items = await repairCollectItems();
+      if (!items.length) {
+        repairStatus(repairScope() === 'playlist'
+          ? 'no playlist file lives on disk yet. open a folder, or switch the scope to your library.'
+          : 'no library folders registered yet.');
+        return;
+      }
+      const wantCovers = $('repairCoverChk').checked;
+      const needFetch = items.filter(it => !it.file).map(it => it.path);
+      const tagsByPath = {};
+      const CHUNK = 40;
+      for (let i = 0; i < needFetch.length; i += CHUNK) {
+        repairStatus('reading tags... ' + Math.min(i + CHUNK, needFetch.length) + ' / ' + needFetch.length);
+        let restored = [];
+        try { restored = await window.winControls.readFilePrefixes(needFetch.slice(i, i + CHUNK), 1048576); } catch (e) {}
+        for (const rr of restored) {
+          try {
+            const f = new File([rr.data], rr.path.split(PATH_SPLIT_RE).pop());
+            tagsByPath[rr.path] = await readTags(f);
+          } catch (e) { tagsByPath[rr.path] = null; }
+        }
+      }
+      repairStatus('working out what to change...');
+      const rows = [];
+      for (const it of items) {
+        let raw = null;
+        if (it.file) { try { raw = await readTags(it.file); } catch (e) { raw = null; } }
+        else raw = tagsByPath[it.path] || null;
+        const before = {
+          artist: (raw && raw.artist) || '',
+          title: (raw && raw.title) || '',
+          album: (raw && raw.album) || '',
+        };
+        const hadCover = !!(raw && raw.cover);
+        releaseTagPictures(raw);
+        const rep = repairTagsFor(it.name, it.path, raw || {});
+        const after = {
+          artist: rep.tags.artist || before.artist,
+          title: rep.tags.title || before.title,
+          album: rep.tags.album || before.album,
+        };
+        const fields = {};
+        for (const f of ['artist', 'title', 'album']) if (after[f] !== before[f]) fields[f] = true;
+        if (wantCovers && !hadCover && REPAIR_AUDIO_RE.test(it.path) && (after.title || after.album)) fields.cover = true;
+        if (!Object.keys(fields).length) continue;
+        rows.push({
+          name: it.name, path: it.path, file: it.file || null,
+          before: before, after: after,
+          titleQuery: rep.tags._titleQuery || '',
+          fields: fields, result: '',
+        });
+      }
+      repairRows = rows;
+      repairStatus(rows.length
+        ? rows.length + ' of ' + items.length + ' files would change. untick a whole file, or just the line you want left alone.'
+        : 'scanned ' + items.length + ' files, nothing needs repairing.');
+    } finally {
+      repairBusy = false;
+      $('repairScanBtn').disabled = false;
+      renderRepairList();
+      repairSyncApply();
+    }
+  }
+  async function repairApply() {
+    if (repairBusy) return;
+    const sel = repairRows.filter(repairRowPending);
+    if (!sel.length) return;
+    repairBusy = true;
+    $('repairScanBtn').disabled = true;
+    $('repairApplyBtn').disabled = true;
+    renderRepairList();
+    const curFile = playlist[curIndex];
+    const curPath = curFile && curFile._path;
+    const touchesCurrent = !!curPath && sel.some(r => r.path === curPath);
+    const restore = { pos: audio.currentTime, wasPlaying: playing };
+    if (touchesCurrent) {
+      audio.pause(); setPlay(false);
+      audio.removeAttribute('src'); audio.load();
+      await new Promise(res => setTimeout(res, 120));
+    }
+    let done = 0, failed = 0;
+    try {
+      for (let i = 0; i < sel.length; i++) {
+        const r = sel[i];
+        repairStatus('writing ' + (i + 1) + ' / ' + sel.length + '   ' + r.name);
+        const tags = {};
+        for (const f of ['artist', 'title', 'album']) if (r.fields[f] && r.after[f]) tags[f] = r.after[f];
+        if (r.fields.cover) {
+          try {
+            const res = await window.winControls.discordLookupCover(r.after.artist || '', r.after.album || '', r.titleQuery || r.after.title || '');
+            if (res && res.url) tags.coverUrl = res.url;
+          } catch (e) {}
+        }
+        if (!Object.keys(tags).length) { r.result = 'nothing selected to write'; failed++; renderRepairList(); continue; }
+        let out = null;
+        try { out = await window.winControls.writeFileTags({ path: r.path, name: r.name, tags: tags }); } catch (e) { out = { error: e.message }; }
+        if (out && out.ok) { r.result = 'ok'; done++; } else { r.result = (out && out.error) || 'failed'; failed++; }
+        renderRepairList();
+      }
+    } finally {
+      repairBusy = false;
+      $('repairScanBtn').disabled = false;
+      renderRepairList();
+      repairSyncApply();
+    }
+    const rewritten = sel.filter(r => r.result === 'ok' && r.file);
+    if (rewritten.length && window.winControls) {
+      try {
+        const restoredFiles = await window.winControls.readSessionFiles(rewritten.map(r => r.path));
+        for (const rf of restoredFiles) {
+          const idx = playlist.findIndex(f => f && f._path === rf.path);
+          if (idx < 0) continue;
+          const nf = new File([rf.data], rf.name, { type: rf.mime });
+          nf._path = rf.path;
+          // same here: leave _dur unset so the new tags and cover are picked up
+          playlist[idx] = nf;
+        }
+        renderPlaylist();
+      } catch (e) {}
+    }
+    if (touchesCurrent) {
+      resumePos = restore.pos;
+      await loadCurrent();
+      if (!restore.wasPlaying) { audio.pause(); setPlay(false); }
+    } else if (rewritten.some(r => r.path === curPath)) {
+      updateNowPlaying(playlist[curIndex]);
+    }
+    repairStatus(done + ' written' + (failed ? ', ' + failed + ' failed' : '') + '.', failed ? 'repair-fail' : 'repair-done');
+    if (done) toast(done + ' file' + (done > 1 ? 's' : '') + ' retagged');
+  }
+  $('repairOpenBtn').addEventListener('click', () => {
+    $('repairOverlay').classList.remove('hidden');
+    repairSyncApply();
+  });
+  $('repairCloseBtn').addEventListener('click', () => { if (!repairBusy) $('repairOverlay').classList.add('hidden'); });
+  $('repairOverlay').addEventListener('click', e => { if (e.target === $('repairOverlay') && !repairBusy) $('repairOverlay').classList.add('hidden'); });
+  $('repairScanBtn').addEventListener('click', repairScan);
+  $('repairApplyBtn').addEventListener('click', repairApply);
+  $('repairFieldToggles').querySelectorAll('input[data-field]').forEach(box => {
+    box.addEventListener('change', () => {
+      if (repairBusy) return;
+      const field = box.dataset.field;
+      for (const r of repairRows) if (!r.result && field in r.fields) r.fields[field] = box.checked;
+      renderRepairList();
+      repairSyncApply();
+    });
+  });
+  $('repairScopeSeg').querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (repairBusy) return;
+      $('repairScopeSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b === btn));
+      repairRows = [];
+      renderRepairList();
+      repairStatus('');
+      repairSyncApply();
+    });
+  });
   function draw() {
     const nowTs = performance.now();
     updateDebugOverlay(nowTs);
@@ -4257,10 +5024,11 @@
     updateScalePulse();
     applyVizPulse();
     applyChromaAb();
+    if (S.icueEnabled) sendIcueFrame(nowTs);
 
     const bassNow = bassEnergy();
     const realTransparent = S.bg === 'transparent' || S.winTransparent;
-    const overCover = S.bgCoverArt && !realTransparent;
+    const overCover = ambientBgActive() && !realTransparent;
     const transparentCanvas = realTransparent || (overCover && !recording) || badAppleActive;
 
     ctx.save();
@@ -4443,15 +5211,30 @@
         if (desc === 'comment' && !result.comment) result.comment = val;
       }
       else if (id === 'APIC') {
+        const enc = frame[0];
         let p = 1;
         let mime = '';
         while (p < frame.length && frame[p] !== 0) { mime += String.fromCharCode(frame[p]); p++; }
+        const picType = frame[p + 1];
         p += 2;
-        const enc = frame[0];
-        if (enc === 1 || enc === 2) { while (p + 1 < frame.length && !(frame[p] === 0 && frame[p + 1] === 0)) p += 2; p += 2; }
-        else { while (p < frame.length && frame[p] !== 0) p++; p += 1; }
+        const descStart = p;
+        const wide = enc === 1 || enc === 2;
+        if (wide) { while (p + 1 < frame.length && !(frame[p] === 0 && frame[p + 1] === 0)) p += 2; }
+        else { while (p < frame.length && frame[p] !== 0) p++; }
+        const descBytes = frame.subarray(descStart, p);
+        p += wide ? 2 : 1;
+        // some writers pad an empty description with an extra null, and no image
+        // format starts with one, so stepping over them is always safe
+        let guard = 0;
+        while (p < frame.length && frame[p] === 0 && guard < 16) { p++; guard++; }
         const imgBytes = frame.subarray(p);
-        if (imgBytes.length) result.cover = URL.createObjectURL(new Blob([imgBytes], { type: mime || 'image/jpeg' }));
+        if (imgBytes.length) {
+          const descBuf = new Uint8Array(descBytes.length + 1);
+          descBuf[0] = enc;
+          descBuf.set(descBytes, 1);
+          const url = URL.createObjectURL(new Blob([imgBytes], { type: mime || 'image/jpeg' }));
+          addPicture(result, { url: url, mime: mime || 'image/jpeg', type: picType, desc: decodeID3Text(descBuf), bytes: imgBytes.length });
+        }
       }
       pos = frameEnd;
     }
@@ -4493,24 +5276,36 @@
       else if ((key === 'KEY' || key === 'INITIALKEY') && !result.key) result.key = val;
       else if ((key === 'COMMENT' || key === 'DESCRIPTION') && !result.comment) result.comment = val;
       else if ((key === 'LYRICS' || key === 'UNSYNCEDLYRICS' || key === 'SYNCEDLYRICS') && !result.lyrics) result.lyrics = val;
-      else if (key === 'METADATA_BLOCK_PICTURE' && !result.cover) {
+      else if (key === 'METADATA_BLOCK_PICTURE') {
         try {
           const bin = Uint8Array.from(atob(val), c => c.charCodeAt(0));
-          result.cover = parseFlacPicture(bin);
+          addPicture(result, parseFlacPicture(bin));
         } catch (e) {}
       }
     }
   }
+  // the rest of the app only wants one cover url, the properties dialog wants the
+  // whole set, so every reader records a picture through here
+  function addPicture(result, pic) {
+    if (!pic || !pic.url) return;
+    if (!result.pictures) result.pictures = [];
+    result.pictures.push(pic);
+    if (!result.cover || pic.type === 3) result.cover = pic.url;
+  }
   function parseFlacPicture(bytes) {
     const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-    let pos = 4;
+    let pos = 0;
+    const type = dv.getUint32(pos); pos += 4;
     const mimeLen = dv.getUint32(pos); pos += 4;
-    const mime = String.fromCharCode(...bytes.subarray(pos, pos + mimeLen)); pos += mimeLen;
-    const descLen = dv.getUint32(pos); pos += 4 + descLen;
-    pos += 16;
+    const mime = String.fromCharCode(...bytes.subarray(pos, pos + mimeLen)) || 'image/jpeg'; pos += mimeLen;
+    const descLen = dv.getUint32(pos); pos += 4;
+    let desc = '';
+    try { desc = new TextDecoder('utf-8').decode(bytes.subarray(pos, pos + descLen)); } catch (e) {}
+    pos += descLen + 16;
     const dataLen = dv.getUint32(pos); pos += 4;
     const img = bytes.subarray(pos, pos + dataLen);
-    return img.length ? URL.createObjectURL(new Blob([img], { type: mime || 'image/jpeg' })) : null;
+    if (!img.length) return null;
+    return { url: URL.createObjectURL(new Blob([img], { type: mime })), mime: mime, desc: desc, type: type, bytes: img.length };
   }
   async function readFlacTags(file) {
     const result = {};
@@ -4524,8 +5319,8 @@
       pos += 4;
       if (type === 4) {
         parseVorbisComments(new Uint8Array(await readSlice(file, pos, size)), 0, result);
-      } else if (type === 6 && !result.cover) {
-        try { result.cover = parseFlacPicture(new Uint8Array(await readSlice(file, pos, size))); } catch (e) {}
+      } else if (type === 6) {
+        try { addPicture(result, parseFlacPicture(new Uint8Array(await readSlice(file, pos, size)))); } catch (e) {}
       }
       pos += size;
       if (last) break;
@@ -4567,7 +5362,7 @@
       } else if ((id === 'id3 ' || id === 'ID3 ') && size > 10) {
         try {
           const sub = await readID3v2(file, pos);
-          if (sub) for (const k of ['title', 'artist', 'album', 'albumArtist', 'composer', 'track', 'disc', 'year', 'genre', 'bpm', 'comment', 'cover']) if (sub[k] && !result[k]) result[k] = sub[k];
+          if (sub) for (const k of ['title', 'artist', 'album', 'albumArtist', 'composer', 'track', 'disc', 'year', 'genre', 'bpm', 'comment', 'cover', 'pictures']) if (sub[k] && !result[k]) result[k] = sub[k];
         } catch (e) {}
       }
       pos += size + (size & 1);
@@ -4672,13 +5467,42 @@
         else if (nm === '©lyr' && !result.lyrics) result.lyrics = txt();
         else if (nm === 'tmpo' && !result.bpm && payload.length >= 2) result.bpm = String((payload[0] << 8) | payload[1]);
         else if (nm === '©cmt' && !result.comment) result.comment = txt();
-        else if (nm === 'covr' && !result.cover && payload.length) {
-          result.cover = URL.createObjectURL(new Blob([payload], { type: dtype === 14 ? 'image/png' : 'image/jpeg' }));
+        else if (nm === 'covr') {
+          let dp = p + 8;
+          while (dp + 16 <= p + size) {
+            const dsz = Math.max(8, atomSize(moov, dp));
+            const dnm = String.fromCharCode(moov[dp + 4], moov[dp + 5], moov[dp + 6], moov[dp + 7]);
+            if (dnm === 'data' && dsz > 16) {
+              const img = moov.subarray(dp + 16, dp + dsz);
+              const mime = moov[dp + 11] === 14 ? 'image/png' : 'image/jpeg';
+              // mp4 has no picture roles, so the first image is the cover and the rest are extras
+              if (img.length) addPicture(result, {
+                url: URL.createObjectURL(new Blob([img], { type: mime })),
+                mime: mime, desc: '', type: result.pictures ? 0 : 3, bytes: img.length,
+              });
+            }
+            dp += dsz;
+          }
         }
       }
       p += size;
     }
     return result;
+  }
+  // every reader mints a blob url per embedded image, but only the properties
+  // dialog ever looks at more than the cover. everywhere else they have to be
+  // handed back, or a library scan retains every booklet scan it ever parsed.
+  function releaseTagPictures(tags, keepUrl) {
+    if (!tags) return;
+    for (const p of tags.pictures || []) {
+      if (!p.url || p.url === keepUrl) continue;
+      try { URL.revokeObjectURL(p.url); } catch (e) {}
+    }
+    tags.pictures = null;
+    if (tags.cover && tags.cover !== keepUrl) {
+      try { URL.revokeObjectURL(tags.cover); } catch (e) {}
+      tags.cover = null;
+    }
   }
   async function readTags(file) {
     try {
@@ -4803,33 +5627,20 @@
     coverLog(`── track: ${file.name}`);
     let tags = null;
     try { tags = await readTags(file); } catch {}
-    if (playlist[curIndex] !== myFile) return;
+    releaseTagPictures(tags, tags && tags.cover);
+    if (playlist[curIndex] !== myFile) {
+      if (tags && tags.cover) { try { URL.revokeObjectURL(tags.cover); } catch (e) {} }
+      return;
+    }
     if (!tags) coverLog('tags: NONE readable in this file — falling back to filename only');
     else coverLog(`tags: artist="${tags.artist || '(none)'}" album="${tags.album || '(none)'}" title="${tags.title || '(none)'}" embedded cover=${tags.cover ? 'yes' : 'no'}`);
-    const nameGuess = guessArtistTitleFromName(file.name, file.path);
+    const repaired = repairTagsFor(file.name, file.path, tags);
+    const nameGuess = repaired.guess;
     if (nameGuess.artist || nameGuess.title) coverLog(`filename guess: artist="${nameGuess.artist || '(none)'}" title="${nameGuess.title || '(none)'}" [${nameGuess.confidence} confidence, via ${nameGuess.how}]`);
-    if (!isMidiNp) {
-      const t = Object.assign({}, tags);
-      let patched = false;
-      if (t.title) {
-        const inner = guessArtistTitleFromName(t.title, '', false);
-        const innerKey = normNameKey(inner.artist), tagKey = normNameKey(t.artist || '');
-        const corroborated = innerKey && (innerKey === tagKey || (nameGuess.artist && innerKey === normNameKey(nameGuess.artist)));
-        if (corroborated && inner.title && normNameKey(inner.title) !== normNameKey(t.title)) {
-          coverLog(`tag title is a raw video title — cleaned to "${inner.title}"`);
-          t._rawTitle = t.title;
-          t.title = inner.title;
-          t._titleQuery = inner.titleQuery;
-          if (!t.artist) { t.artist = inner.artist; t._artistFromName = true; t._nameConfidence = inner.confidence; }
-          patched = true;
-        }
-      }
-      if (!t.artist && nameGuess.artist) { t.artist = nameGuess.artist; t._artistFromName = true; t._nameConfidence = nameGuess.confidence; patched = true; }
-      if (!t.title && nameGuess.title) { t.title = nameGuess.title; t._titleFromName = true; t._titleQuery = nameGuess.titleQuery; patched = true; }
-      if (patched) {
-        tags = t;
-        coverLog(`using artist="${t.artist || '(none)'}" title="${t.title || '(none)'}" for lookup and display`);
-      }
+    if (!isMidiNp && repaired.patched) {
+      repaired.notes.forEach(n => coverLog(n));
+      tags = repaired.tags;
+      coverLog(`using artist="${tags.artist || '(none)'}" title="${tags.title || '(none)'}" for lookup and display`);
     }
     if (isMidiNp) coverDbSource = 'skipped (midi track)';
     if (isMidiNp) coverLog('midi track — cover lookup skipped, discord uses the "mediyyuiconnobg" asset');
@@ -5078,10 +5889,8 @@
       if (tags) {
         if (f._title === undefined) f._title = tags.title || '';
         if (f._trackNo === undefined) { const tn = tags.track ? String(tags.track).match(/^\d+/) : null; f._trackNo = tn ? +tn[0] : 0; }
-        if (tags.cover) {
-          if (f._thumb === undefined) f._thumb = await makeThumb(tags.cover);
-          try { URL.revokeObjectURL(tags.cover); } catch (e) {}
-        }
+        if (tags.cover && f._thumb === undefined) f._thumb = await makeThumb(tags.cover);
+        releaseTagPictures(tags);
       }
     } catch (e) {}
     await new Promise(res => {
@@ -5119,11 +5928,24 @@
     retireAllBloodLines(true);
     renderPlaylist();
   }
+  // putting a track back is cheap, so removing one never has to be a dead end
+  function restoreToPlaylist(f, i, wasCurrent) {
+    const at = Math.max(0, Math.min(i, playlist.length));
+    playlist.splice(at, 0, f);
+    if (wasCurrent || curIndex < 0) { curIndex = at; renderPlaylist(); loadCurrent(); return; }
+    if (at <= curIndex) curIndex++;
+    renderPlaylist(); updateTName(); updateNavButtons(); saveSession(true);
+  }
   function removeFromPlaylist(i) {
     if (i < 0 || i >= playlist.length) return;
     const wasCurrent = i === curIndex;
-    playlist.splice(i, 1);
+    const [gone] = playlist.splice(i, 1);
     if (i < curIndex) curIndex--;
+    toast('removed ' + (gone._title || gone.name.replace(/[.][^.]+$/, '')), {
+      duration: 5000,
+      actionLabel: 'undo',
+      onAction: () => restoreToPlaylist(gone, i, wasCurrent),
+    });
     if (!playlist.length) { resetToEmpty(); return; }
     if (wasCurrent) {
       curIndex = Math.min(i, playlist.length - 1);
@@ -5262,11 +6084,27 @@
     input.addEventListener('blur', commit);
   }
   let confirmResolve = null;
-  function confirmDialog(message, okLabel, cancelLabel) {
+  function confirmDialog(message, okLabel, cancelLabel, details) {
     return new Promise(resolve => {
       if (confirmResolve) confirmResolve(false);
       confirmResolve = resolve;
       $('confirmMsg').textContent = message;
+      const list = $('confirmDetails');
+      list.innerHTML = '';
+      const rows = details || [];
+      list.classList.toggle('hidden', !rows.length);
+      $('confirmBox').classList.toggle('wide', !!rows.length);
+      for (const d of rows) {
+        const row = document.createElement('div');
+        row.className = 'confirm-diff';
+        for (const [cls, text] of [['k', d.label], ['from', d.from || '(empty)'], ['arrow', '\u2192'], ['to', d.to || '(empty)']]) {
+          const span = document.createElement('span');
+          span.className = cls;
+          span.textContent = text;
+          row.appendChild(span);
+        }
+        list.appendChild(row);
+      }
       $('confirmOkBtn').textContent = okLabel || 'continue';
       $('confirmCancelBtn').textContent = cancelLabel || 'cancel';
       $('confirmOverlay').classList.remove('hidden');
@@ -5693,9 +6531,20 @@
   $('plClearBtn').addEventListener('click', () => {
     closePlMenus();
     if (!playlist.length) return;
+    const backup = playlist.slice();
+    const wasAt = curIndex;
     playlist = [];
     resetToEmpty();
-    toast('playlist cleared');
+    toast(backup.length + ' track' + (backup.length > 1 ? 's' : '') + ' cleared', {
+      duration: 7000,
+      actionLabel: 'undo',
+      onAction: () => {
+        playlist = backup.slice();
+        curIndex = Math.max(0, Math.min(wasAt, playlist.length - 1));
+        renderPlaylist();
+        loadCurrent();
+      },
+    });
   });
 
   let ctxIdx = -1;
@@ -5747,44 +6596,681 @@
     composer: 'propComposer', track: 'propTrack', disc: 'propDisc', year: 'propYear',
     genre: 'propGenre', bpm: 'propBpm', key: 'propKey', comment: 'propComment',
   };
+  const PIC_ROLES = ['other', 'file icon', 'other file icon', 'front cover', 'back cover', 'leaflet', 'media',
+    'lead artist', 'artist', 'conductor', 'band', 'composer', 'lyricist', 'recording location',
+    'during recording', 'during performance', 'screen capture', 'bright fish', 'illustration',
+    'band logo', 'publisher logo'];
   let propsIdx = -1;
-  let propsCoverUrl = null;
+  let propsPics = [];        // { url, mime, desc, type, bytes, blob? }
+  let propsPicSel = -1;
+  let propsArtDirty = false;
+  let propsOrig = null;      // the values the file had when the dialog opened
+
+  // lyrics linked by hand live under the same key the player uses at playback time
+  function trackLyricsKey(f) {
+    return f ? f.name + '|' + Math.round(f._dur || 0) : '';
+  }
+  let lyricsFiles = {};
+  try { lyricsFiles = JSON.parse(localStorage.getItem('bbv_lyricsFiles') || '{}'); } catch (e) {}
+  function saveLyricsFiles() {
+    const keys = Object.keys(lyricsFiles);
+    while (keys.length > 200) delete lyricsFiles[keys.shift()];
+    try { localStorage.setItem('bbv_lyricsFiles', JSON.stringify(lyricsFiles)); } catch (e) {}
+  }
+
   function propsFileRow(label, value) {
     const k = document.createElement('span'); k.textContent = label;
     const v = document.createElement('span'); v.textContent = value; v.title = value;
     $('propsFileGrid').append(k, v);
   }
+  function setPropsTab(name) {
+    $('propsTabs').querySelectorAll('button[data-ptab]').forEach(b => b.classList.toggle('on', b.dataset.ptab === name));
+    $('propsOverlay').querySelectorAll('.props-pane').forEach(p => p.classList.toggle('hidden', p.dataset.ptab !== name));
+  }
+  $('propsTabs').querySelectorAll('button[data-ptab]').forEach(b => {
+    b.addEventListener('click', () => setPropsTab(b.dataset.ptab));
+  });
+
+  // ── artwork ────────────────────────────────────────────────────────────────
+  function releasePropsPics() {
+    for (const p of propsPics) { if (p.owned) { try { URL.revokeObjectURL(p.url); } catch (e) {} } }
+    propsPics = [];
+    propsPicSel = -1;
+  }
+  function renderPropsArt() {
+    const grid = $('propArtGrid');
+    grid.innerHTML = '';
+    if (!propsPics.length) {
+      const empty = document.createElement('div');
+      empty.className = 'props-art-empty';
+      empty.textContent = 'no artwork embedded in this file yet.';
+      grid.appendChild(empty);
+    }
+    propsPics.forEach((p, i) => {
+      const cell = document.createElement('div');
+      cell.className = 'props-art-cell' + (i === propsPicSel ? ' on' : '');
+      const thumb = document.createElement('div');
+      thumb.className = 'props-art-thumb';
+      thumb.style.backgroundImage = 'url("' + p.url + '")';
+      cell.appendChild(thumb);
+      const meta = document.createElement('div');
+      meta.className = 'props-art-meta';
+      meta.textContent = (p.mime || '').replace('image/', '') + ' · ' + Math.round((p.bytes || 0) / 1024) + ' kb';
+      cell.appendChild(meta);
+      // the role is the picture's own, not its position: a back cover stays a back cover
+      const role = document.createElement('select');
+      role.className = 'props-art-role';
+      role.title = 'what this image is';
+      PIC_ROLES.forEach((label, t) => {
+        const opt = document.createElement('option');
+        opt.value = String(t);
+        opt.textContent = label;
+        role.appendChild(opt);
+      });
+      role.value = String(typeof p.type === 'number' && PIC_ROLES[p.type] ? p.type : (i === 0 ? 3 : 0));
+      p.type = Number(role.value);
+      role.addEventListener('click', e => e.stopPropagation());
+      role.addEventListener('change', () => { p.type = Number(role.value); propsArtDirty = true; });
+      cell.appendChild(role);
+      const name = document.createElement('input');
+      name.type = 'text';
+      name.value = p.desc || '';
+      name.placeholder = 'label';
+      name.spellcheck = false;
+      name.addEventListener('click', e => e.stopPropagation());
+      name.addEventListener('keydown', e => e.stopPropagation());
+      name.addEventListener('input', () => { p.desc = name.value; propsArtDirty = true; });
+      cell.appendChild(name);
+      cell.tabIndex = 0;
+      cell.addEventListener('keydown', e => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        propsPicSel = i;
+        renderPropsArt();
+        const back = $('propArtGrid').children[i];
+        if (back) back.focus();
+      });
+      cell.addEventListener('click', () => { propsPicSel = i; renderPropsArt(); });
+      grid.appendChild(cell);
+    });
+    $('propSaveCover').disabled = propsPicSel < 0;
+    $('propArtRemoveBtn').disabled = propsPicSel < 0;
+    const onDisk = propsIdx >= 0 && playlist[propsIdx] && playlist[propsIdx]._path;
+    const canEmbed = onDisk && /[.](mp3|m4a|flac|ogg|oga|aac|wav|mp4|m4v|mov)$/i.test(playlist[propsIdx]._path);
+    $('propArtNote').textContent = propsPics.length
+      ? 'the first image is what players show as the cover. drag is not supported yet, remove and re-add to reorder.'
+        + (canEmbed ? '' : ' this container cannot hold artwork, so it will not be saved for this one.')
+      : '';
+  }
+  $('propArtAddBtn').addEventListener('click', () => $('propArtInput').click());
+  $('propArtInput').addEventListener('change', async e => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    for (const file of files) {
+      const blob = file.slice(0, file.size, file.type || 'image/jpeg');
+      propsPics.push({
+        url: URL.createObjectURL(blob), owned: true, blob: blob,
+        mime: file.type || 'image/jpeg', desc: file.name.replace(/[.][^.]+$/, ''),
+        type: propsPics.length === 0 ? 3 : 0, bytes: file.size,
+      });
+    }
+    if (files.length) { propsArtDirty = true; propsPicSel = propsPics.length - 1; renderPropsArt(); }
+  });
+  $('propArtRemoveBtn').addEventListener('click', () => {
+    if (propsPicSel < 0) return;
+    const [gone] = propsPics.splice(propsPicSel, 1);
+    if (gone && gone.owned) { try { URL.revokeObjectURL(gone.url); } catch (e) {} }
+    propsPicSel = Math.min(propsPicSel, propsPics.length - 1);
+    propsArtDirty = true;
+    renderPropsArt();
+  });
+  $('propSaveCover').addEventListener('click', async () => {
+    const p = propsPics[propsPicSel];
+    if (!p) return;
+    const f = playlist[propsIdx];
+    const blob = p.blob || await fetch(p.url).then(r => r.blob());
+    const ext = (blob.type || '').indexOf('png') >= 0 ? 'png' : 'jpg';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (f ? f.name.replace(/[.][^.]+$/, '') : 'cover') + ' - ' + (p.desc || 'artwork') + '.' + ext;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+
+  // ── lyrics ─────────────────────────────────────────────────────────────────
+  function lrcStamp(t) {
+    if (t == null || !isFinite(t)) return '';
+    const m = Math.floor(t / 60), s = Math.floor(t % 60), cs = Math.floor((t % 1) * 100);
+    return m + ':' + String(s).padStart(2, '0') + '.' + String(cs).padStart(2, '0');
+  }
+  function renderPropsLyricLines(lines) {
+    const view = $('propLyrView');
+    view.innerHTML = '';
+    if (!lines || !lines.length) return;
+    for (const ln of lines) {
+      const row = document.createElement('div');
+      row.className = 'props-lyr-line' + (ln.text ? '' : ' blank');
+      const x = document.createElement('div');
+      x.className = 'x';
+      x.textContent = ln.text || '♪';
+      const t = document.createElement('div');
+      t.className = 't';
+      t.textContent = lrcStamp(ln.t);
+      row.append(x, t);
+      view.appendChild(row);
+    }
+  }
+  async function refreshPropsLyrics() {
+    const f = playlist[propsIdx];
+    const state = $('propLyrState');
+    $('propLyrResults').classList.add('hidden');
+    $('propLyrView').innerHTML = '';
+    if (!f) { state.textContent = ''; return; }
+    const key = trackLyricsKey(f);
+    const local = lyricsFiles[key];
+    const pick = lyricsPicks[key];
+    $('propLyrUnlinkBtn').disabled = !local && !pick;
+    if (local) {
+      state.innerHTML = 'linked to the local file <b></b>';
+      state.querySelector('b').textContent = local.name;
+      renderPropsLyricLines(/[.]vtt$/i.test(local.name) ? parseVTT(local.text) : parseLRC(local.text));
+      return;
+    }
+    if (pick) {
+      const isNe = typeof pick === 'string' && pick.indexOf('ne:') === 0;
+      const label = isNe ? 'netease song #' + pick.slice(3) : 'lrclib entry #' + pick;
+      state.innerHTML = 'linked to <b></b>';
+      state.querySelector('b').textContent = label;
+      state.append(document.createTextNode(' — loading…'));
+      try {
+        const r = isNe
+          ? await window.winControls.lyricsFetchNeteaseById(pick.slice(3))
+          : await window.winControls.lyricsFetchById(pick);
+        if (playlist[propsIdx] !== f) return;
+        const parsed = r && r.synced ? parseLRC(r.synced) : (r && r.plain ? r.plain.split('\n').map(t => ({ t: null, text: t })) : null);
+        state.innerHTML = 'linked to <b></b>';
+        state.querySelector('b').textContent = label;
+        renderPropsLyricLines(parsed);
+        if (!parsed) state.append(document.createTextNode(' — could not load it'));
+      } catch (e) {
+        state.append(document.createTextNode(' — could not load it'));
+      }
+      return;
+    }
+    state.textContent = 'nothing linked to this track yet.';
+  }
+  async function propsLyricsSearch() {
+    const f = playlist[propsIdx];
+    if (!f || !window.winControls) return;
+    const box = $('propLyrResults');
+    const q = $('propLyrQuery').value.trim();
+    if (!q) return;
+    box.classList.remove('hidden');
+    box.innerHTML = '<div class="props-lyr-hit"><span>searching…</span></div>';
+    const srcBtn = $('propLyrSrcSeg').querySelector('button.on');
+    const src = srcBtn ? srcBtn.dataset.val : 'lrclib';
+    let r = null;
+    try {
+      r = src === 'netease'
+        ? await window.winControls.lyricsSearchNetease(q)
+        : await window.winControls.lyricsSearch(q);
+    } catch (e) {}
+    if (playlist[propsIdx] !== f) return;
+    const hits = (r && r.results) || [];
+    box.innerHTML = '';
+    if (!hits.length) {
+      box.innerHTML = '<div class="props-lyr-hit"><span>no result</span></div>';
+      return;
+    }
+    for (const h of hits) {
+      const row = document.createElement('div');
+      row.className = 'props-lyr-hit';
+      const g = document.createElement('div');
+      g.className = 'grow';
+      const b = document.createElement('b');
+      b.textContent = h.trackName || '?';
+      g.append(b, document.createTextNode('  '));
+      const who = document.createElement('span');
+      who.textContent = (h.artistName || '') + (h.albumName ? ' · ' + h.albumName : '');
+      g.appendChild(who);
+      const meta = document.createElement('span');
+      meta.textContent = (h.synced ? 'synced' : 'plain') + (h.duration ? ' · ' + fmt(h.duration) : '');
+      row.append(g, meta);
+      row.addEventListener('click', () => {
+        const key = trackLyricsKey(f);
+        delete lyricsFiles[key];
+        saveLyricsFiles();
+        lyricsCacheDrop(key);
+        lyricsPicks[key] = src === 'netease' ? 'ne:' + h.id : h.id;
+        try { localStorage.setItem('bbv_lyricsPicks', JSON.stringify(lyricsPicks)); } catch (e) {}
+        toast('lyrics linked to this track');
+        if (playlist[curIndex] === f) loadLyricsFor(f, lastTags);
+        refreshPropsLyrics();
+      });
+      box.appendChild(row);
+    }
+  }
+  $('propLyrSrcSeg').querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => {
+      $('propLyrSrcSeg').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+      $('propLyrResults').innerHTML = '';
+      $('propLyrResults').classList.add('hidden');
+    });
+  });
+  $('propLyrSearchBtn').addEventListener('click', propsLyricsSearch);
+  $('propLyrQuery').addEventListener('keydown', e => {
+    e.stopPropagation();
+    if (e.key === 'Enter') propsLyricsSearch();
+  });
+  $('propLyrFileBtn').addEventListener('click', () => $('propLyrFileInput').click());
+  $('propLyrFileInput').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    const f = playlist[propsIdx];
+    if (!file || !f) return;
+    const text = await file.text();
+    const key = trackLyricsKey(f);
+    lyricsCacheDrop(key);
+    lyricsFiles[key] = { name: file.name, text: text };
+    saveLyricsFiles();
+    delete lyricsPicks[key];
+    try { localStorage.setItem('bbv_lyricsPicks', JSON.stringify(lyricsPicks)); } catch (e) {}
+    toast('lyrics file linked to this track');
+    if (playlist[curIndex] === f) loadLyricsFor(f, lastTags);
+    refreshPropsLyrics();
+  });
+  $('propLyrUnlinkBtn').addEventListener('click', () => {
+    const f = playlist[propsIdx];
+    if (!f) return;
+    const key = trackLyricsKey(f);
+    lyricsCacheDrop(key);
+    delete lyricsFiles[key];
+    delete lyricsPicks[key];
+    saveLyricsFiles();
+    try { localStorage.setItem('bbv_lyricsPicks', JSON.stringify(lyricsPicks)); } catch (e) {}
+    toast('lyrics unlinked');
+    if (playlist[curIndex] === f) loadLyricsFor(f, lastTags);
+    refreshPropsLyrics();
+  });
+
+  // ── filling the fields from the release databases ──────────────────────────
+  // every matching release is broken back down into per-field choices, so a title
+  // can come from one release and the cover from another.
+  const META_FIELDS = [
+    { key: 'artist', label: 'artist', input: 'propArtist' },
+    { key: 'title', label: 'title', input: 'propTitle' },
+    { key: 'album', label: 'album', input: 'propAlbum' },
+    { key: 'year', label: 'year', input: 'propYear' },
+    { key: 'genre', label: 'genre', input: 'propGenre' },
+    { key: 'trackNo', label: 'track #', input: 'propTrack' },
+  ];
+  let metaHits = [];
+  let metaCovers = [];
+
+  function metaOptions(key) {
+    const seen = new Map();
+    for (const hit of metaHits) {
+      const value = (hit[key] || '').trim();
+      if (!value) continue;
+      const id = value.toLowerCase();
+      if (!seen.has(id)) seen.set(id, { value: value, count: 0, sources: new Set() });
+      const entry = seen.get(id);
+      entry.count++;
+      entry.sources.add(hit.source);
+    }
+    // the value the most releases agree on is the likeliest one, so it sits on top
+    return [...seen.values()].sort((a, b) => b.count - a.count);
+  }
+  function metaCoverOptions() {
+    const seen = new Map();
+    for (const hit of metaHits) {
+      if (!hit.coverUrl || seen.has(hit.coverUrl)) continue;
+      seen.set(hit.coverUrl, { url: hit.coverUrl, source: hit.source, blob: null, thumbUrl: '' });
+    }
+    return [...seen.values()].slice(0, 8);
+  }
+  // the cover art archive answers slowly and musicbrainz asks for about one
+  // request a second, so the thumbnails are fetched in turn rather than at once
+  let metaThumbJobs = [];
+  let metaThumbBusy = false;
+  let metaThumbLast = 0;
+  let metaThumbRun = 0;
+  async function runCoverThumbs() {
+    if (metaThumbBusy) return;
+    metaThumbBusy = true;
+    while (metaThumbJobs.length) {
+      const job = metaThumbJobs.shift();
+      if (job.run !== metaThumbRun) continue;
+      if (job.cover.source === 'musicbrainz') {
+        const wait = 1000 - (Date.now() - metaThumbLast);
+        if (wait > 0) await new Promise(r => setTimeout(r, wait));
+      }
+      metaThumbLast = Date.now();
+      let img = null;
+      try { img = await window.winControls.metaImage(job.cover.url); } catch (e) {}
+      if (job.run !== metaThumbRun) continue;
+      job.cell.classList.remove('loading');
+      if (!img || !img.data) {
+        // a thumbnail that never arrived is a cover that cannot be saved either
+        job.cell.classList.add('dead');
+        job.radio.disabled = true;
+        if (job.radio.checked) job.grid.querySelector('input').checked = true;
+        continue;
+      }
+      job.cover.blob = new Blob([img.data], { type: img.mime || 'image/jpeg' });
+      job.cover.thumbUrl = URL.createObjectURL(job.cover.blob);
+      job.thumb.style.backgroundImage = 'url("' + job.cover.thumbUrl + '")';
+      // the pixel size is what separates a usable cover from a thumbnail, and only
+      // the decoded image knows it
+      const kb = Math.max(1, Math.round(job.cover.blob.size / 1024)) + ' kb';
+      job.size.textContent = kb;
+      const probe = new Image();
+      probe.onload = () => {
+        job.cover.w = probe.naturalWidth;
+        job.cover.h = probe.naturalHeight;
+        job.size.textContent = probe.naturalWidth + '\u00d7' + probe.naturalHeight + '\n' + kb;
+      };
+      probe.src = job.cover.thumbUrl;
+    }
+    metaThumbBusy = false;
+  }
+  function showMetaPreview(cell, cover) {
+    if (!cover.thumbUrl) return;
+    const box = $('metaPreview');
+    box.style.backgroundImage = 'url("' + cover.thumbUrl + '")';
+    const r = cell.getBoundingClientRect();
+    const dialog = $('metaOverlay').querySelector('.meta-box');
+    const d = dialog ? dialog.getBoundingClientRect() : r;
+    const size = 220, gap = 14;
+    // beside the whole dialog rather than beside the cell, so it covers nothing
+    let left = d.right + gap;
+    if (left + size > window.innerWidth - 8) left = d.left - gap - size;
+    if (left < 8) left = r.right + gap;
+    box.style.left = Math.max(8, Math.min(left, window.innerWidth - size - 8)) + 'px';
+    box.style.top = Math.max(8, Math.min(r.top + r.height / 2 - size / 2, window.innerHeight - size - 8)) + 'px';
+    box.classList.add('show');
+  }
+  function hideMetaPreview() { $('metaPreview').classList.remove('show'); }
+  function releaseMetaCovers() {
+    hideMetaPreview();
+    metaThumbRun++;
+    metaThumbJobs = [];
+    for (const c of metaCovers) {
+      if (!c.thumbUrl) continue;
+      try { URL.revokeObjectURL(c.thumbUrl); } catch (e) {}
+      c.thumbUrl = '';
+    }
+  }
+  function metaRadio(name, checked) {
+    const radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.name = name;
+    radio.checked = !!checked;
+    return radio;
+  }
+  function metaGroupBox(title) {
+    const box = document.createElement('div');
+    box.className = 'meta-group';
+    const head = document.createElement('div');
+    head.className = 'meta-group-head';
+    head.textContent = title;
+    box.appendChild(head);
+    return box;
+  }
+  function metaMsg(text, busy) {
+    releaseMetaCovers();
+    const box = $('metaGroups');
+    box.innerHTML = '';
+    const line = document.createElement('div');
+    line.className = 'meta-empty';
+    if (busy) {
+      const spin = document.createElement('span');
+      spin.className = 'meta-spin';
+      line.appendChild(spin);
+    }
+    line.appendChild(document.createTextNode(text));
+    box.appendChild(line);
+    $('metaNote').textContent = '';
+    $('metaApplyBtn').disabled = true;
+  }
+  function renderMetaPicker() {
+    releaseMetaCovers();
+    const box = $('metaGroups');
+    box.innerHTML = '';
+    metaCovers = [];
+    let groups = 0;
+
+    for (const field of META_FIELDS) {
+      const current = $(field.input).value.trim();
+      const options = metaOptions(field.key);
+      if (!options.length) continue;
+      groups++;
+      const group = metaGroupBox(field.label);
+      // a filled-in field still gets the whole list under it, so it can be swapped
+      // out. it just stays the default, and says so when the databases agree.
+      const same = current ? options.find(o => o.value.toLowerCase() === current.toLowerCase()) : null;
+      const keep = document.createElement('label');
+      keep.className = 'meta-opt';
+      keep.appendChild(metaRadio('meta-' + field.key, true));
+      const keepText = document.createElement('span');
+      keepText.className = 'meta-keep';
+      keepText.textContent = current ? 'keep "' + current + '"' : 'leave empty';
+      keep.appendChild(keepText);
+      if (same) {
+        const agree = document.createElement('span');
+        agree.className = 'meta-src';
+        agree.textContent = [...same.sources].join(' · ') + ' agree';
+        keep.appendChild(agree);
+      }
+      group.appendChild(keep);
+      for (const option of options) {
+        if (option === same) continue;
+        const row = document.createElement('label');
+        row.className = 'meta-opt';
+        const radio = metaRadio('meta-' + field.key, false);
+        radio.dataset.value = option.value;
+        row.appendChild(radio);
+        const value = document.createElement('span');
+        value.className = 'meta-val';
+        value.textContent = option.value;
+        row.appendChild(value);
+        const src = document.createElement('span');
+        src.className = 'meta-src';
+        src.textContent = [...option.sources].join(' · ') + (option.count > 1 ? '  x' + option.count : '');
+        row.appendChild(src);
+        group.appendChild(row);
+      }
+      box.appendChild(group);
+    }
+
+    metaCovers = metaCoverOptions();
+    if (metaCovers.length) {
+      groups++;
+      const group = metaGroupBox('cover');
+      const grid = document.createElement('div');
+      grid.className = 'meta-covers';
+      const keep = document.createElement('label');
+      keep.className = 'meta-cover';
+      keep.appendChild(metaRadio('meta-cover', true));
+      const keepText = document.createElement('span');
+      keepText.textContent = propsPics.length ? 'keep current' : 'no cover';
+      keep.appendChild(keepText);
+      grid.appendChild(keep);
+      for (const cover of metaCovers) {
+        const cell = document.createElement('label');
+        cell.className = 'meta-cover';
+        const radio = metaRadio('meta-cover', false);
+        radio.dataset.url = cover.url;
+        cell.appendChild(radio);
+        const thumb = document.createElement('div');
+        thumb.className = 'meta-cover-thumb';
+        cell.appendChild(thumb);
+        const src = document.createElement('span');
+        src.textContent = cover.source;
+        cell.appendChild(src);
+        const size = document.createElement('span');
+        size.className = 'meta-cover-size';
+        cell.appendChild(size);
+        cell.classList.add('loading');
+        cell.addEventListener('mouseenter', () => showMetaPreview(cell, cover));
+        cell.addEventListener('mouseleave', hideMetaPreview);
+        grid.appendChild(cell);
+        // the page can't pull remote images itself, so the bytes come through main
+        metaThumbJobs.push({ run: metaThumbRun, cover: cover, cell: cell, thumb: thumb, size: size, radio: radio, grid: grid });
+      }
+      group.appendChild(grid);
+      box.appendChild(group);
+      runCoverThumbs();
+    }
+
+    $('metaNote').textContent = groups
+      ? metaHits.length + ' releases matched. anything left on the first choice stays as it is.'
+      : metaHits.length + ' releases matched, but none of them carried a usable field.';
+    $('metaApplyBtn').disabled = !groups;
+  }
+  async function applyMetaPicks() {
+    const f = playlist[propsIdx];
+    if (!f) return;
+    const box = $('metaGroups');
+    let changed = 0;
+    for (const field of META_FIELDS) {
+      const picked = box.querySelector('input[name="meta-' + field.key + '"]:checked');
+      if (!picked || !picked.dataset.value) continue;
+      $(field.input).value = picked.dataset.value;
+      changed++;
+    }
+    $('propHeadTitle').textContent = $('propTitle').value || f.name;
+    $('propHeadArtist').textContent = $('propArtist').value;
+    $('propHeadAlbum').textContent = $('propAlbum').value;
+
+    const pickedCover = box.querySelector('input[name="meta-cover"]:checked');
+    if (pickedCover && pickedCover.dataset.url) {
+      const cover = metaCovers.find(c => c.url === pickedCover.dataset.url);
+      let blob = cover && cover.blob;
+      if (!blob) {
+        // the thumbnail may still be in flight when save is pressed
+        try {
+          const img = await window.winControls.metaImage(pickedCover.dataset.url);
+          if (img && img.data) blob = new Blob([img.data], { type: img.mime || 'image/jpeg' });
+        } catch (e) {}
+      }
+      if (playlist[propsIdx] !== f) return;
+      if (blob) {
+        // the first image is the one players use, so the new cover goes in front
+        propsPics.unshift({
+          url: URL.createObjectURL(blob), owned: true, blob: blob,
+          mime: blob.type, desc: $('propAlbum').value || 'front cover', type: 3, bytes: blob.size,
+        });
+        propsPicSel = 0;
+        propsArtDirty = true;
+        renderPropsArt();
+        const head = $('propHeadCover');
+        head.style.backgroundImage = 'url("' + propsPics[0].url + '")';
+        head.classList.add('has-img');
+        changed++;
+      } else {
+        toast('the cover could not be downloaded', { error: true });
+      }
+    }
+    closeMetaPicker();
+    toast(changed
+      ? changed + (changed > 1 ? ' values' : ' value') + ' filled in — press save to write them into the file'
+      : 'nothing picked');
+  }
+  async function runMetaSearch() {
+    const f = playlist[propsIdx];
+    if (!f || !window.winControls || !window.winControls.metaSearch) return;
+    const query = $('propMetaQuery').value.trim();
+    if (!query) return;
+    metaHits = [];
+    metaMsg('searching discogs and musicbrainz…', true);
+    let r = null;
+    try {
+      // an untagged file still has a filename, and the detector already knows how
+      // to read one. without this the search falls back to loose free text.
+      const guess = guessArtistTitleFromName(f.name, f._path);
+      const artist = $('propArtist').value.trim() || guess.artist;
+      const title = $('propTitle').value.trim() || guess.titleQuery || guess.title;
+      r = await window.winControls.metaSearch({ query: query, artist: artist, title: title });
+    } catch (e) {}
+    if (playlist[propsIdx] !== f || $('metaOverlay').classList.contains('hidden')) return;
+    metaHits = (r && r.results) || [];
+    if (!metaHits.length) { metaMsg('nothing found for that search'); return; }
+    renderMetaPicker();
+  }
+  function closeMetaPicker() {
+    hideMetaPreview();
+    releaseMetaCovers();
+    $('metaOverlay').classList.add('hidden');
+  }
+  $('propMetaBtn').addEventListener('click', () => {
+    if (propsIdx < 0) return;
+    $('metaOverlay').classList.remove('hidden');
+    runMetaSearch();
+  });
+  $('metaSearchBtn').addEventListener('click', runMetaSearch);
+  $('metaCancelBtn').addEventListener('click', closeMetaPicker);
+  $('metaApplyBtn').addEventListener('click', applyMetaPicks);
+  $('metaOverlay').addEventListener('click', e => { if (e.target === $('metaOverlay')) closeMetaPicker(); });
+  $('metaGroups').addEventListener('scroll', hideMetaPreview);
+  $('propMetaQuery').addEventListener('keydown', e => {
+    e.stopPropagation();
+    if (e.key === 'Enter') runMetaSearch();
+  });
+  // ── opening ────────────────────────────────────────────────────────────────
   async function openProps(i) {
     const f = playlist[i];
     if (!f) return;
     propsIdx = i;
+    propsArtDirty = false;
     let tags = null;
     try { tags = await readTags(f); } catch (e) {}
     tags = tags || {};
     for (const [key, id] of Object.entries(PROP_FIELDS)) $(id).value = tags[key] || '';
-    if (propsCoverUrl) { URL.revokeObjectURL(propsCoverUrl); propsCoverUrl = null; }
-    const cover = $('propCover');
-    if (tags.cover) {
-      propsCoverUrl = tags.cover;
-      cover.style.backgroundImage = `url("${tags.cover}")`;
-      cover.classList.add('has-img');
-      $('propSaveCover').disabled = false;
+
+    releasePropsPics();
+    // freshly minted by the readTags above, so the dialog owns them outright
+    propsPics = (tags.pictures || []).map(p => Object.assign({}, p, { owned: true }));
+    // the cover the rest of the app uses goes first, so the grid matches what players show
+    const frontAt = propsPics.findIndex(p => p.url === tags.cover);
+    if (frontAt > 0) propsPics.unshift(propsPics.splice(frontAt, 1)[0]);
+    propsPicSel = propsPics.length ? 0 : -1;
+    propsOrig = { pics: propsPics.length };
+    for (const key of Object.keys(PROP_FIELDS)) propsOrig[key] = $(PROP_FIELDS[key]).value;
+
+    const head = $('propHeadCover');
+    if (propsPics.length) {
+      head.style.backgroundImage = 'url("' + propsPics[0].url + '")';
+      head.classList.add('has-img');
     } else {
-      cover.style.backgroundImage = '';
-      cover.classList.remove('has-img');
-      $('propSaveCover').disabled = true;
+      head.style.backgroundImage = '';
+      head.classList.remove('has-img');
     }
+    $('propHeadFile').textContent = f.name;
+    $('propHeadFile').title = f._path || f.name;
+    $('propHeadTitle').textContent = tags.title || f.name.replace(/[.][^.]+$/, '');
+    $('propHeadArtist').textContent = tags.artist || '';
+    $('propHeadAlbum').textContent = tags.album || '';
+    renderPropsArt();
+
     $('propsFileGrid').innerHTML = '';
     propsFileRow('file', f.name);
     propsFileRow('duration', f._dur > 0 ? fmt(f._dur) : '—');
     propsFileRow('format', (f.name.split('.').pop() || '').toUpperCase() || '—');
     propsFileRow('size', (f.size / 1048576).toFixed(1) + ' mb');
+
+    const guessQuery = [tags.artist, tags.title].filter(Boolean).join(' ') || f.name.replace(/[.][^.]+$/, '');
+    $('propLyrQuery').value = guessQuery;
+    $('propMetaQuery').value = guessQuery;
+    refreshPropsLyrics();
+
     const onDisk = !!f._path;
     $('propSaveBtn').textContent = onDisk ? 'save' : 'save & download';
     $('propsNote').innerHTML = onDisk
       ? '⚠️ save writes the metadata directly into the file.'
       : '⚠️ this track isn\'t on disk, saving writes the metadata into a downloaded copy.';
     $('propSaveBtn').disabled = false;
+    setPropsTab('details');
     $('propsOverlay').classList.remove('hidden');
     $('propTitle').focus();
   }
@@ -5807,30 +7293,57 @@
     btn.disabled = false;
     btn.textContent = label;
   });
-  $('propCancelBtn').addEventListener('click', () => $('propsOverlay').classList.add('hidden'));
-  $('propsOverlay').addEventListener('click', e => { if (e.target === $('propsOverlay')) $('propsOverlay').classList.add('hidden'); });
+  function closePropsDialog() {
+    $('propsOverlay').classList.add('hidden');
+    releasePropsPics();
+    propsArtDirty = false;
+  }
+  $('propCancelBtn').addEventListener('click', closePropsDialog);
+  $('propsOverlay').addEventListener('click', e => { if (e.target === $('propsOverlay')) closePropsDialog(); });
   for (const id of Object.values(PROP_FIELDS)) {
     $(id).addEventListener('keydown', e => {
       if (e.key === 'Enter') $('propSaveBtn').click();
       e.stopPropagation();
     });
   }
-  $('propSaveCover').addEventListener('click', async () => {
-    if (!propsCoverUrl) return;
-    const f = playlist[propsIdx];
-    const blob = await fetch(propsCoverUrl).then(r => r.blob());
-    const ext = blob.type === 'image/png' ? 'png' : 'jpg';
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = (f ? f.name.replace(/\.[^.]+$/, '') : 'cover') + ' - cover.' + ext;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  });
   $('propSaveBtn').addEventListener('click', async () => {
     const f = playlist[propsIdx];
     if (!f || !window.winControls) return;
     const tags = {};
     for (const key of Object.keys(PROP_FIELDS)) tags[key] = $(PROP_FIELDS[key]).value.trim();
+
+    // saving writes straight into the file, so what is about to change gets shown
+    // first. this also catches the case where nothing changed at all.
+    const details = [];
+    for (const key of Object.keys(PROP_FIELDS)) {
+      const before = ((propsOrig && propsOrig[key]) || '').trim();
+      if (before === tags[key]) continue;
+      details.push({ label: key.replace(/[A-Z]/g, c => ' ' + c.toLowerCase()), from: before, to: tags[key] });
+    }
+    if (propsArtDirty) {
+      const was = propsOrig ? propsOrig.pics : 0;
+      const img = n => n + (n === 1 ? ' image' : ' images');
+      details.push({ label: 'artwork', from: img(was), to: img(propsPics.length) });
+    }
+    if (!details.length) { toast('nothing changed, nothing written'); return; }
+    const okToWrite = await confirmDialog(
+      f._path ? 'write these into ' + f.name + '?' : 'write these into a downloaded copy?',
+      'write', 'cancel', details);
+    if (!okToWrite) return;
+
+    if (propsArtDirty) {
+      const pics = [];
+      for (const p of propsPics) {
+        try {
+          const blob = p.blob || await fetch(p.url).then(r => r.blob());
+          pics.push({
+            data: await blob.arrayBuffer(), mime: blob.type || p.mime || 'image/jpeg',
+            desc: p.desc || '', type: typeof p.type === 'number' ? p.type : (pics.length ? 0 : 3),
+          });
+        } catch (e) {}
+      }
+      tags.pictures = pics;
+    }
     $('propSaveBtn').disabled = true;
     toast('writing metadata…');
     const editingCurrent = propsIdx === curIndex && !!audio.src && !!f._path;
@@ -5855,13 +7368,13 @@
       if (editingCurrent) { resumePos = restore.pos; await loadCurrent(); if (!restore.wasPlaying) { audio.pause(); setPlay(false); } }
       return;
     }
-    $('propsOverlay').classList.add('hidden');
+    closePropsDialog();
     if (r.inPlace) {
       const restored = await window.winControls.readSessionFiles([f._path]);
       if (restored.length) {
         const nf = new File([restored[0].data], restored[0].name, { type: restored[0].mime });
         nf._path = restored[0].path;
-        nf._dur = f._dur;
+        // no _dur on purpose: it lets ensureProbed re-read the new tags, thumbnail included
         playlist[propsIdx] = nf;
         renderPlaylist();
         if (editingCurrent) {
@@ -6253,7 +7766,7 @@
     const missing = paths.filter(p => !libraryTagCache[p]);
     if (!missing.length) return;
     let restored;
-    try { restored = await window.winControls.readFilePrefixes(missing, 262144); } catch (e) { restored = []; }
+    try { restored = await window.winControls.readFilePrefixes(missing, 1048576); } catch (e) { restored = []; }
     for (const r of restored) {
       let tags = null;
       try {
@@ -6265,6 +7778,7 @@
         title: (tags && tags.title) || '',
         album: (tags && tags.album) || '',
       };
+      releaseTagPictures(tags);
     }
     for (const p of missing) if (!libraryTagCache[p]) libraryTagCache[p] = { artist: '', title: '', album: '' };
     saveLibraryTagCacheDebounced();
@@ -6510,6 +8024,12 @@
 
   function setPlay(p) {
     playing = p;
+    // the separated window normally learns this from the render loop, but the OS
+    // throttles that loop while the app sits in the background, which is exactly
+    // when media keys get used. push the change straight away instead of waiting.
+    if (lyricsWinOpen && window.winControls) {
+      window.winControls.lyricsWinSync({ t: ready ? audio.currentTime : 0, playing: p, rate: audio.playbackRate });
+    }
     const src = p ? 'assets/buttons/pause.png' : 'assets/buttons/play.png';
     $('playBtn').querySelector('img').src = src;
     $('miniPlay').querySelector('img').src = src;
@@ -6683,16 +8203,74 @@
       if (om) { offset = +om[1]; continue; }
       const times = [...raw.matchAll(/\[(\d+):(\d{1,2})(?:[.:](\d{1,3}))?\]/g)];
       if (!times.length) continue;
-      const lineText = raw.replace(/\[[^\]]*\]/g, '').trim();
+      const body = raw.replace(/\[[^\]]*\]/g, '');
+      // enhanced lrc marks each word with <mm:ss.xx>. keep those timings, and strip
+      // the tags either way so they never end up on screen.
+      const marks = [...body.matchAll(/<(\d+):(\d{1,2})(?:[.:](\d{1,3}))?>/g)];
+      const lineText = body.replace(/<[^>]*>/g, '').trim();
+      let words = null;
+      if (marks.length) {
+        words = [];
+        for (let i = 0; i < marks.length; i++) {
+          const mk = marks[i];
+          const wms = (+mk[1]) * 60000 + (+mk[2]) * 1000 + (mk[3] ? +mk[3].padEnd(3, '0') : 0);
+          const from = mk.index + mk[0].length;
+          const to = i + 1 < marks.length ? marks[i + 1].index : body.length;
+          const txt = body.slice(from, to).replace(/<[^>]*>/g, '');
+          if (txt) words.push({ t: (wms - offset) / 1000, text: txt });
+        }
+        if (!words.length) words = null;
+      }
       for (const m of times) {
         const ms = (+m[1]) * 60000 + (+m[2]) * 1000 + (m[3] ? +m[3].padEnd(3, '0') : 0);
-        lines.push({ t: (ms - offset) / 1000, text: lineText });
+        lines.push({ t: (ms - offset) / 1000, text: lineText, words: words });
       }
     }
     lines.sort((a, b) => a.t - b.t);
     return lines.length ? lines : null;
   }
 
+  // almost no lrclib or netease entry carries word timings. when they are missing the
+  // line is split across its own duration, weighted by word length — an estimate, so
+  // it can be turned off. real timings from an enhanced file always win either way.
+  let lyricWordsGen = 0;
+  function lyricWords(list, i) {
+    const ln = list && list[i];
+    if (!ln || !ln.text) return null;
+    if (ln._wg === lyricWordsGen) return ln._w;
+    ln._wg = lyricWordsGen;
+    if (ln.words && ln.words.length) { ln._w = ln.words; return ln._w; }
+    if (!S.lyricsGuessWords) { ln._w = null; return null; }
+    const parts = ln.text.split(/(\s+)/).filter(x => x.length);
+    if (parts.length < 2) { ln._w = null; return null; }
+    const next = list[i + 1];
+    const start = ln.t;
+    const span = next && next.t > start ? next.t - start : 3.5;
+    const dur = Math.min(12, Math.max(0.5, span));
+    let total = 0;
+    const weight = parts.map(x => { const v = /^\s+$/.test(x) ? 0.4 : Math.max(1, x.length); total += v; return v; });
+    let acc = 0;
+    ln._w = parts.map((x, k) => { const t0 = start + (acc / total) * dur; acc += weight[k]; return { t: t0, text: x }; });
+    return ln._w;
+  }
+  function buildLyricWords(el, words, fallback) {
+    el.innerHTML = '';
+    if (!words) { el.textContent = fallback; return; }
+    for (const w of words) {
+      const sp = document.createElement('span');
+      sp.className = 'w';
+      sp._t = w.t;
+      sp.textContent = w.text;
+      el.appendChild(sp);
+    }
+  }
+  function paintLyricWords(el, t) {
+    const kids = el.children;
+    for (let i = 0; i < kids.length; i++) {
+      const on = kids[i]._t <= t;
+      if (kids[i]._on !== on) { kids[i]._on = on; kids[i].classList.toggle('sung', on); }
+    }
+  }
   function parseVTT(text) {
     if (!text || !text.includes('-->')) return null;
     const toSec = (s) => {
@@ -6735,8 +8313,44 @@
   let lyricsCurKey = '';
   let lyricsPicks = {};
   try { lyricsPicks = JSON.parse(localStorage.getItem('bbv_lyricsPicks') || '{}'); } catch (e) {}
+
+  // resolved lyrics are kept on disk so a track only ever hits the network once.
+  // an entry remembers which pick produced it, so changing source invalidates it.
+  let lyricsCache = {};
+  try { lyricsCache = JSON.parse(localStorage.getItem('bbv_lyricsCache') || '{}'); } catch (e) {}
+  const LYRICS_CACHE_MAX = 150;
+  const LYRICS_MISS_TTL = 7 * 86400000;
+  function saveLyricsCache() {
+    const keys = Object.keys(lyricsCache);
+    while (keys.length > LYRICS_CACHE_MAX) delete lyricsCache[keys.shift()];
+    try { localStorage.setItem('bbv_lyricsCache', JSON.stringify(lyricsCache)); }
+    catch (e) {
+      // storage full: drop the oldest half rather than losing the lot
+      const ks = Object.keys(lyricsCache);
+      for (let i = 0; i < Math.ceil(ks.length / 2); i++) delete lyricsCache[ks[i]];
+      try { localStorage.setItem('bbv_lyricsCache', JSON.stringify(lyricsCache)); } catch (e2) {}
+    }
+  }
+  const lyricsPickTag = (pick) => (pick == null ? null : String(pick));
+  function lyricsCacheRead(key, pick) {
+    const e = key ? lyricsCache[key] : null;
+    if (!e) return null;
+    if ((e.pick || null) !== lyricsPickTag(pick)) return null;
+    if (e.text) return { text: e.text, source: e.source || '' };
+    return Date.now() - (e.ts || 0) < LYRICS_MISS_TTL ? { miss: true } : null;
+  }
+  function lyricsCacheWrite(key, pick, text, source) {
+    if (!key) return;
+    delete lyricsCache[key];
+    lyricsCache[key] = { pick: lyricsPickTag(pick), text: text || '', source: source || '', ts: Date.now() };
+    saveLyricsCache();
+  }
+  function lyricsCacheDrop(key) {
+    if (key && lyricsCache[key]) { delete lyricsCache[key]; saveLyricsCache(); }
+  }
   function saveLyricsPick(id) {
     if (!lyricsCurKey) return;
+    lyricsCacheDrop(lyricsCurKey);
     lyricsPicks[lyricsCurKey] = id;
     const keys = Object.keys(lyricsPicks);
     if (keys.length > 300) delete lyricsPicks[keys[0]];
@@ -6775,22 +8389,40 @@
         const dur = await waitDuration();
         if (token !== lyricsToken) return;
         lyricsCurKey = file.name + '|' + Math.round(dur || 0);
+        // a lyrics file linked by hand in the properties dialog wins over everything
+        const linked = lyricsFiles[lyricsCurKey];
+        if (linked && linked.text) {
+          const parsed = /[.]vtt$/i.test(linked.name || '') ? parseVTT(linked.text) : parseLRC(linked.text);
+          if (parsed) { lyricsLines = parsed; return; }
+        }
         const pickId = lyricsPicks[lyricsCurKey];
+        const cached = lyricsCacheRead(lyricsCurKey, pickId);
+        if (cached && cached.text) {
+          const parsed = parseLRC(cached.text);
+          if (parsed) { lyricsLines = parsed; return; }
+        }
+        // a remembered failure is respected for a week, then retried
+        if (cached && cached.miss) return;
         if (pickId != null) {
-          const pr = await window.winControls.lyricsFetchById(pickId);
+          const neId = typeof pickId === 'string' && pickId.indexOf('ne:') === 0 ? pickId.slice(3) : null;
+            const pr = neId
+            ? await window.winControls.lyricsFetchNeteaseById(neId)
+            : await window.winControls.lyricsFetchById(pickId);
           if (token !== lyricsToken) return;
           const parsed = pr && pr.synced ? parseLRC(pr.synced) : null;
-          if (parsed) { lyricsLines = parsed; return; }
+          if (parsed) { lyricsCacheWrite(lyricsCurKey, pickId, pr.synced, neId ? 'netease' : 'lrclib'); lyricsLines = parsed; return; }
         }
         const r = await window.winControls.lyricsFetch({ ...lyricsMeta(file, tags), duration: dur, sourcePref: S.lyricsSourcePref });
         if (token !== lyricsToken) return;
         if (r && r.synced) {
           lyricsLines = parseLRC(r.synced);
+          if (lyricsLines) lyricsCacheWrite(lyricsCurKey, null, r.synced, r.source || '');
           if (lyricsLines && r.source && r.source !== S.lyricsSourcePref) {
             toast(`lyrics source: ${r.source} (${S.lyricsSourcePref} had no match)`);
           }
         }
         if (!lyricsLines && r && r.suggestions && r.suggestions.length) lyricsSuggs = r.suggestions;
+        if (!lyricsLines) lyricsCacheWrite(lyricsCurKey, pickId, '', '');
       }
     } finally {
       clearTimeout(spinT);
@@ -7040,7 +8672,10 @@
       const mid = (lo + hi) >> 1;
       if (lyricsLines[mid].t <= t) { idx = mid; lo = mid + 1; } else hi = mid - 1;
     }
-    if (idx === lyricsIdx) return;
+    if (idx === lyricsIdx) {
+      if (idx >= 0) paintLyricWords($('lyricCur'), t);
+      return;
+    }
     const prevIdx = lyricsIdx;
     lyricsIdx = idx;
     const cur = idx >= 0 ? lyricsLines[idx].text : '';
@@ -7058,7 +8693,8 @@
     }
     const rise = Math.max(16, nextEl.offsetTop - curEl.offsetTop);
     curEl.style.setProperty('--rise', rise + 'px');
-    curEl.textContent = cur;
+    buildLyricWords(curEl, cur ? lyricWords(lyricsLines, idx) : null, cur);
+    paintLyricWords(curEl, t);
     nextEl.textContent = next;
     box.classList.remove('off');
     curEl.classList.remove('pop', 'rise');
@@ -7179,13 +8815,14 @@
     toast(S.lyricsMode === 'off' ? 'lyrics off' : 'lyrics on');
   }
   $('lyricsModeSeg').querySelectorAll('button').forEach(btn => {
-    btn.addEventListener('click', () => setLyricsMode(btn.dataset.val));
+    btn.addEventListener('click', () => { setLyricsMode(btn.dataset.val); closeMoreMenu(); });
   });
   $('lyricsSourcePrefSeg').querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => {
       S.lyricsSourcePref = btn.dataset.val;
       syncMoreMenu(); save();
       toast('lyrics source preference: ' + S.lyricsSourcePref);
+      closeMoreMenu();
     });
   });
   if (window.winControls && window.winControls.onLyricsWinState) {
@@ -7207,6 +8844,7 @@
       lyrwinSentLines = lyricsLines;
       window.winControls.lyricsWinSync({
         lines: lyricsLines || [],
+        guessWords: S.lyricsGuessWords,
         title: $('npTitle').textContent,
         artist: $('npArtist').classList.contains('hidden') ? '' : $('npArtist').textContent,
       });
@@ -7287,6 +8925,7 @@
     $('speedCur').innerHTML = S.drunkMode ? 'drunk' : S.playbackRate + '&times;';
     $('normCheck').textContent = S.normalize ? '✓' : '';
     $('lyricsFxCheck').textContent = S.lyricsFx ? '✓' : '';
+    $('lyricsGuessCheck').textContent = S.lyricsGuessWords ? '✓' : '';
     $('lyricsCheck').textContent = S.lyricsMode;
     $('lyricsModeSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.val === S.lyricsMode));
     $('lyricsSourcePrefSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.val === S.lyricsSourcePref));
@@ -7471,6 +9110,17 @@
     S.lyricsFx = !S.lyricsFx;
     if (!S.lyricsFx) { $('lyricsBox').style.transform = ''; $('lyricsBox').style.filter = ''; $('bloodLyrics').style.transform = ''; $('bloodLyrics').style.filter = ''; lyricsXformLast = null; bloodXformLast = null; lyricsChromaApplied = false; }
     syncMoreMenu(); save();
+    closeMoreMenu();
+  });
+  $('lyricsGuessItem').addEventListener('click', () => {
+    S.lyricsGuessWords = !S.lyricsGuessWords;
+    lyricWordsGen++;              // the per-line word split is cached, so it has to be dropped
+    lyricsIdx = -2;               // and the line on screen rebuilt rather than left as it was
+    updateLyricsOverlay();
+    lyrwinSentLines = undefined;  // the separated window splits the lines itself
+    syncMoreMenu(); save();
+    toast(S.lyricsGuessWords ? 'word timing estimated when the file has none' : 'word by word only when the file really has it');
+    closeMoreMenu();
   });
   $('xfadeSeg').querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => { S.crossfade = btn.dataset.val === 'on'; syncUI(); save(); });
@@ -7564,7 +9214,8 @@
     e.target.value = '';
     if (!file) return;
     const bytes = await file.arrayBuffer();
-    await applySoundfontBytes(bytes);
+    try { await applySoundfontBytes(bytes); }
+    catch (err) { toast((err && err.message) || 'could not load that soundfont', { error: true, duration: 7000 }); return; }
     S.soundfontName = file.name;
     S.soundfontPath = window.winControls ? window.winControls.getPathForFile(file) : '';
     save();
@@ -7688,7 +9339,8 @@
     const typing = /INPUT|TEXTAREA/.test(document.activeElement.tagName) && document.activeElement.type !== 'range';
     if (e.code === 'Space' && !typing && document.activeElement.tagName !== 'BUTTON') { e.preventDefault(); togglePlay(); }
     else if (e.key === 'Escape') {
-      if (!$('confirmOverlay').classList.contains('hidden')) closeConfirmDialog(false);
+      if (!$('metaOverlay').classList.contains('hidden')) closeMetaPicker();
+      else if (!$('confirmOverlay').classList.contains('hidden')) closeConfirmDialog(false);
       else if (!$('plsOverlay').classList.contains('hidden')) $('plsOverlay').classList.add('hidden');
       else if (!$('statsOverlay').classList.contains('hidden')) $('statsOverlay').classList.add('hidden');
       else if (!$('recentOverlay').classList.contains('hidden')) $('recentOverlay').classList.add('hidden');
@@ -7814,11 +9466,37 @@
   clearX.type = 'button'; clearX.className = 'input-clear-x'; clearX.textContent = '✕'; clearX.tabIndex = -1;
   document.body.appendChild(clearX);
   let clearTarget = null;
+  // the button floats on top of the page, so it has to hide itself once the field it
+  // belongs to has been scrolled out of whatever box is clipping it
+  function clippedOutOfView(el) {
+    const r = el.getBoundingClientRect();
+    for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+      const cs = getComputedStyle(p);
+      const clips = /(auto|scroll|hidden)/.test(cs.overflowY) || /(auto|scroll|hidden)/.test(cs.overflowX);
+      if (!clips) continue;
+      const pr = p.getBoundingClientRect();
+      if (r.bottom <= pr.top + 1 || r.top >= pr.bottom - 1) return true;
+      if (r.right <= pr.left + 1 || r.left >= pr.right - 1) return true;
+    }
+    return false;
+  }
+  // the ✕ floats above everything, so a dialog stacked over its input has to hide it
+  let overlayList = null;
+  function coveredByOverlay(el) {
+    if (!overlayList) overlayList = [...document.querySelectorAll('.help-overlay')];
+    const own = el.closest('.help-overlay');
+    for (let i = own ? overlayList.indexOf(own) + 1 : 0; i < overlayList.length; i++) {
+      if (!overlayList[i].classList.contains('hidden')) return true;
+    }
+    return false;
+  }
   function clearXVisible() {
     if (!clearTarget || !clearTarget.value || document.activeElement !== clearTarget) return false;
     if (clearTarget.offsetParent === null) return false;
     const overlay = clearTarget.closest('.help-overlay');
     if (overlay && overlay.classList.contains('hidden')) return false;
+    if (coveredByOverlay(clearTarget)) return false;
+    if (clippedOutOfView(clearTarget)) return false;
     return true;
   }
   function tickClearX() {
@@ -8127,15 +9805,21 @@
     });
   });
 
+  // set by MEDIYYU_DISCORD_CLIENT_ID at build time; empty in a source checkout
+  // until you point it at your own discord application
+  function discordAppId() {
+    const fromBuild = window.winControls && window.winControls.buildConfig && window.winControls.buildConfig.discordClientId;
+    return (fromBuild || S.discordClientId || '').trim();
+  }
   function applyDiscordConnection() {
     if (!window.winControls) return;
-    if (S.discordEnabled && S.discordClientId) { window.winControls.discordConnect(S.discordClientId); sendDiscordActivity(); }
+    if (S.discordEnabled && discordAppId()) { window.winControls.discordConnect(discordAppId()); sendDiscordActivity(); }
     else { window.winControls.discordClearActivity(); window.winControls.discordDisconnect(); }
   }
   let discordOffLogged = false;
   function sendDiscordActivity() {
     if (!window.winControls) return;
-    if (!S.discordEnabled || !S.discordClientId) {
+    if (!S.discordEnabled || !discordAppId()) {
       if (!discordOffLogged) {
         discordOffLogged = true;
         coverLog(`discord: rich presence ${!S.discordEnabled ? 'is turned OFF in settings' : 'has no client id set'} — nothing sent`);
@@ -8237,6 +9921,9 @@
   }
   $('lastfmSeg').querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => { S.lastfmEnabled = btn.dataset.val === 'on'; syncUI(); save(); });
+  });
+  $('icueSeg').querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => { S.icueEnabled = btn.dataset.val === 'on'; syncUI(); save(); applyIcue(); });
   });
 
   let lastfmScrobbled = false;
@@ -8391,7 +10078,9 @@
     try { localStorage.setItem('bbv_lastVersion', curVer); } catch (e) {}
   }
 
-  setInterval(() => { if (S.discordEnabled && S.discordClientId) applyDiscordConnection(); }, 20000);
+  if (S.icueEnabled) applyIcue();
+
+  setInterval(() => { if (S.discordEnabled && discordAppId()) applyDiscordConnection(); }, 20000);
   applyDiscordConnection();
 
   let userPresets = [];
@@ -8464,7 +10153,7 @@
     });
   }
   function applyCoverBgStyle() {
-    document.body.classList.toggle('bg-cover-art', S.bgCoverArt && !curIsVideo && !midiActive);
+    document.body.classList.toggle('bg-cover-art', S.bgCoverArt && ambientCoverShown && !curIsVideo && !midiActive);
     document.body.classList.toggle('bg-clip', (S.bgCoverArt || badAppleActive) && curIsVideo && !midiActive);
     document.body.classList.toggle('bad-apple-egg', badAppleActive && curIsVideo);
     const realTransparent = S.bg === 'transparent' || S.winTransparent;
@@ -8581,6 +10270,7 @@
     $('alwaysOnTopSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.alwaysOnTop));
     $('discordSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.discordEnabled));
     $('lastfmSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.lastfmEnabled));
+    $('icueSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.icueEnabled));
     syncLastfmUI();
     $('notifyTrackSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.notifyTrack));
     $('notifyEndSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.notifyEnd));

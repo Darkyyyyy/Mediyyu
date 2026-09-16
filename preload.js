@@ -1,10 +1,12 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 const appVersion = ipcRenderer.sendSync('app:getVersion');
 const isPackaged = ipcRenderer.sendSync('app:isPackaged');
+const buildConfig = ipcRenderer.sendSync('config:get') || {};
 
 contextBridge.exposeInMainWorld('winControls', {
   appVersion,
   isPackaged,
+  buildConfig,
   minimize: () => ipcRenderer.send('win:minimize'),
   maximize: () => ipcRenderer.send('win:maximize'),
   close: () => ipcRenderer.send('win:close'),
@@ -40,14 +42,21 @@ contextBridge.exposeInMainWorld('winControls', {
   discordSetActivity: (activity) => ipcRenderer.send('discord:setActivity', activity),
   discordClearActivity: () => ipcRenderer.send('discord:clearActivity'),
   discordLookupCover: (artist, album, title) => ipcRenderer.invoke('discord:lookupCover', { artist, album, title }),
+  metaSearch: (payload) => ipcRenderer.invoke('meta:search', payload),
+  metaImage: (url) => ipcRenderer.invoke('meta:image', url),
   onDiscordLog: (cb) => ipcRenderer.on('discord:log', (e, payload) => cb(payload)),
   lyricsFindLocal: (p) => ipcRenderer.invoke('lyrics:findLocal', p),
   lyricsFetch: (meta) => ipcRenderer.invoke('lyrics:fetch', meta),
   lyricsFetchById: (id) => ipcRenderer.invoke('lyrics:fetchById', id),
   lyricsSearch: (query) => ipcRenderer.invoke('lyrics:search', query),
+  lyricsSearchNetease: (query) => ipcRenderer.invoke('lyrics:searchNetease', query),
+  lyricsFetchNeteaseById: (id) => ipcRenderer.invoke('lyrics:fetchNeteaseById', id),
   lyricsOpenTrackPage: (id) => ipcRenderer.send('lyrics:openTrackPage', id),
   openExternal: (url) => ipcRenderer.send('shell:openExternal', url),
   fetchReleases: () => ipcRenderer.invoke('releases:fetch'),
+  icueEnable: () => ipcRenderer.invoke('icue:enable'),
+  icueDisable: () => ipcRenderer.invoke('icue:disable'),
+  icueFrame: (buf) => ipcRenderer.send('icue:frame', buf),
   lyricsWinToggle: () => ipcRenderer.send('lyrwin:toggle'),
   lyricsWinSet: (open) => ipcRenderer.send('lyrwin:set', open),
   lyricsWinSync: (p) => ipcRenderer.send('lyrwin:sync', p),
@@ -56,6 +65,7 @@ contextBridge.exposeInMainWorld('winControls', {
   lyricsWinClose: () => ipcRenderer.send('lyrwin:close'),
   onLyricsWinState: (cb) => ipcRenderer.on('lyrwin:state', (e, open) => cb(open)),
   onLyricsWinSync: (cb) => ipcRenderer.on('lyrwin:sync', (e, p) => cb(p)),
+  onLyricsWinHover: (cb) => ipcRenderer.on('lyrwin:hover', (e, v) => cb(!!v)),
   onLyricsWinSeek: (cb) => ipcRenderer.on('lyrwin:seek', (e, t) => cb(t)),
   onUpdateAvailable: (cb) => ipcRenderer.on('update:available', (e, info) => cb(info)),
   onUpdateProgress: (cb) => ipcRenderer.on('update:progress', (e, percent) => cb(percent)),

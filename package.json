@@ -24,6 +24,7 @@
       "repo": "Mediyyu"
     },
     "files": [
+      ".env",
       "main.js",
       "preload.js",
       "Visualizer.html",
@@ -34,6 +35,7 @@
       "node_modules/**/*"
     ],
     "asarUnpack": [
+      "node_modules/cue-sdk/**/*",
       "node_modules/ffmpeg-static/**/*"
     ],
     "fileAssociations": [
@@ -73,14 +75,28 @@
         "zip"
       ],
       "category": "public.app-category.music",
+      "icon": "build/icon.icns",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
       "identity": null,
       "hardenedRuntime": false,
       "gatekeeperAssess": false
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "build/icon.png",
+      "category": "AudioVideo",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     }
   },
   "dependencies": {
     "@xhayper/discord-rpc": "^1.3.4",
     "electron-updater": "^6.8.9",
     "ffmpeg-static": "^5.3.0"
+  },
+  "optionalDependencies": {
+    "cue-sdk": "^4.0.84"
   }
 }

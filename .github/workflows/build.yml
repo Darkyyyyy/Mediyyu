@@ -1,0 +1,122 @@
+name: build
+
+# Apple only allows macOS builds on macOS, and the iCUE native module has no Linux
+# support, so each platform is built on its own runner. Push a tag like v1.3.2 and
+# all three land on that release.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  # on a tag push the artifacts go straight to the release; a manual run only builds
+  PUBLISH: ${{ github.event_name == 'push' && 'always' || 'never' }}
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: write the api keys this build ships with
+        shell: bash
+        # unset secrets expand to nothing, which simply leaves that feature off
+        run: |
+          cat > .env <<'ENVEOF'
+          MEDIYYU_DISCOGS_KEY=${{ secrets.MEDIYYU_DISCOGS_KEY }}
+          MEDIYYU_DISCOGS_SECRET=${{ secrets.MEDIYYU_DISCOGS_SECRET }}
+          MEDIYYU_LASTFM_KEY=${{ secrets.MEDIYYU_LASTFM_KEY }}
+          MEDIYYU_LASTFM_SECRET=${{ secrets.MEDIYYU_LASTFM_SECRET }}
+          MEDIYYU_DISCORD_CLIENT_ID=${{ secrets.MEDIYYU_DISCORD_CLIENT_ID }}
+          ENVEOF
+      - name: build installer and portable
+        run: npx electron-builder --win --publish ${{ env.PUBLISH }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: |
+            dist/*.exe
+            dist/*.blockmap
+            dist/latest.yml
+          if-no-files-found: error
+
+  macos:
+    # arm64 runner, so this produces an Apple Silicon build.
+    # For Intel Macs add a second job on macos-13 with --x64.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      # npm install here fetches the darwin ffmpeg binary, which a Windows
+      # checkout never has, and the darwin iCUE library ships in the package.
+      - run: npm ci
+      - name: write the api keys this build ships with
+        shell: bash
+        # unset secrets expand to nothing, which simply leaves that feature off
+        run: |
+          cat > .env <<'ENVEOF'
+          MEDIYYU_DISCOGS_KEY=${{ secrets.MEDIYYU_DISCOGS_KEY }}
+          MEDIYYU_DISCOGS_SECRET=${{ secrets.MEDIYYU_DISCOGS_SECRET }}
+          MEDIYYU_LASTFM_KEY=${{ secrets.MEDIYYU_LASTFM_KEY }}
+          MEDIYYU_LASTFM_SECRET=${{ secrets.MEDIYYU_LASTFM_SECRET }}
+          MEDIYYU_DISCORD_CLIENT_ID=${{ secrets.MEDIYYU_DISCORD_CLIENT_ID }}
+          ENVEOF
+      - name: build dmg and zip
+        run: npx electron-builder --mac --publish ${{ env.PUBLISH }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: |
+            dist/*.dmg
+            dist/*.zip
+            dist/latest-mac.yml
+          if-no-files-found: error
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      # cue-sdk is an optional dependency with no Linux build, so npm skips it here
+      # and the keyboard lighting simply reports itself as unavailable at runtime.
+      - run: npm ci
+      - name: write the api keys this build ships with
+        shell: bash
+        # unset secrets expand to nothing, which simply leaves that feature off
+        run: |
+          cat > .env <<'ENVEOF'
+          MEDIYYU_DISCOGS_KEY=${{ secrets.MEDIYYU_DISCOGS_KEY }}
+          MEDIYYU_DISCOGS_SECRET=${{ secrets.MEDIYYU_DISCOGS_SECRET }}
+          MEDIYYU_LASTFM_KEY=${{ secrets.MEDIYYU_LASTFM_KEY }}
+          MEDIYYU_LASTFM_SECRET=${{ secrets.MEDIYYU_LASTFM_SECRET }}
+          MEDIYYU_DISCORD_CLIENT_ID=${{ secrets.MEDIYYU_DISCORD_CLIENT_ID }}
+          ENVEOF
+      - name: build appimage and deb
+        run: npx electron-builder --linux --publish ${{ env.PUBLISH }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: |
+            dist/*.AppImage
+            dist/*.deb
+            dist/latest-linux.yml
+          if-no-files-found: error

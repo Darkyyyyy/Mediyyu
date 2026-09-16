@@ -9,6 +9,46 @@ const os = require('os');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
 
+// ── build-time configuration ────────────────────────────────────────────────
+// no api credential is kept in the source. released builds get theirs from a
+// .env the release workflow writes and packages; anyone building from source
+// supplies their own. no dependency here: the format is simple enough.
+//
+// first file found wins per key, so an external .env overrides a packaged one,
+// and a real environment variable overrides both.
+function loadDotEnv() {
+  const spots = [
+    path.join(process.cwd(), '.env'),
+    path.join(path.dirname(app.getPath('exe')), '.env'),
+    path.join(app.getAppPath(), '.env'),
+  ];
+  for (const spot of spots) {
+    let text = null;
+    try { if (fs.existsSync(spot)) text = fs.readFileSync(spot, 'utf8'); } catch (err) {}
+    if (!text) continue;
+    for (const raw of text.split(/\r?\n/)) {
+      const line = raw.trim();
+      if (!line || line.startsWith('#')) continue;
+      const eq = line.indexOf('=');
+      if (eq < 1) continue;
+      const key = line.slice(0, eq).trim();
+      let value = line.slice(eq + 1).trim();
+      const quote = value[0];
+      if ((quote === '"' || quote === "'") && value.endsWith(quote) && value.length > 1) value = value.slice(1, -1);
+      // a real environment variable always outranks the file
+      if (process.env[key] === undefined) process.env[key] = value;
+    }
+  }
+}
+loadDotEnv();
+// a pair is only usable when both halves are there; otherwise the feature that
+// needs it reports itself as unconfigured rather than failing obscurely
+const envPair = (key) => {
+  const a = (process.env[key + '_KEY'] || '').trim();
+  const b = (process.env[key + '_SECRET'] || '').trim();
+  return a && b ? [a, b] : null;
+};
+
 const ffmpegPath = app.isPackaged
   ? require('ffmpeg-static').replace('app.asar', 'app.asar.unpacked')
   : require('ffmpeg-static');
@@ -228,6 +268,29 @@ function createWindow() {
 }
 
 let lyricsWin = null;
+let lyrHoverTimer = null;
+let lyrHoverLast = null;
+function stopLyricsHoverWatch() {
+  if (lyrHoverTimer) { clearInterval(lyrHoverTimer); lyrHoverTimer = null; }
+  lyrHoverLast = null;
+}
+function startLyricsHoverWatch() {
+  stopLyricsHoverWatch();
+  lyrHoverTimer = setInterval(() => {
+    if (!lyricsWin || lyricsWin.isDestroyed()) return stopLyricsHoverWatch();
+    let inside = false;
+    try {
+      const pt = screen.getCursorScreenPoint();
+      const b = lyricsWin.getBounds();
+      const edge = 6; // reach a little past the frame, where resizing happens
+      inside = pt.x >= b.x - edge && pt.x <= b.x + b.width + edge
+        && pt.y >= b.y - edge && pt.y <= b.y + b.height + edge;
+    } catch (err) {}
+    if (inside === lyrHoverLast) return;
+    lyrHoverLast = inside;
+    try { lyricsWin.webContents.send('lyrwin:hover', inside); } catch (err) {}
+  }, 120);
+}
 function createLyricsWindow() {
   if (lyricsWin && !lyricsWin.isDestroyed()) { lyricsWin.focus(); return; }
   lyricsWin = new BrowserWindow({
@@ -241,7 +304,9 @@ function createLyricsWindow() {
     },
   });
   lyricsWin.loadFile('lyrics.html');
+  startLyricsHoverWatch();
   lyricsWin.on('closed', () => {
+    stopLyricsHoverWatch();
     lyricsWin = null;
     if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('lyrwin:state', false);
   });
@@ -467,6 +532,54 @@ function buildTagArgs(tags, ext) {
   const extra = /\.mp3$/i.test(ext) ? ['-id3v2_version', '3', '-write_id3v1', '1'] : [];
   return { meta, extra };
 }
+// cover art can only be attached cleanly to audio-only containers. in a video file the
+// stream indexes shift and the existing artwork survives, so we leave those alone.
+const COVER_EMBED_RE = /[.](mp3|m4a|flac|ogg|oga|aac|wav|mp4|m4v|mov)$/i;
+const COVER_VIDEO_RE = /[.](mp4|m4v|mov)$/i;
+async function downloadCover(url) {
+  if (!/^https?:[/][/]/i.test(String(url || ""))) return null;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    const res = await fetch(url, { signal: controller.signal, headers: { "User-Agent": lrclibUA() } });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.length < 512) return null;
+    const p = path.join(os.tmpdir(), "mediyyu-cover-" + Date.now() + "-" + Math.random().toString(36).slice(2) + ".jpg");
+    fs.writeFileSync(p, buf);
+    return p;
+  } catch (err) { return null; }
+}
+// ffmpeg writes every attached picture as apic type 0 ("other"), so the roles the
+// dialog shows have to be stamped back into the frames once it is done. only id3
+// carries roles: mp4 has a single cover atom and no notion of one.
+function stampApicTypes(file, types) {
+  try {
+    if (!types.some(t => t)) return;
+    const b = fs.readFileSync(file);
+    if (b.length < 10 || b.slice(0, 3).toString('latin1') !== 'ID3') return;
+    const ver = b[3];
+    const syncsafe = (i) => ((b[i] & 0x7f) << 21) | ((b[i + 1] & 0x7f) << 14) | ((b[i + 2] & 0x7f) << 7) | (b[i + 3] & 0x7f);
+    const end = Math.min(b.length, 10 + syncsafe(6));
+    let p = 10, n = 0, dirty = false;
+    while (p + 10 <= end && n < types.length) {
+      const id = b.slice(p, p + 4).toString('latin1');
+      if (!/^[A-Z0-9]{4}$/.test(id)) break;
+      const size = ver >= 4 ? syncsafe(p + 4) : b.readUInt32BE(p + 4);
+      if (size <= 0 || p + 10 + size > end) break;
+      if (id === 'APIC') {
+        let q = p + 11;                       // past the frame header and the encoding byte
+        while (q < end && b[q] !== 0) q++;    // past the mime string
+        q++;                                  // and its terminator: the picture type
+        const want = types[n++] & 0xff;
+        if (q < p + 10 + size && b[q] !== want) { b[q] = want; dirty = true; }
+      }
+      p += 10 + size;
+    }
+    if (dirty) fs.writeFileSync(file, b);
+  } catch (err) {}
+}
 function runFfmpeg(args) {
   return new Promise((resolve) => {
     const ff = spawn(ffmpegPath, args);
@@ -483,8 +596,69 @@ ipcMain.handle('file:writeTags', async (e, { path: srcPath, buffer, name, tags }
       const ext = path.extname(srcPath) || '.mp3';
       const { meta, extra } = buildTagArgs(tags, ext);
       const tmpOut = srcPath + '.tagtmp' + ext;
-      const result = await runFfmpeg(['-y', '-i', srcPath, '-map', '0', '-c', 'copy', ...meta, ...extra, tmpOut]);
-      if (result.code !== 0) { try { fs.unlinkSync(tmpOut); } catch (e2) {} return { error: result.errOut.slice(-400) }; }
+      let coverTmp = null;
+      // the properties dialog sends the full artwork set; the batch repair sends one url
+      const artOk = COVER_EMBED_RE.test(ext);
+      const artIsVideo = COVER_VIDEO_RE.test(ext);
+      const picTmps = [];
+      if (artOk && tags && Array.isArray(tags.pictures)) {
+        for (const pic of tags.pictures) {
+          try {
+            const buf = Buffer.from(pic.data);
+            if (!buf.length) continue;
+            const pext = /png/i.test(pic.mime || '') ? '.png' : '.jpg';
+            const tp = path.join(os.tmpdir(), 'mediyyu-art-' + Date.now() + '-' + picTmps.length + pext);
+            fs.writeFileSync(tp, buf);
+            picTmps.push({ path: tp, desc: String(pic.desc || ''), type: Number(pic.type) || 0 });
+          } catch (e2) {}
+        }
+      } else if (artOk && tags && tags.coverUrl) {
+        coverTmp = await downloadCover(tags.coverUrl);
+        if (coverTmp) picTmps.push({ path: coverTmp, desc: '' });
+      }
+      const replacingArt = picTmps.length > 0 || (artOk && tags && Array.isArray(tags.pictures));
+      const inputs = ['-i', srcPath];
+      for (const pic of picTmps) inputs.push('-i', pic.path);
+      // copying the picture streams keeps a png cover a png. a few images cannot be
+      // muxed as-is, so fall back to re-encoding rather than failing the whole save.
+      const buildMaps = (videoCodec) => {
+        if (!replacingArt) return ['-map', '0', '-c', 'copy'];
+        // 0:V is every real video stream without the attached pictures, so a video
+        // keeps its picture and loses only the cover it used to carry. an audio file
+        // has nothing but covers to drop, so its audio is all that is kept.
+        const m = artIsVideo
+          ? ['-map', '0:V?', '-map', '0:a?', '-map', '0:s?']
+          : ['-map', '0:a'];
+        // the movie itself is video stream 0 of the output, so the covers start after it
+        const vAt = i => i + (artIsVideo ? 1 : 0);
+        picTmps.forEach((pic, i) => m.push('-map', String(i + 1)));
+        m.push('-c', 'copy');
+        // re-encoding must never reach the movie stream, only the covers
+        if (picTmps.length) {
+          if (artIsVideo) picTmps.forEach((pic, i) => m.push('-c:v:' + vAt(i), videoCodec));
+          else m.push('-c:v', videoCodec);
+        }
+        picTmps.forEach((pic, i) => {
+          m.push('-disposition:v:' + vAt(i), 'attached_pic');
+          if (pic.desc) m.push('-metadata:s:v:' + vAt(i), 'title=' + pic.desc);
+        });
+        return m;
+      };
+      let result = await runFfmpeg(['-y', ...inputs, ...buildMaps('copy'), ...meta, ...extra, tmpOut]);
+      if (result.code !== 0 && picTmps.length) {
+        try { fs.unlinkSync(tmpOut); } catch (e2) {}
+        result = await runFfmpeg(['-y', ...inputs, ...buildMaps('mjpeg'), ...meta, ...extra, tmpOut]);
+      }
+      for (const pic of picTmps) { try { fs.unlinkSync(pic.path); } catch (e2) {} }
+      if (result.code !== 0) {
+        try { fs.unlinkSync(tmpOut); } catch (e2) {}
+        const raw = result.errOut || '';
+        const badArt = /dimensions not set|Could not write header/i.test(raw);
+        return { error: badArt
+          ? 'the artwork embedded in this file is malformed, so it cannot be rewritten around'
+          : raw.slice(-400) };
+      }
+      if (picTmps.length) stampApicTypes(tmpOut, picTmps.map(p => p.type));
       let replaced = false, lastErr = null;
       for (let i = 0; i < 6 && !replaced; i++) {
         try { fs.rmSync(srcPath); fs.renameSync(tmpOut, srcPath); replaced = true; }
@@ -494,7 +668,7 @@ ipcMain.handle('file:writeTags', async (e, { path: srcPath, buffer, name, tags }
         try { fs.unlinkSync(tmpOut); } catch (e2) {}
         return { error: 'could not replace the original file (it may be locked): ' + (lastErr && lastErr.message) };
       }
-      return { ok: true, inPlace: true };
+      return { ok: true, inPlace: true, cover: picTmps.length };
     }
     if (!buffer) return { error: 'no input file' };
     const ext = path.extname(name || '.mp3') || '.mp3';
@@ -612,6 +786,54 @@ async function neteaseFetchLyric(artist, title, duration) {
     return { synced: lyric };
   } catch { return null; }
 }
+const NETEASE_HEADERS = () => ({ "User-Agent": lrclibUA(), "Referer": "https://music.163.com/" });
+ipcMain.handle('lyrics:searchNetease', async (e, query) => {
+  try {
+    if (!query || !query.trim()) return { results: [] };
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    const r = await fetch('https://music.163.com/api/search/get?s=' + encodeURIComponent(query.trim()) + '&type=1&limit=20', { headers: NETEASE_HEADERS(), signal: controller.signal });
+    clearTimeout(timeout);
+    if (!r.ok) return { results: [] };
+    const j = await r.json();
+    const songs = (j && j.result && j.result.songs) || [];
+    return {
+      results: songs.slice(0, 20).map(sg => ({
+        id: sg.id,
+        trackName: sg.name || '',
+        artistName: (sg.artists || []).map(a => a.name).filter(Boolean).join(', '),
+        albumName: (sg.album && sg.album.name) || '',
+        duration: sg.duration ? Math.round(sg.duration / 1000) : 0,
+        synced: true,
+      })),
+    };
+  } catch (err) { return { results: [] }; }
+});
+ipcMain.handle('lyrics:fetchNeteaseById', async (e, id) => {
+  // netease does not always put the words in lrc: plenty of tracks carry them on the
+  // media endpoint instead, and a few only have the translation. try each in turn.
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  const grab = async (url) => {
+    try {
+      const r = await fetch(url, { headers: NETEASE_HEADERS(), signal: controller.signal });
+      return r.ok ? await r.json() : null;
+    } catch (err) { return null; }
+  };
+  try {
+    const a = await grab('https://music.163.com/api/song/lyric?id=' + encodeURIComponent(id) + '&lv=1&kv=1&tv=-1');
+    let lyric = a && a.lrc && a.lrc.lyric;
+    if (!lyric || !lyric.trim()) {
+      const b = await grab('https://music.163.com/api/song/media?id=' + encodeURIComponent(id));
+      lyric = b && b.lyric;
+    }
+    if ((!lyric || !lyric.trim()) && a && a.tlyric) lyric = a.tlyric.lyric;
+    if (!lyric || !lyric.trim()) return null;
+    return { synced: lyric, plain: '' };
+  } finally {
+    clearTimeout(timeout);
+  }
+});
 ipcMain.handle('lyrics:fetch', async (e, { artist, title, album, duration, suggestOnly, sourcePref }) => {
   try {
     const q = (o) => Object.entries(o).filter(([, v]) => v != null && v !== '').map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
@@ -737,6 +959,141 @@ ipcMain.handle('releases:fetch', async () => {
   } catch { return []; }
 });
 
+// ── corsair icue per-key lighting ────────────────────────────────────────────
+const ICUE_BANDS = 32;
+let icueSdk;                 // undefined = not tried, null = unavailable
+let icueSession = false;     // a CorsairConnect session is live
+let icueConnecting = null;   // in-flight connect promise
+let icueTargets = [];        // [{ id, model, leds: [{ id, band, ny }] }]
+let icueOn = false;          // the renderer asked for lighting
+
+function icueLoad() {
+  if (icueSdk !== undefined) return icueSdk;
+  try {
+    icueSdk = require('cue-sdk');
+  } catch (err) {
+    icueSdk = null;
+    logError('icue', 'cue-sdk could not be loaded: ' + ((err && err.message) || err));
+  }
+  return icueSdk;
+}
+
+function icueBuildTargets() {
+  const sdk = icueSdk;
+  icueTargets = [];
+  let res;
+  try { res = sdk.CorsairGetDevices({ deviceTypeMask: sdk.CorsairDeviceType.CDT_All }); } catch (e) { return; }
+  for (const dev of (res && res.data) || []) {
+    let lp;
+    try { lp = sdk.CorsairGetLedPositions(dev.id); } catch (e) { continue; }
+    const leds = (lp && lp.data) || [];
+    if (!leds.length) continue;
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const l of leds) {
+      if (l.cx < minX) minX = l.cx;
+      if (l.cx > maxX) maxX = l.cx;
+      if (l.cy < minY) minY = l.cy;
+      if (l.cy > maxY) maxY = l.cy;
+    }
+    const spanX = maxX - minX, spanY = maxY - minY;
+    const mapped = leds.map(l => {
+      const tx = spanX > 0 ? (l.cx - minX) / spanX : 0.5;
+      // ny is 0 on the bottom row and 1 on the top row, so bars grow upwards
+      const ny = spanY > 0 ? 1 - (l.cy - minY) / spanY : 0;
+      let band = Math.round(tx * (ICUE_BANDS - 1));
+      if (band < 0) band = 0;
+      if (band > ICUE_BANDS - 1) band = ICUE_BANDS - 1;
+      return { id: l.id, band: band, ny: ny };
+    });
+    icueTargets.push({ id: dev.id, model: dev.model || 'corsair device', leds: mapped });
+  }
+}
+
+function icueConnect() {
+  if (icueSession) return Promise.resolve({ ok: true, devices: icueDeviceSummary() });
+  if (icueConnecting) return icueConnecting;
+  const sdk = icueLoad();
+  if (!sdk) return Promise.resolve({ ok: false, reason: 'module' });
+  icueConnecting = new Promise(resolve => {
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      icueConnecting = null;
+      resolve(value);
+    };
+    const timer = setTimeout(() => finish({ ok: false, reason: 'timeout' }), 9000);
+    try {
+      sdk.CorsairConnect(evt => {
+        const state = evt && evt.data && evt.data.state;
+        if (state === sdk.CorsairSessionState.CSS_Connected) {
+          icueSession = true;
+          icueBuildTargets();
+          finish(icueTargets.length ? { ok: true, devices: icueDeviceSummary() } : { ok: false, reason: 'no-devices' });
+        } else if (state === sdk.CorsairSessionState.CSS_ConnectionRefused) {
+          finish({ ok: false, reason: 'refused' });
+        } else if (state === sdk.CorsairSessionState.CSS_Timeout) {
+          finish({ ok: false, reason: 'timeout' });
+        } else if (state === sdk.CorsairSessionState.CSS_Closed || state === sdk.CorsairSessionState.CSS_ConnectionLost) {
+          icueSession = false;
+          icueTargets = [];
+        }
+      });
+    } catch (err) {
+      logError('icue', 'connect failed: ' + ((err && err.message) || err));
+      finish({ ok: false, reason: 'error' });
+    }
+  });
+  return icueConnecting;
+}
+
+function icueDeviceSummary() {
+  return icueTargets.map(d => ({ model: d.model, ledCount: d.leds.length }));
+}
+
+function icueRelease() {
+  icueOn = false;
+  if (!icueSession || !icueSdk) return;
+  icueSession = false;
+  icueTargets = [];
+  // disconnecting hands the lighting back to icue's own profile
+  try { icueSdk.CorsairDisconnect(); } catch (e) {}
+}
+
+ipcMain.handle('icue:enable', async () => {
+  const res = await icueConnect();
+  icueOn = !!res.ok;
+  return res;
+});
+ipcMain.handle('icue:disable', () => { icueRelease(); return { ok: true }; });
+
+ipcMain.on('icue:frame', (e, buf) => {
+  if (!icueOn || !icueSession || !icueSdk || !icueTargets.length || !buf) return;
+  for (const dev of icueTargets) {
+    const colors = new Array(dev.leds.length);
+    for (let i = 0; i < dev.leds.length; i++) {
+      const led = dev.leds[i];
+      const k = led.band * 4;
+      const level = buf[k] / 255;
+      // a key lights up once the bar for its column has risen past its row
+      let fill = (level - led.ny) * 3;
+      if (fill < 0) fill = 0; else if (fill > 1) fill = 1;
+      fill = 0.04 + fill * 0.96;
+      colors[i] = {
+        id: led.id,
+        r: Math.round(buf[k + 1] * fill),
+        g: Math.round(buf[k + 2] * fill),
+        b: Math.round(buf[k + 3] * fill),
+        a: 255,
+      };
+    }
+    try { icueSdk.CorsairSetLedColors(dev.id, colors); } catch (err) { icueOn = false; return; }
+  }
+});
+
+app.on('before-quit', icueRelease);
+
 ipcMain.handle('library:pickFolder', async (e) => {
   const win = BrowserWindow.fromWebContents(e.sender);
   const { canceled, filePaths } = await dialog.showOpenDialog(win, { properties: ['openDirectory'] });
@@ -799,7 +1156,14 @@ ipcMain.handle('files:readPrefixes', async (e, paths, maxBytes) => {
         if (!p || typeof p !== 'string') continue;
         fh = await fs.promises.open(p, 'r');
         const stat = await fh.stat();
-        const len = Math.min(cap, stat.size);
+        let len = Math.min(cap, stat.size);
+        const head = Buffer.alloc(10);
+        const headRead = await fh.read(head, 0, 10, 0);
+        if (headRead.bytesRead === 10 && head.toString('latin1', 0, 3) === 'ID3') {
+          const tagLen = 10 + (((head[6] & 0x7f) << 21) | ((head[7] & 0x7f) << 14) | ((head[8] & 0x7f) << 7) | (head[9] & 0x7f));
+          const want = Math.min(stat.size, tagLen + 4096, 8 * 1024 * 1024);
+          if (want > len) len = want;
+        }
         const buf = Buffer.alloc(len);
         await fh.read(buf, 0, len, 0);
         out[idx] = { path: p, data: buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) };
@@ -818,6 +1182,10 @@ ipcMain.handle('soundfont:read', async (e, p) => {
     const data = await fs.promises.readFile(p);
     return { name: path.basename(p), data: data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) };
   } catch { return null; }
+});
+ipcMain.on('config:get', (e) => {
+  // what the renderer needs to know about how this copy was built
+  e.returnValue = { discordClientId: (process.env.MEDIYYU_DISCORD_CLIENT_ID || '').trim() };
 });
 ipcMain.on('discord:connect', (e, clientId) => { discordConnect(clientId); });
 ipcMain.on('discord:disconnect', () => { discordDisconnect(); });
@@ -838,7 +1206,7 @@ ipcMain.on('discord:clearActivity', () => {
   if (!discordClient || !discordClient.isConnected) return;
   discordClient.user?.clearActivity().catch(() => {});
 });
-const _dg = Buffer.from('eWhRdHRoTnhvRlNPQ1lFRXBjeUg6VEtiWWlDa296QnFMRHZlS0d1QVlSbHhIT0pQaHdWZkU=', 'base64').toString('utf8').split(':');
+const _dg = envPair('MEDIYYU_DISCOGS');
 // strip punctuation, symbols and any "feat. X" credit that only confuse the cover databases.
 // letters (every script), digits, spaces, hyphens and apostrophes are kept.
 function cleanSearchTerm(s) {
@@ -887,6 +1255,10 @@ async function lookupCoverItunes(artist, album) {
   }
 }
 async function lookupCoverDiscogs(artist, album, title) {
+  if (!_dg) {
+    discordLog('discogs: SKIPPED — this build has no discogs key (see .env.example)');
+    return null;
+  }
   const term = [artist, album || title].filter(Boolean).join(' ');
   if (!term) {
     discordLog('discogs: SKIPPED — no artist and no album/title to search with');
@@ -1023,6 +1395,101 @@ function saveCoverCacheDebounced() {
 function coverCacheKey(artist, album, title) {
   return [artist, album, title].map(s => (s || '').toLowerCase().trim()).join('|');
 }
+// ── filling tags from the release databases ─────────────────────────────────
+function mbCoverUrl(id) { return id ? `https://coverartarchive.org/release/${id}/front-500` : null; }
+async function metaSearchMusicBrainz(query, artist, title) {
+  const out = [];
+  try {
+    await mbThrottle();
+    const esc = (v) => String(v).replace(/(["\\])/g, "\\$1");
+    const lucene = artist && title
+      ? `recording:"${esc(title)}" AND artist:"${esc(artist)}"`
+      : query;
+    const url = 'https://musicbrainz.org/ws/2/recording/?query=' + encodeURIComponent(lucene) + '&fmt=json&limit=5';
+    // musicbrainz answers 503 as soon as it considers the burst too fast, and it
+    // does that often enough that one refusal must not mean an empty picker
+    const backoff = [1200, 2500, 4000];
+    let r = null;
+    for (let attempt = 0; ; attempt++) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 9000);
+      try { r = await fetch(url, { headers: { 'User-Agent': lrclibUA() }, signal: controller.signal }); }
+      finally { clearTimeout(timer); }
+      if (r.status !== 503 || attempt >= backoff.length) break;
+      await new Promise(res => setTimeout(res, backoff[attempt]));
+      mbLastCall = Date.now();
+    }
+    if (!r.ok) return out;
+    const j = await r.json();
+    for (const rec of j.recordings || []) {
+      const artist = (rec['artist-credit'] || []).map(a => a.name).filter(Boolean).join(', ');
+      const rel = (rec.releases || [])[0];
+      out.push({
+        source: 'musicbrainz',
+        title: rec.title || '',
+        artist: artist || '',
+        album: (rel && rel.title) || '',
+        year: rel && rel.date ? String(rel.date).slice(0, 4) : '',
+        genre: '',
+        trackNo: rel && rel.media && rel.media[0] && rel.media[0].track && rel.media[0].track[0]
+          ? String(rel.media[0].track[0].number || '') : '',
+        coverUrl: mbCoverUrl(rel && rel.id),
+      });
+    }
+  } catch (err) {}
+  return out;
+}
+async function metaSearchDiscogs(query) {
+  const out = [];
+  if (!_dg) return out;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 9000);
+    const url = 'https://api.discogs.com/database/search?q=' + encodeURIComponent(query)
+      + '&type=release&per_page=8&key=' + _dg[0] + '&secret=' + _dg[1];
+    const r = await fetch(url, { headers: { 'User-Agent': lrclibUA() }, signal: controller.signal });
+    clearTimeout(timer);
+    if (!r.ok) return out;
+    const j = await r.json();
+    for (const it of j.results || []) {
+      const whole = String(it.title || '');
+      const cut = whole.indexOf(' - ');
+      const artist = cut > 0 ? whole.slice(0, cut).trim() : '';
+      const album = cut > 0 ? whole.slice(cut + 3).trim() : whole.trim();
+      out.push({
+        source: 'discogs',
+        title: '',
+        artist: artist,
+        album: album,
+        year: it.year ? String(it.year) : '',
+        genre: (it.style && it.style[0]) || (it.genre && it.genre[0]) || '',
+        trackNo: '',
+        coverUrl: it.cover_image || it.thumb || null,
+      });
+    }
+  } catch (err) {}
+  return out;
+}
+ipcMain.handle('meta:search', async (e, payload) => {
+  const p = typeof payload === 'string' ? { query: payload } : (payload || {});
+  const q = String(p.query || '').trim();
+  if (!q) return { results: [] };
+  const [mb, dg] = await Promise.all([
+    metaSearchMusicBrainz(q, p.artist, p.title),
+    metaSearchDiscogs(q),
+  ]);
+  // musicbrainz knows track titles, discogs knows genres and years. show both.
+  return { results: mb.concat(dg) };
+});
+ipcMain.handle('meta:image', async (e, url) => {
+  const tmp = await downloadCover(url);
+  if (!tmp) return null;
+  try {
+    const buf = fs.readFileSync(tmp);
+    return { mime: /[.]png$/i.test(tmp) ? 'image/png' : 'image/jpeg', data: buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) };
+  } catch (err) { return null; }
+  finally { try { fs.unlinkSync(tmp); } catch (err) {} }
+});
 ipcMain.handle('discord:lookupCover', async (e, { artist, album, title }) => {
   discordLog(`── cover lookup: artist="${artist || '(none)'}" album="${album || '(none)'}" title="${title || '(none)'}"`);
   if (!album && !title) {
@@ -1062,7 +1529,7 @@ ipcMain.handle('discord:lookupCover', async (e, { artist, album, title }) => {
   return { url: url || null, source: source };
 });
 
-const _sc = Buffer.from('OTllNjhiNjhlNjNmYzBkN2E1MDZlNWY1ZDQ3YjJlYjM6MWE5MzdiYjBlYzQwNTQyNjQ5M2UwNzBmMDE3YzlhOGE=', 'base64').toString('utf8').split(':');
+const _sc = envPair('MEDIYYU_LASTFM');
 const SCROBBLE_API = 'https://ws.audioscrobbler.com/2.0/';
 function scrobbleSign(params) {
   const keys = Object.keys(params).filter(k => k !== 'format').sort();
@@ -1081,7 +1548,9 @@ async function scrobbleCall(method, params, usePost) {
     : await fetch(SCROBBLE_API + '?' + qs);
   return r.json();
 }
+const LASTFM_UNCONFIGURED = 'this build has no last.fm key — see .env.example if you built it yourself';
 ipcMain.handle('scrobble:getAuthUrl', async () => {
+  if (!_sc) return { error: LASTFM_UNCONFIGURED };
   try {
     const data = await scrobbleCall('auth.getToken', {});
     if (!data.token) return { error: (data.message || 'could not get a token') };
@@ -1089,6 +1558,7 @@ ipcMain.handle('scrobble:getAuthUrl', async () => {
   } catch (err) { return { error: err.message }; }
 });
 ipcMain.handle('scrobble:completeAuth', async (e, token) => {
+  if (!_sc) return { error: LASTFM_UNCONFIGURED };
   try {
     const data = await scrobbleCall('auth.getSession', { token });
     if (data.session && data.session.key) return { key: data.session.key, username: data.session.name };

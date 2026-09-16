@@ -42,6 +42,28 @@ npm install
 npm start
 ```
 
+## api keys
+
+no credentials live in this repository. three optional features need one, and
+each is off until you supply your own:
+
+| feature | needs |
+| --- | --- |
+| discogs as a cover source, and the "fill from discogs / musicbrainz" button | a discogs consumer key + secret |
+| last.fm scrobbling and similar-track autoplay | a last.fm api key + shared secret |
+| discord rich presence | a discord application id |
+
+```bash
+cp .env.example .env
+```
+
+then fill in what you want. `.env.example` says where to register each one.
+`.env` is gitignored, and everything you leave empty simply stays off —
+playback, tag editing, lyrics and musicbrainz covers need none of it.
+
+released builds get their keys from repository secrets at build time, so the
+downloads above work without any setup.
+
 ## build
 
 ```bash
