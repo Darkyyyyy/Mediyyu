@@ -4303,7 +4303,7 @@
 
   let coverPanLast = '';
   function updateCoverPan() {
-    if (!S.bgCoverArt || curIsVideo || !ready || !isFinite(audio.duration) || !audio.duration) return;
+    if (!S.bgCoverArt || curHasPicture || !ready || !isFinite(audio.duration) || !audio.duration) return;
     const p = Math.min(1, audio.currentTime / audio.duration);
     const x = ((p * 2 - 1) * 3).toFixed(2);
     const scale = (1.12 * coverPulseScale()).toFixed(4);
@@ -4321,7 +4321,7 @@
   // canvas would still go transparent and the window would fall through to black.
   let ambientCoverShown = false;
   function ambientBgActive() {
-    return S.bgCoverArt && (ambientCoverShown || curIsVideo) && !midiActive;
+    return S.bgCoverArt && (ambientCoverShown || curHasPicture) && !midiActive;
   }
   function setAmbientCover(url) {
     ambientCoverShown = !!url;
@@ -5118,6 +5118,11 @@
 
   let playlist = [];
   let curIsVideo = false;
+  // an .mp4 or .webm can hold nothing but audio — a youtube rip usually does.
+  // the backdrop must follow what the file really has, not what its extension
+  // claims, or the canvas turns transparent over a clip that paints nothing and
+  // the window falls through to black.
+  let curHasPicture = false;
   let curIndex = -1;
   function isAudioFile(f) { return f.type.startsWith('audio') || f.type.startsWith('video') || /\.(mp3|wav|ogg|m4a|flac|aac|mp4|webm|mov|m4v|mid|midi)$/i.test(f.name); }
   function isVideoFile(f) { return (f.type && f.type.startsWith('video')) || /\.(mp4|webm|mov|m4v)$/i.test(f.name); }
@@ -5556,7 +5561,7 @@
   }
   let videoColorTarget = null, videoColorCurrent = null, videoColorSampleT = 0;
   function updateLiveVideoColor(nowTs) {
-    if (!curIsVideo || S.mode !== 'cover' || !ready || !playing) return;
+    if (!curHasPicture || S.mode !== 'cover' || !ready || !playing) return;
     if (nowTs - videoColorSampleT > 160) {
       videoColorSampleT = nowTs;
       const sampled = sampleFrameColors($('clipBg'));
@@ -7498,6 +7503,9 @@
     audio.defaultPlaybackRate = S.playbackRate;
     audio.playbackRate = S.playbackRate;
     curIsVideo = isVideoFile(file);
+    // assumed false until the clip proves otherwise, so a coverless audio-only
+    // mp4 keeps the plain background instead of blacking out
+    curHasPicture = false;
     checkBadApple(file.name);
     const clip = $('clipBg');
     if (curIsVideo) {
@@ -8047,7 +8055,7 @@
   audio.addEventListener('play', () => setPlay(true));
   audio.addEventListener('pause', () => setPlay(false));
   function syncClip() {
-    if (!curIsVideo) return;
+    if (!curIsVideo || !curHasPicture) return;
     const clip = $('clipBg');
     if (audio.paused || !(S.bgCoverArt || badAppleActive)) clip.pause();
     else {
@@ -8057,11 +8065,19 @@
   }
   audio.addEventListener('play', syncClip);
   audio.addEventListener('pause', syncClip);
+  $('clipBg').addEventListener('loadedmetadata', () => {
+    const clip = $('clipBg');
+    const has = curIsVideo && clip.videoWidth > 0 && clip.videoHeight > 0;
+    if (has === curHasPicture) return;
+    curHasPicture = has;
+    applyCoverBgStyle();
+    syncClip();
+  });
   audio.addEventListener('seeked', () => { if (curIsVideo) $('clipBg').currentTime = audio.currentTime; });
   audio.addEventListener('ratechange', () => { if (curIsVideo) $('clipBg').playbackRate = audio.playbackRate; });
   let clipDriftF = 0;
   function checkClipDrift() {
-    if (!curIsVideo || !(S.bgCoverArt || badAppleActive)) return;
+    if (!curHasPicture || !(S.bgCoverArt || badAppleActive)) return;
     if (++clipDriftF % 120 !== 0) return;
     const clip = $('clipBg');
     if (!audio.paused && clip.readyState >= 2) {
@@ -10153,8 +10169,8 @@
     });
   }
   function applyCoverBgStyle() {
-    document.body.classList.toggle('bg-cover-art', S.bgCoverArt && ambientCoverShown && !curIsVideo && !midiActive);
-    document.body.classList.toggle('bg-clip', (S.bgCoverArt || badAppleActive) && curIsVideo && !midiActive);
+    document.body.classList.toggle('bg-cover-art', S.bgCoverArt && ambientCoverShown && !curHasPicture && !midiActive);
+    document.body.classList.toggle('bg-clip', (S.bgCoverArt || badAppleActive) && curHasPicture && !midiActive);
     document.body.classList.toggle('bad-apple-egg', badAppleActive && curIsVideo);
     const realTransparent = S.bg === 'transparent' || S.winTransparent;
     document.body.classList.toggle('glass-native-blur', S.glassBlur && S.bgCoverArt && !midiActive && !realTransparent);
