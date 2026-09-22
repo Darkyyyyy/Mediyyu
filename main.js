@@ -130,6 +130,16 @@ function trackNormalBounds(win) {
   normalBoundsMap.set(win, win.getBounds());
 }
 
+// chromium answers f11 by itself, behind the app's back: it calls setFullScreen
+// directly, so displayMode still says windowed, the edge-to-edge flag is never
+// set and the saved window bounds are lost. the app's own f key does all of that
+// properly, so the native shortcut is taken out of the way.
+function blockNativeFullscreenKey(win) {
+  win.webContents.on('before-input-event', (e, input) => {
+    if (input.type === 'keyDown' && input.key === 'F11') e.preventDefault();
+  });
+}
+
 function applyDisplayMode(win, mode) {
   if (win.isMaximized()) win.unmaximize();
   if (mode === 'fullscreen') {
@@ -235,6 +245,7 @@ function createWindow() {
   });
 
   win.loadFile('Visualizer.html');
+  blockNativeFullscreenKey(win);
   win.webContents.on('preload-error', (e, preloadPath, error) => console.error('[PRELOAD ERROR]', preloadPath, error));
   if (process.env.DEBUG_VIZ) win.webContents.openDevTools({ mode: 'detach' });
   trackNormalBounds(win);
@@ -305,6 +316,7 @@ function createLyricsWindow() {
   });
   lyricsWin.loadFile('lyrics.html');
   startLyricsHoverWatch();
+  blockNativeFullscreenKey(lyricsWin);
   lyricsWin.on('closed', () => {
     stopLyricsHoverWatch();
     lyricsWin = null;
@@ -1099,15 +1111,18 @@ ipcMain.handle('library:pickFolder', async (e) => {
   const { canceled, filePaths } = await dialog.showOpenDialog(win, { properties: ['openDirectory'] });
   return canceled || !filePaths.length ? null : filePaths[0];
 });
-ipcMain.handle('files:scanDir', async (e, dirPath, recursive) => {
+ipcMain.handle('files:scanDir', async (e, dirPath, recursive, limit) => {
   const out = [];
+  // the drag-and-drop callers want a small guard rail; the library browser has to
+  // see a whole collection, so the cap is theirs to raise
+  const cap = Math.min(Math.max(1, limit || 2000), 60000);
   const maxDepth = recursive === false ? 0 : 8;
   const walk = (dir, depth) => {
-    if (depth > maxDepth || out.length >= 2000) return;
+    if (depth > maxDepth || out.length >= cap) return;
     let entries;
     try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
     for (const ent of entries) {
-      if (out.length >= 2000) break;
+      if (out.length >= cap) break;
       const p = path.join(dir, ent.name);
       if (ent.isDirectory()) walk(p, depth + 1);
       else if (AUDIO_EXT_RE.test(ent.name)) out.push(p);
@@ -1117,6 +1132,263 @@ ipcMain.handle('files:scanDir', async (e, dirPath, recursive) => {
     if (dirPath && typeof dirPath === 'string' && fs.statSync(dirPath).isDirectory()) walk(dirPath, 0);
   } catch {}
   return out;
+});
+// exactly what a ripper usually writes
+const COVER_FILE_RE = /^(cover|folder|front|album|artwork|art|thumb|frontcover|front[ _-]?cover|albumart.*)\.[a-z0-9]+$/i;
+// anything that merely mentions being cover art, e.g. "01 - front cover.jpg"
+const COVER_HINT_RE = /(cover|front|folder|artwork|albumart|jacket)/i;
+const ANY_IMAGE_RE = /\.(jpe?g|png|webp|gif|bmp|jfif|avif|tiff?)$/i;
+// where scans tend to be filed away
+const ART_SUBDIR_RE = /^(scans?|artworks?|covers?|booklets?|art|images?|jacket)$/i;
+const IMAGE_MIME = {
+  jpg: 'image/jpeg', jpeg: 'image/jpeg', jfif: 'image/jpeg', png: 'image/png',
+  webp: 'image/webp', gif: 'image/gif', bmp: 'image/bmp', avif: 'image/avif',
+  tif: 'image/tiff', tiff: 'image/tiff',
+};
+// an album whose files carry no embedded art usually still has a cover.jpg sitting
+// next to them, and without this the library grid would be a wall of blank squares
+// picks the likeliest cover image out of one directory: the canonical name first,
+// then anything that says it is cover art, then any image at all
+function pickCoverIn(dir, looseOk) {
+  let entries;
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch (err) { return null; }
+  const files = entries.filter(ent => ent.isFile() && ANY_IMAGE_RE.test(ent.name));
+  let pick = files.find(ent => COVER_FILE_RE.test(ent.name));
+  if (!pick) pick = files.find(ent => COVER_HINT_RE.test(ent.name));
+  if (!pick && looseOk) pick = files[0];
+  return pick ? path.join(dir, pick.name) : null;
+}
+ipcMain.handle('library:folderImages', async (e, dirs) => {
+  const list = Array.isArray(dirs) ? dirs.slice(0, 500) : [];
+  const out = [];
+  for (const dir of list) {
+    try {
+      if (!dir || typeof dir !== 'string') continue;
+      let found = pickCoverIn(dir, true);
+      // a scans folder next to the tracks
+      if (!found) {
+        let subs = [];
+        try {
+          subs = fs.readdirSync(dir, { withFileTypes: true })
+            .filter(ent => ent.isDirectory() && ART_SUBDIR_RE.test(ent.name));
+        } catch (err) {}
+        for (const sub of subs) {
+          found = pickCoverIn(path.join(dir, sub.name), true);
+          if (found) break;
+        }
+      }
+      // one level up, for a disc folder inside an album folder. only a named
+      // cover counts there: a stray image could belong to something else.
+      if (!found) found = pickCoverIn(path.dirname(dir), false);
+      if (!found) continue;
+      const stat = await fs.promises.stat(found);
+      if (stat.size > 24 * 1024 * 1024) continue;
+      const data = await fs.promises.readFile(found);
+      out.push({
+        dir,
+        file: found,
+        mime: IMAGE_MIME[path.extname(found).slice(1).toLowerCase()] || 'image/jpeg',
+        data: data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength),
+      });
+    } catch (err) {}
+  }
+  return out;
+});
+// duration straight out of the file headers. the renderer's own probe loads the
+// whole file into an <audio> element, which is fine for a playlist and hopeless
+// for a library of thousands, so these read a few hundred bytes instead
+const MP3_BITRATES = {
+  1: [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 0],
+  2: [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0],
+};
+const MP3_RATES = { 3: [44100, 48000, 32000], 2: [22050, 24000, 16000], 0: [11025, 12000, 8000] };
+
+async function readChunk(fh, pos, len) {
+  if (len <= 0 || pos < 0) return Buffer.alloc(0);
+  const buf = Buffer.alloc(len);
+  const { bytesRead } = await fh.read(buf, 0, len, pos);
+  return buf.subarray(0, bytesRead);
+}
+function mp3Duration(head, audioStart, fileSize) {
+  for (let i = 0; i < head.length - 4; i++) {
+    if (head[i] !== 0xff || (head[i + 1] & 0xe0) !== 0xe0) continue;
+    const verBits = (head[i + 1] >> 3) & 3;
+    const layer = (head[i + 1] >> 1) & 3;
+    if (verBits === 1 || layer !== 1) continue;           // reserved version, or not layer 3
+    const rates = MP3_RATES[verBits];
+    const rateIdx = (head[i + 2] >> 2) & 3;
+    const brIdx = (head[i + 2] >> 4) & 15;
+    if (!rates || rateIdx === 3 || brIdx === 0 || brIdx === 15) continue;
+    const sampleRate = rates[rateIdx];
+    const bitrate = MP3_BITRATES[verBits === 3 ? 1 : 2][brIdx] * 1000;
+    if (!sampleRate || !bitrate) continue;
+    const mpeg1 = verBits === 3;
+    const perFrame = mpeg1 ? 1152 : 576;
+    const mono = ((head[i + 3] >> 6) & 3) === 3;
+    // a vbr file carries its own frame count; without one, size over bitrate is
+    // the best we can do
+    const xingAt = i + 4 + (mpeg1 ? (mono ? 17 : 32) : (mono ? 9 : 17));
+    const tag = head.length >= xingAt + 4 ? head.toString('latin1', xingAt, xingAt + 4) : '';
+    if (tag === 'Xing' || tag === 'Info') {
+      const flags = head.readUInt32BE(xingAt + 4);
+      if (flags & 1) {
+        const frames = head.readUInt32BE(xingAt + 8);
+        if (frames > 0) return (frames * perFrame) / sampleRate;
+      }
+    }
+    const vbriAt = i + 4 + 32;
+    if (head.length >= vbriAt + 4 && head.toString('latin1', vbriAt, vbriAt + 4) === 'VBRI') {
+      const frames = head.readUInt32BE(vbriAt + 14);
+      if (frames > 0) return (frames * perFrame) / sampleRate;
+    }
+    return ((fileSize - audioStart - i) * 8) / bitrate;
+  }
+  return 0;
+}
+function flacDuration(head) {
+  let pos = 4;
+  while (pos + 4 <= head.length) {
+    const last = (head[pos] & 0x80) !== 0;
+    const type = head[pos] & 0x7f;
+    const len = (head[pos + 1] << 16) | (head[pos + 2] << 8) | head[pos + 3];
+    const body = pos + 4;
+    if (type === 0 && body + 18 <= head.length) {
+      const sr = (head[body + 10] << 12) | (head[body + 11] << 4) | (head[body + 12] >> 4);
+      const total = ((head[body + 13] & 0x0f) * 4294967296) + head.readUInt32BE(body + 14);
+      return sr > 0 ? total / sr : 0;
+    }
+    if (last) break;
+    pos = body + len;
+  }
+  return 0;
+}
+function wavDuration(head) {
+  let pos = 12, byteRate = 0;
+  while (pos + 8 <= head.length) {
+    const id = head.toString('latin1', pos, pos + 4);
+    const len = head.readUInt32LE(pos + 4);
+    if (id === 'fmt ' && pos + 16 <= head.length) byteRate = head.readUInt32LE(pos + 16);
+    if (id === 'data' && byteRate > 0) return len / byteRate;
+    pos += 8 + len + (len & 1);
+  }
+  return 0;
+}
+// mp4 keeps its moov atom at either end of the file, so the walk follows atom
+// sizes and only reads the 8-byte headers it lands on
+async function mp4Duration(fh, fileSize) {
+  async function walk(start, end, depth) {
+    let pos = start;
+    while (pos + 8 <= end && depth < 4) {
+      const head = await readChunk(fh, pos, 16);
+      if (head.length < 8) return 0;
+      let size = head.readUInt32BE(0);
+      const type = head.toString('latin1', 4, 8);
+      let body = pos + 8;
+      if (size === 1) {
+        if (head.length < 16) return 0;
+        size = Number(head.readBigUInt64BE(8));
+        body = pos + 16;
+      } else if (size === 0) size = end - pos;
+      if (size < 8) return 0;
+      if (type === 'moov' || type === 'trak' || type === 'mdia') {
+        const found = await walk(body, pos + size, depth + 1);
+        if (found) return found;
+      } else if (type === 'mvhd' || type === 'mdhd') {
+        const box = await readChunk(fh, body, 32);
+        if (box.length >= 20) {
+          const version = box[0];
+          const timescale = version === 1 ? box.readUInt32BE(20) : box.readUInt32BE(12);
+          const dur = version === 1 ? Number(box.readBigUInt64BE(24)) : box.readUInt32BE(16);
+          if (timescale > 0 && dur > 0 && dur !== 0xffffffff) return dur / timescale;
+        }
+      }
+      pos += size;
+    }
+    return 0;
+  }
+  return walk(0, fileSize, 0);
+}
+// an ogg stream only knows its length from the granule position on its very last
+// page, so this one reads the tail
+async function oggDuration(fh, head, fileSize) {
+  let rate = 0;
+  const vorbis = head.indexOf('vorbis', 0, 'latin1');
+  const opus = head.indexOf('OpusHead', 0, 'latin1');
+  if (opus >= 0) rate = 48000;
+  else if (vorbis >= 0 && vorbis + 12 <= head.length) rate = head.readUInt32LE(vorbis + 6 + 5);
+  if (!rate) return 0;
+  const tailLen = Math.min(fileSize, 65536);
+  const tail = await readChunk(fh, fileSize - tailLen, tailLen);
+  for (let i = tail.length - 14; i >= 0; i--) {
+    if (tail[i] !== 0x4f || tail[i + 1] !== 0x67 || tail[i + 2] !== 0x67 || tail[i + 3] !== 0x53) continue;
+    const granule = Number(tail.readBigUInt64LE(i + 6));
+    if (granule > 0) return granule / rate;
+  }
+  return 0;
+}
+async function probeDuration(p) {
+  const ext = path.extname(p).slice(1).toLowerCase();
+  let fh = null;
+  try {
+    fh = await fs.promises.open(p, 'r');
+    const stat = await fh.stat();
+    const size = stat.size;
+    if (!size) return 0;
+    let head = await readChunk(fh, 0, Math.min(size, 65536));
+    if (ext === 'mp3' || ext === 'aac') {
+      let audioStart = 0;
+      if (head.length >= 10 && head.toString('latin1', 0, 3) === 'ID3') {
+        audioStart = 10 + (((head[6] & 0x7f) << 21) | ((head[7] & 0x7f) << 14) | ((head[8] & 0x7f) << 7) | (head[9] & 0x7f));
+        head = await readChunk(fh, audioStart, Math.min(Math.max(0, size - audioStart), 65536));
+      }
+      return mp3Duration(head, audioStart, size);
+    }
+    if (ext === 'flac') return flacDuration(head);
+    if (ext === 'wav') return wavDuration(head);
+    if (ext === 'm4a' || ext === 'mp4' || ext === 'm4v' || ext === 'mov') return await mp4Duration(fh, size);
+    if (ext === 'ogg' || ext === 'opus' || ext === 'oga') return await oggDuration(fh, head, size);
+    return 0;
+  } catch (err) {
+    return 0;
+  } finally {
+    if (fh) { try { await fh.close(); } catch (e) {} }
+  }
+}
+ipcMain.handle('library:durations', async (e, paths) => {
+  const list = Array.isArray(paths) ? paths.slice(0, 2000) : [];
+  const out = new Array(list.length);
+  let next = 0;
+  async function worker() {
+    while (next < list.length) {
+      const i = next++;
+      let dur = 0;
+      try { dur = await probeDuration(list[i]); } catch (err) {}
+      out[i] = { path: list[i], dur: isFinite(dur) && dur > 0 ? dur : 0 };
+    }
+  }
+  await Promise.all([worker(), worker(), worker(), worker()]);
+  return out.filter(Boolean);
+});
+// name, type and size without reading a byte: a playlist row needs nothing more
+ipcMain.handle('files:describe', async (e, paths) => {
+  const list = Array.isArray(paths) ? paths : [];
+  const out = new Array(list.length);
+  let next = 0;
+  async function worker() {
+    while (next < list.length) {
+      const i = next++;
+      const p = list[i];
+      try {
+        if (!p || typeof p !== 'string') continue;
+        const stat = await fs.promises.stat(p);
+        if (!stat.isFile()) continue;
+        const ext = path.extname(p).slice(1).toLowerCase();
+        out[i] = { path: p, name: path.basename(p), mime: AUDIO_MIME[ext] || 'audio/mpeg', size: stat.size };
+      } catch (err) {}
+    }
+  }
+  await Promise.all([worker(), worker(), worker(), worker(), worker(), worker()]);
+  return out.filter(Boolean);
 });
 ipcMain.handle('session:readFiles', async (e, paths) => {
   const list = Array.isArray(paths) ? paths : [];
@@ -1157,12 +1429,26 @@ ipcMain.handle('files:readPrefixes', async (e, paths, maxBytes) => {
         fh = await fs.promises.open(p, 'r');
         const stat = await fh.stat();
         let len = Math.min(cap, stat.size);
-        const head = Buffer.alloc(10);
-        const headRead = await fh.read(head, 0, 10, 0);
-        if (headRead.bytesRead === 10 && head.toString('latin1', 0, 3) === 'ID3') {
+        const head = Buffer.alloc(16);
+        const headRead = await fh.read(head, 0, 16, 0);
+        if (headRead.bytesRead >= 10 && head.toString('latin1', 0, 3) === 'ID3') {
           const tagLen = 10 + (((head[6] & 0x7f) << 21) | ((head[7] & 0x7f) << 14) | ((head[8] & 0x7f) << 7) | (head[9] & 0x7f));
-          const want = Math.min(stat.size, tagLen + 4096, 8 * 1024 * 1024);
-          if (want > len) len = want;
+          // exactly the tag, no more: a single 3000px cover makes a 9 MB tag, and
+          // stopping short hands back a truncated png, while reading past it only
+          // ships audio nobody is going to parse
+          len = Math.min(stat.size, tagLen + 4096, 24 * 1024 * 1024);
+        } else if (headRead.bytesRead >= 4 && head.toString('latin1', 0, 4) === 'fLaC') {
+          // walk the metadata block chain and stop where the audio starts
+          let pos = 4, last = false, guard = 0;
+          while (!last && guard++ < 64) {
+            const bh = Buffer.alloc(4);
+            const got = await fh.read(bh, 0, 4, pos);
+            if (got.bytesRead < 4) break;
+            last = (bh[0] & 0x80) !== 0;
+            pos += 4 + ((bh[1] << 16) | (bh[2] << 8) | bh[3]);
+            if (pos > stat.size) { pos = stat.size; break; }
+          }
+          len = Math.min(stat.size, Math.max(pos + 1024, 8192), 24 * 1024 * 1024);
         }
         const buf = Buffer.alloc(len);
         await fh.read(buf, 0, len, 0);
@@ -1397,15 +1683,19 @@ function coverCacheKey(artist, album, title) {
 }
 // ── filling tags from the release databases ─────────────────────────────────
 function mbCoverUrl(id) { return id ? `https://coverartarchive.org/release/${id}/front-500` : null; }
-async function metaSearchMusicBrainz(query, artist, title) {
-  const out = [];
-  try {
+// an album is a release, not a recording: asking the recording endpoint for a
+// record's name finds a track called that, which almost never exists
+// an album is a release, not a recording: asking the recording endpoint for a
+// record's name finds a track called that, which almost never exists
+async function metaSearchMusicBrainz(query, artist, title, forAlbum) {
+  const esc = (v) => String(v).replace(/(["\\])/g, "\\$1");
+  const field = forAlbum ? 'release' : 'recording';
+  const limit = forAlbum ? 8 : 5;
+
+  async function ask(lucene) {
     await mbThrottle();
-    const esc = (v) => String(v).replace(/(["\\])/g, "\\$1");
-    const lucene = artist && title
-      ? `recording:"${esc(title)}" AND artist:"${esc(artist)}"`
-      : query;
-    const url = 'https://musicbrainz.org/ws/2/recording/?query=' + encodeURIComponent(lucene) + '&fmt=json&limit=5';
+    const url = 'https://musicbrainz.org/ws/2/' + field + '/?query=' + encodeURIComponent(lucene)
+      + '&fmt=json&limit=' + limit;
     // musicbrainz answers 503 as soon as it considers the burst too fast, and it
     // does that often enough that one refusal must not mean an empty picker
     const backoff = [1200, 2500, 4000];
@@ -1419,15 +1709,45 @@ async function metaSearchMusicBrainz(query, artist, title) {
       await new Promise(res => setTimeout(res, backoff[attempt]));
       mbLastCall = Date.now();
     }
-    if (!r.ok) return out;
+    if (!r.ok) return [];
     const j = await r.json();
-    for (const rec of j.recordings || []) {
-      const artist = (rec['artist-credit'] || []).map(a => a.name).filter(Boolean).join(', ');
+    return (forAlbum ? j.releases : j.recordings) || [];
+  }
+
+  const out = [];
+  try {
+    const strict = artist && title
+      ? `${field}:"${esc(title)}" AND artist:"${esc(artist)}"`
+      : query;
+    let rows = await ask(strict);
+    // one artist tag spelled differently from the credit — "Shoji Meguro" against
+    // "ATLUS Sound Team" — is enough for the strict clause to find nothing at all,
+    // so the name alone gets a second go
+    if (!rows.length && artist && title) rows = await ask(`${field}:"${esc(title)}"`);
+
+    if (forAlbum) {
+      for (const rel of rows) {
+        const who = (rel['artist-credit'] || []).map(a => a.name).filter(Boolean).join(', ');
+        out.push({
+          source: 'musicbrainz',
+          title: '',
+          artist: who || '',
+          album: rel.title || '',
+          year: rel.date ? String(rel.date).slice(0, 4) : '',
+          genre: '',
+          trackNo: '',
+          coverUrl: mbCoverUrl(rel.id),
+        });
+      }
+      return out;
+    }
+    for (const rec of rows) {
+      const who = (rec['artist-credit'] || []).map(a => a.name).filter(Boolean).join(', ');
       const rel = (rec.releases || [])[0];
       out.push({
         source: 'musicbrainz',
         title: rec.title || '',
-        artist: artist || '',
+        artist: who || '',
         album: (rel && rel.title) || '',
         year: rel && rel.date ? String(rel.date).slice(0, 4) : '',
         genre: '',
@@ -1475,7 +1795,7 @@ ipcMain.handle('meta:search', async (e, payload) => {
   const q = String(p.query || '').trim();
   if (!q) return { results: [] };
   const [mb, dg] = await Promise.all([
-    metaSearchMusicBrainz(q, p.artist, p.title),
+    metaSearchMusicBrainz(q, p.artist, p.title, p.kind === 'album'),
     metaSearchDiscogs(q),
   ]);
   // musicbrainz knows track titles, discogs knows genres and years. show both.
