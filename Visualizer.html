@@ -783,6 +783,10 @@
   .patchnotes-content ul { margin: 6px 0; padding-left: 20px; }
   .patchnotes-content li { margin: 4px 0; }
   .patchnotes-content p { margin: 8px 0; }
+  .patchnotes-content img.md-img {
+    display: block; max-width: 100%; height: auto; margin: 10px auto;
+    border-radius: 10px; border: 1px solid var(--line);
+  }
   .patchnotes-content a { color: #8ecbff; }
   .patchnotes-content code { background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 4px; font-family: var(--mono); font-size: 12px; }
   .sec-head { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); margin: 0 0 10px; }
@@ -11638,10 +11642,31 @@
   $('eeTableOverlay').addEventListener('click', e => { if (e.target === $('eeTableOverlay')) $('eeTableOverlay').classList.add('hidden'); });
 
   function escapeHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  // a release body is escaped on purpose: nothing written in it can inject html
+  // into the app. an image still has to show, so only its source is pulled out
+  // and a plain <img> is built here from values we checked ourselves.
+  function mdImage(src, alt, width) {
+    const url = String(src || '').replace(/&amp;/g, '&');
+    if (!/^https:\/\/[^\s"'<>]+$/i.test(url)) return '';
+    const w = /^\d{1,4}$/.test(String(width || '')) ? ' style="max-width:' + width + 'px"' : '';
+    return '<img class="md-img" src="' + escapeHtml(url) + '" alt="' + escapeHtml(String(alt || '')) + '"' + w + ' loading="lazy" />';
+  }
   function inlineMd(s) {
     let out = escapeHtml(s);
     out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
     out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    // ![alt](url), before the link rule below can claim the bracketed part
+    out = out.replace(/!\[([^\]]*)\]\((https?:[^)\s]+)\)/g, (m, alt, src) => mdImage(src, alt));
+    // <img ...>, which github accepts and which arrives here escaped
+    out = out.replace(/&lt;img\b[\s\S]*?&gt;/gi, tag => {
+      const src = /src\s*=\s*"([^"]+)"/i.exec(tag) || /src\s*=\s*'([^']+)'/i.exec(tag) || /src\s*=\s*([^\s&]+)/i.exec(tag);
+      const alt = /alt\s*=\s*"([^"]*)"/i.exec(tag) || /alt\s*=\s*'([^']*)'/i.exec(tag);
+      const w = /width\s*=\s*"?'?(\d{1,4})/i.exec(tag);
+      return src ? mdImage(src[1], alt && alt[1], w && w[1]) : '';
+    });
+    // layout wrappers a readme-style body carries mean nothing in this panel,
+    // and printing them as text is worse than dropping them
+    out = out.replace(/&lt;\/?(?:p|div|br|center|span|em|b|i|small|picture|source)\b[\s\S]*?&gt;/gi, '');
     out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" data-ext-link>$1</a>');
     return out;
   }
@@ -11657,7 +11682,10 @@
       const bullet = line.match(/^[-*]\s+(.*)$/);
       if (bullet) { if (!inList) { html += '<ul>'; inList = true; } html += `<li>${inlineMd(bullet[1])}</li>`; continue; }
       closeList();
-      html += `<p>${inlineMd(line)}</p>`;
+      // a line that was nothing but a layout tag renders to nothing, and an
+      // empty paragraph would just leave a gap
+      const body = inlineMd(line);
+      if (body.trim()) html += `<p>${body}</p>`;
     }
     closeList();
     return html || '<p class="pls-empty">no description</p>';
