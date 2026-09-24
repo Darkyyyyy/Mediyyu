@@ -1,0 +1,197 @@
+{
+  "features" : [
+    "refractivity",
+    "specular-location"
+  ],
+  "fill" : {
+    "automatic-gradient" : "display-p3:0.37646,0.34521,0.47070,1.00000"
+  },
+  "groups" : [
+    {
+      "blend-mode" : "normal",
+      "blur-material" : 0.5,
+      "layers" : [
+        {
+          "blend-mode" : "overlay",
+          "glass" : true,
+          "image-name" : "main.svg",
+          "name" : "main"
+        }
+      ],
+      "lighting" : "combined",
+      "position" : {
+        "scale" : 1.36,
+        "translation-in-points" : [
+          -30,
+          -12
+        ]
+      },
+      "refractivity" : {
+        "depth" : 0,
+        "enabled" : true,
+        "strength" : 0.0262890625
+      },
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.75
+      },
+      "specular" : "inside",
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.3
+      }
+    },
+    {
+      "blur-material" : null,
+      "layers" : [
+        {
+          "fill" : {
+            "automatic-gradient" : "display-p3:0.61176,0.72549,0.87843,1.00000"
+          },
+          "glass" : true,
+          "image-name" : "drop3.svg",
+          "name" : "drop3",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              31,
+              196
+            ]
+          }
+        },
+        {
+          "fill" : {
+            "automatic-gradient" : "srgb:0.61176,0.72549,0.87843,1.00000"
+          },
+          "image-name" : "drop2.svg",
+          "name" : "drop2",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              265,
+              176
+            ]
+          }
+        },
+        {
+          "fill" : {
+            "automatic-gradient" : "srgb:0.61176,0.72549,0.87843,1.00000"
+          },
+          "image-name" : "drop1.svg",
+          "name" : "drop1",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              269,
+              121
+            ]
+          }
+        }
+      ],
+      "name" : "Group",
+      "position" : {
+        "scale" : 1.36,
+        "translation-in-points" : [
+          -31,
+          -11
+        ]
+      },
+      "refractivity" : {
+        "depth" : 1,
+        "enabled" : true,
+        "strength" : -0.140859375
+      },
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.48
+      }
+    },
+    {
+      "blend-mode" : "normal",
+      "blur-material" : 0.5,
+      "layers" : [
+        {
+          "fill" : {
+            "solid" : "srgb:0.61176,0.72549,0.87843,1.00000"
+          },
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "backdrop.svg",
+          "name" : "backdrop",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              7,
+              8
+            ]
+          }
+        }
+      ],
+      "lighting" : "combined",
+      "position" : {
+        "scale" : 1.36,
+        "translation-in-points" : [
+          -30,
+          -12
+        ]
+      },
+      "refractivity" : {
+        "depth" : 0.6762890625,
+        "enabled" : true,
+        "strength" : 0.878203125
+      },
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.75
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.39
+      }
+    },
+    {
+      "hidden" : true,
+      "layers" : [
+        {
+          "fill-specializations" : [
+            {
+              "appearance" : "tinted",
+              "value" : "automatic"
+            }
+          ],
+          "glass" : true,
+          "image-name" : "logoMediyyu.svg",
+          "name" : "logoMediyyu",
+          "position" : {
+            "scale" : 1.36,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.3
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : [
+      "macOS"
+    ]
+  }
+}

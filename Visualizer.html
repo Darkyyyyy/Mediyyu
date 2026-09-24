@@ -349,6 +349,48 @@
   #maxBtn:hover svg { transform: scale(1.2); }
   #closeBtn:hover svg { transform: rotate(90deg) scale(1.1); }
   .wincontrols #closeBtn:hover { background: #e81123; color: #fff; }
+
+  /* macOS : pastilles natives a gauche, wincontrols Windows masquees */
+  .mac-traffic { display: none; }
+  body.is-mac.css-traffic .mac-traffic {
+    display: flex;
+    position: absolute;
+    top: 11px;
+    left: 13px;
+    gap: 8px;
+    z-index: 51;
+  }
+  body.is-mac .wincontrols { display: none; }
+  body.is-mac .topbar { border-radius: 0 0 0 12px; border-top: 0; border-right: 0; }
+  body.mini .mac-traffic, body.edge-to-edge .mac-traffic { display: none !important; }
+  .mac-key { display: none; }
+  body.is-mac .mac-key { display: block; }
+  /* place reservee aux pastilles natives, qui vivent hors de la page */
+  body.is-mac:not(.mini):not(.edge-to-edge) #dragbar { left: 92px; width: calc(100% - 92px); }
+  .mac-traffic .tl {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    cursor: default;
+    color: transparent;
+    background: #ff5f57;
+    box-shadow: inset 0 0 0 .5px rgba(0,0,0,.18);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition: background .18s ease, color .18s ease;
+  }
+  .mac-traffic .tl-min { background: #febc2e; }
+  .mac-traffic .tl-zoom { background: #28c840; }
+  .mac-traffic .tl svg { width: 12px; height: 12px; display: block; }
+  .mac-traffic:hover .tl { color: rgba(0,0,0,.6); }
+  .mac-traffic .tl:active { filter: brightness(.82); }
+  body.win-blur .mac-traffic .tl { background: rgba(255,255,255,.2); }
   .btn {
     -webkit-appearance: none;
     appearance: none;
@@ -528,13 +570,15 @@
     display: flex; flex-wrap: wrap; gap: 4px; align-items: flex-end;
     border-bottom: 1px solid var(--line); margin-bottom: 12px;
   }
-  .props-tabs button[data-ptab] {
+  .props-tabs button[data-ptab], .props-tabs button[data-atab] {
     border: 0; background: transparent; color: var(--dim); cursor: pointer;
     font-family: var(--ui); font-size: 12px; padding: 7px 13px; border-radius: 8px 8px 0 0;
     border-bottom: 2px solid transparent; transition: color .15s ease, border-color .15s ease;
   }
-  .props-tabs button[data-ptab]:hover { color: var(--txt); }
-  .props-tabs button[data-ptab].on { color: var(--txt); border-bottom-color: var(--txt); font-weight: 600; }
+  .props-tabs button[data-ptab]:hover, .props-tabs button[data-atab]:hover { color: var(--txt); }
+  .props-tabs button[data-ptab].on, .props-tabs button[data-atab].on {
+    color: var(--txt); border-bottom-color: var(--txt); font-weight: 600;
+  }
   .props-meta-btn {
     margin-left: auto; margin-bottom: 5px; flex: 0 0 auto; white-space: nowrap;
     border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--txt);
@@ -752,6 +796,9 @@
   .toast-action {
     display: inline-block; margin-left: 8px; color: #fff; font-weight: 600;
     text-decoration: underline dotted rgba(255,255,255,.5); cursor: pointer;
+    /* the toast stack is click-through so it never blocks the visualiser; the
+       one part meant to be pressed has to opt back in */
+    pointer-events: auto;
   }
   .toast-action:hover { text-decoration-color: #fff; }
   .patchnotes-box { width: min(680px, 92vw); }
@@ -851,8 +898,14 @@
   .drop-icon { width: 96px; height: 96px; margin: -6px auto 14px; opacity: .9; display: block; }
   .drop h1 { font-size: 25px; font-weight: 600; letter-spacing: -.01em; margin-bottom: 9px; }
   .drop p { font-size: 14px; color: var(--dim); margin-bottom: 24px; }
+  .drop-or { font-size: 12px; color: var(--dim); margin: 1px 0 11px; }
+  .drop-actions { display: flex; gap: 9px; justify-content: center; }
+  /* the row centres either way, but two buttons of different widths read as
+     lopsided, so they are sized to match each other */
+  .drop-actions .browse { min-width: 140px; box-sizing: border-box; text-align: center; }
   .browse {
     display: inline-block; border: 1px solid var(--line); background: rgba(255,255,255,.06);
+    color: var(--txt); font-family: var(--ui);
     padding: 11px 24px; border-radius: 11px; font-size: 13.5px; cursor: pointer; transition: background .15s ease;
   }
   .browse:hover { background: rgba(255,255,255,.13); }
@@ -1418,6 +1471,194 @@
   .help-title { font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--dim); margin-bottom: 13px; }
   .help-grid { display: grid; grid-template-columns: auto 1fr; gap: 7px 18px; font-size: 12.5px; color: rgba(255,255,255,.85); }
   .help-grid span:nth-child(odd) { font-family: var(--mono); font-size: 11.5px; color: #fff; background: rgba(255,255,255,.09); border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; text-align: center; }
+  .help-grid span.k-sym {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: .08em;
+    padding: 1px 10px;
+  }
+
+  .lib-box {
+    position: relative;
+    width: min(920px, 94vw);
+    /* fixed rather than content-driven: the box used to resize between the grid
+       and every album it opened, which turned the slide into a jump */
+    height: min(660px, calc(100vh - 56px));
+    padding: 16px 18px 18px; display: flex; flex-direction: column; overflow: hidden;
+  }
+  /* z-index -1 paints it above the box's own background but under everything in
+     it, the same trick .pl-bg uses on a playlist row */
+  .lib-album-bg {
+    position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+    opacity: 0; transition: opacity .3s ease;
+    -webkit-mask-image: linear-gradient(to right, #000 0, rgba(0,0,0,.5) 38%, transparent 82%);
+    mask-image: linear-gradient(to right, #000 0, rgba(0,0,0,.5) 38%, transparent 82%);
+  }
+  .lib-album-bg.on { opacity: .55; }
+  /* the inner layer overflows the box so the blur fades out off screen instead
+     of going see-through at the edges */
+  .lib-album-bg i {
+    position: absolute; inset: -14%;
+    background-size: cover; background-position: center;
+    filter: blur(42px) saturate(1.3);
+  }
+  .lib-head { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .lib-head .help-title { margin: 0; flex: 0 0 auto; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lib-back, .lib-close {
+    flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; padding: 0; cursor: pointer;
+    border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--txt); line-height: 1;
+  }
+  .lib-back { font-size: 15px; }
+  .lib-close { font-size: 11px; margin-left: auto; }
+  .lib-back:hover, .lib-close:hover { background: rgba(255,255,255,.2); }
+  .lib-back.hidden, .lib-grid.hidden, .lib-album.hidden, #libSearch.hidden, .lib-head-btn.hidden { display: none; }
+  .lib-head-btn {
+    flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--txt);
+    cursor: pointer; font-family: var(--ui); font-size: 11.5px; white-space: nowrap;
+    border-radius: 8px; padding: 6px 10px; transition: background .13s ease;
+  }
+  /* the icon ships black, like the rest of them */
+  .lib-head-btn img { width: 12px; height: 12px; display: block; filter: invert(1); opacity: .85; }
+  /* a native select draws its list with the os, which ignores every colour in
+     this app, so the menu is built the same way the ••• menus are */
+  .lib-fmt { position: relative; flex: 0 0 auto; margin-left: auto; }
+  .lib-fmt.hidden { display: none; }
+  .lib-fmt-btn {
+    display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+    border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--txt);
+    font-family: var(--ui); font-size: 11.5px; border-radius: 9px; padding: 7px 11px;
+    transition: background .13s ease;
+  }
+  .lib-fmt-btn:hover { background: rgba(255,255,255,.18); }
+  .lib-fmt-btn i {
+    width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent;
+    border-top: 5px solid rgba(255,255,255,.6);
+  }
+  .lib-fmt-menu {
+    position: absolute; right: 0; bottom: calc(100% + 6px); z-index: 30; min-width: 100%; padding: 6px;
+    background-color: rgba(18,19,22,.97);
+    border: 1px solid rgba(255,255,255,.14); border-radius: 11px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.55);
+    opacity: 1; transform: scale(1); transition: opacity .13s ease, transform .13s ease;
+  }
+  .lib-fmt-menu.hidden { opacity: 0; transform: scale(.96); pointer-events: none; }
+  .lib-fmt-opt {
+    display: flex; align-items: center; gap: 8px; width: 100%; white-space: nowrap;
+    border: 0; background: none; color: rgba(255,255,255,.88); cursor: pointer;
+    font-family: var(--ui); font-size: 12px; padding: 7px 10px; border-radius: 7px;
+  }
+  .lib-fmt-opt:hover { background: rgba(255,255,255,.1); }
+  .lib-fmt-opt.on { background: rgba(255,255,255,.14); color: #fff; font-weight: 600; }
+  .lib-head-btn.icon-only { padding: 0; width: 30px; height: 30px; border-radius: 50%; }
+  .lib-head-btn.icon-only img { width: 14px; height: 14px; opacity: .9; }
+  @keyframes lib-spin { to { transform: rotate(360deg); } }
+  /* the button is only disabled while a scan runs, which is exactly when the
+     icon should say something is happening */
+  .lib-head-btn:disabled img { animation: lib-spin 1.1s linear infinite; }
+  .lib-head-btn:hover { background: rgba(255,255,255,.18); }
+  .lib-head-btn:disabled { opacity: .4; cursor: default; background: rgba(255,255,255,.08); }
+  @keyframes lib-in-fwd { from { opacity: 0; transform: translateX(16px) scale(.985); } to { opacity: 1; transform: none; } }
+  @keyframes lib-out-fwd { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(-16px) scale(.985); } }
+  @keyframes lib-in-back { from { opacity: 0; transform: translateX(-16px) scale(.985); } to { opacity: 1; transform: none; } }
+  @keyframes lib-out-back { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(16px) scale(.985); } }
+  .lib-anim-in-fwd { animation: lib-in-fwd .19s ease both; }
+  .lib-anim-out-fwd { animation: lib-out-fwd .12s ease both; }
+  .lib-anim-in-back { animation: lib-in-back .19s ease both; }
+  .lib-anim-out-back { animation: lib-out-back .12s ease both; }
+  #libSearch {
+    flex: 1 1 auto; min-width: 0; border: 1px solid var(--line); border-radius: 8px; outline: none;
+    background: rgba(255,255,255,.05); color: var(--txt); font-family: var(--ui); font-size: 12px; padding: 6px 10px;
+  }
+  #libSearch:focus { border-color: rgba(255,255,255,.3); }
+  .lib-status { font-family: var(--mono); font-size: 10.5px; color: var(--dim); min-height: 13px; margin-bottom: 8px; }
+  .lib-grid {
+    flex: 1 1 auto; min-height: 120px; overflow-y: auto; align-content: start;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(134px, 1fr)); gap: 15px 13px; padding: 2px 4px 4px 2px;
+  }
+  .lib-card { display: flex; flex-direction: column; gap: 7px; min-width: 0; cursor: pointer; }
+  .lib-cover {
+    position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--line); background: rgba(255,255,255,.05);
+    display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr; gap: 1px;
+  }
+  .lib-cover.split-2 { grid-template-columns: 1fr 1fr; }
+  .lib-cover.split-3, .lib-cover.split-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+  .lib-cover.split-3 i:first-child { grid-row: span 2; }
+  .lib-cover i { display: block; min-width: 0; min-height: 0; background: #0d0e11 center/cover no-repeat; }
+  .lib-cover.empty::after {
+    content: ''; position: absolute; inset: 0; opacity: .32;
+    background: url('assets/logo.png') center / 46% auto no-repeat;
+  }
+  .lib-card:hover .lib-cover { border-color: rgba(255,255,255,.34); }
+  .lib-play {
+    position: absolute; right: 8px; bottom: 8px; width: 34px; height: 34px; border-radius: 50%; padding: 0;
+    border: 0; background: rgba(16,17,20,.86); color: #fff; cursor: pointer; font-size: 12px;
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(0,0,0,.55);
+    opacity: 0; transform: translateY(6px) scale(.92);
+    transition: opacity .13s ease, transform .13s ease, background .13s ease, color .13s ease;
+  }
+  .lib-card:hover .lib-play, .lib-play:focus-visible { opacity: 1; transform: none; }
+  .lib-play:hover { background: #fff; }
+  /* the icon is black, so it is flipped over the dark pill and left alone once
+     the pill turns white underneath it */
+  .lib-play img { width: 13px; height: 13px; display: block; margin-left: 2px; filter: invert(1); }
+  .lib-play:hover img { filter: none; }
+  .lib-name {
+    font-size: 12px; line-height: 1.25; overflow: hidden;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  }
+  .lib-artist { font-size: 10.5px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lib-empty { grid-column: 1 / -1; padding: 26px 14px; text-align: center; color: var(--dim); font-size: 12px; line-height: 1.5; }
+  .lib-album { flex: 1 1 auto; overflow-y: auto; padding-right: 4px; }
+  .lib-album-head { display: flex; gap: 16px; margin-bottom: 14px; }
+  .lib-album-cover { flex: 0 0 152px; width: 152px; }
+  .lib-album-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+  .lib-album-title { font-size: 17px; font-weight: 600; line-height: 1.25; }
+  .lib-album-artist { font-size: 12.5px; color: rgba(255,255,255,.75); }
+  .lib-album-sub { font-family: var(--mono); font-size: 10.5px; color: var(--dim); }
+  .lib-album-btns { display: flex; gap: 10px; align-items: center; margin-top: auto; padding-top: 12px; }
+  .lib-act {
+    flex: 0 0 auto; display: flex; align-items: center; justify-content: center; padding: 0;
+    width: 38px; height: 38px; border-radius: 50%; cursor: pointer;
+    border: 1px solid var(--line); background: rgba(255,255,255,.1); color: var(--txt);
+    transition: background .14s ease, transform .14s ease;
+  }
+  .lib-act svg { width: 17px; height: 17px; display: block; }
+  .lib-act:hover { background: rgba(255,255,255,.2); transform: scale(1.07); }
+  /* the accent is set per album from its own cover; the blue is only the fallback
+     for a record with no artwork to take a colour from */
+  .lib-act-play {
+    width: 54px; height: 54px; border: 0;
+    background: var(--album-accent, rgba(90,150,255,.92));
+    box-shadow: 0 6px 20px rgba(0,0,0,.45);
+  }
+  .lib-act-play:hover { background: var(--album-accent, rgba(90,150,255,.92)); }
+  /* the app's own play icon is a black glyph, so it is inverted to white over a
+     dark accent and left alone over a pale one */
+  .lib-act-play img {
+    width: 24px; height: 24px; display: block; margin-left: 3px;
+    filter: var(--album-invert, invert(1));
+  }
+  .lib-tracks { display: flex; flex-direction: column; gap: 3px; }
+  .lib-track {
+    display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px;
+    cursor: pointer; background: rgba(255,255,255,.04); transition: background .12s ease;
+  }
+  .lib-track:hover { background: rgba(255,255,255,.12); }
+  .lib-track-num { flex: 0 0 22px; text-align: right; font-family: var(--mono); font-size: 10.5px; color: var(--dim); }
+  .lib-tracks.multi-disc .lib-track-num { flex-basis: 34px; }
+  .lib-track-name { flex: 1 1 auto; min-width: 0; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lib-track-artist {
+    flex: 0 1 30%; text-align: center; font-size: 11px; color: var(--dim);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .lib-track-dur { flex: 0 0 42px; text-align: right; font-family: var(--mono); font-size: 10.5px; color: var(--dim); }
+  .lib-grid::-webkit-scrollbar, .lib-album::-webkit-scrollbar { width: 7px; }
+  .lib-grid::-webkit-scrollbar-thumb, .lib-album::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 7px; }
+  .lib-card:focus-visible, .lib-track:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 
   .props-box {
     max-width: min(620px, 92vw); width: 620px; padding: 18px 20px;
@@ -1474,6 +1715,16 @@
   .props-foot button.primary:hover { background: rgba(90,150,255,.4); }
   .props-art-foot button:disabled, .props-lyr-tools button:disabled, .props-foot button:disabled { opacity: .4; cursor: default; }
   .menu-item.disabled { opacity: .35; pointer-events: none; }
+  #libMenu .menu-item.hidden { display: none; }
+  /* every .help-overlay shares z-index 55 and otherwise stacks by markup order,
+     which is no use once one of them opens another. the library window keeps the
+     default layer, its own menu sits at 80 (inline), the dialogs it opens sit
+     here, and the picker those dialogs open sits above the lot. */
+  #libraryOverlay, #albumPropsOverlay { z-index: 90; }
+  #metaOverlay { z-index: 95; }
+  #confirmOverlay { z-index: 97; }
+  .album-props-cover { flex: 0 0 96px; width: 96px; }
+  .album-props-status { font-family: var(--mono); font-size: 10.5px; color: var(--dim); min-height: 13px; margin: 4px 0 9px; }
   .confirm-msg { font-size: 12.5px; color: rgba(255,255,255,.85); line-height: 1.5; margin-bottom: 16px; }
   .confirm-box { max-width: 340px; }
   .confirm-box.wide { max-width: min(520px, 92vw); width: 520px; }
@@ -1654,6 +1905,58 @@
     <button class="menu-item" id="tmProps"><span>properties&hellip;</span></button>
   </div>
 
+  <div class="help-overlay hidden" id="albumPropsOverlay">
+    <div class="help-box props-box album-props-box">
+      <div class="props-head">
+        <div class="lib-cover album-props-cover" id="albumPropCover"></div>
+        <div class="props-head-text">
+          <div class="props-head-title" id="albumPropHeadTitle">&mdash;</div>
+          <div class="props-head-artist" id="albumPropHeadArtist"></div>
+          <div class="props-head-file" id="albumPropHeadCount"></div>
+        </div>
+      </div>
+
+      <div class="props-tabs" id="albumPropsTabs">
+        <button type="button" class="on" data-atab="infos">infos</button>
+        <button type="button" data-atab="artwork">artwork</button>
+        <button type="button" id="albumMetaBtn" class="props-meta-btn">fill from discogs / musicbrainz</button>
+      </div>
+
+      <div class="props-pane" data-atab="infos">
+        <div class="props-fields">
+          <label>album</label><input type="text" id="albumPropName" />
+          <label>artist</label><input type="text" id="albumPropTrackArtist" />
+          <label>alb. artist</label><input type="text" id="albumPropArtist" />
+          <label>year</label><input type="text" id="albumPropYear" />
+        </div>
+        <p class="note" id="albumPropNote"></p>
+      </div>
+
+      <div class="props-pane hidden" data-atab="artwork">
+        <div class="props-art-grid" id="albumArtGrid"></div>
+        <p class="props-art-note" id="albumArtNote"></p>
+        <div class="props-art-foot">
+          <button type="button" id="albumArtAddBtn">add image&hellip;</button>
+          <button type="button" id="albumArtRemoveBtn" disabled>remove selected</button>
+        </div>
+      </div>
+
+      <div class="album-props-status" id="albumPropStatus"></div>
+      <div class="props-foot">
+        <button type="button" id="albumPropCancel">cancel</button>
+        <button type="button" id="albumPropSave" class="primary">save to all tracks</button>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="albumArtInput" accept="image/*" multiple style="display:none" />
+
+  <div class="more-menu hidden" id="libMenu" style="width: 190px; z-index: 80;">
+    <button class="menu-item" id="lmPlay"><span>play now</span></button>
+    <button class="menu-item" id="lmAfter"><span>play after</span></button>
+    <button class="menu-item" id="lmProps"><span>properties&hellip;</span></button>
+    <button class="menu-item" id="lmFolder"><span>open in explorer&hellip;</span></button>
+  </div>
+
   <div class="help-overlay hidden" id="propsOverlay">
     <div class="help-box props-box">
       <div class="props-head">
@@ -1777,6 +2080,50 @@
       <div class="pls-foot">
         <button id="libraryAddFolderBtn">add folder&hellip;</button>
         <button id="libraryCloseBtn">close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="help-overlay hidden" id="libBrowseOverlay">
+    <div class="help-box lib-box">
+      <div class="lib-album-bg" id="libAlbumBg"><i></i></div>
+      <div class="lib-head">
+        <button class="lib-back hidden" id="libBackBtn" title="back to albums">&lsaquo;</button>
+        <div class="help-title" id="libBrowseTitle">library</div>
+        <input type="text" id="libSearch" placeholder="search albums, artists&hellip;" />
+        <button class="lib-head-btn icon-only" id="libRescanBtn" aria-label="rescan the library" title="rescan library (can be slow)"><img src="assets/buttons/rescan.png" alt="" /></button>
+        <button class="lib-head-btn" id="libManageBtn" title="add or remove library folders">manage library</button>
+        <button class="lib-close" id="libCloseBtn" title="close">&#10005;</button>
+      </div>
+      <div class="lib-status" id="libStatus"></div>
+      <div class="lib-grid" id="libGrid"></div>
+      <div class="lib-album hidden" id="libAlbum">
+        <div class="lib-album-head">
+          <div class="lib-cover lib-album-cover" id="libAlbumCover"></div>
+          <div class="lib-album-info">
+            <div class="lib-album-title" id="libAlbumTitle"></div>
+            <div class="lib-album-artist" id="libAlbumArtist"></div>
+            <div class="lib-album-sub" id="libAlbumSub"></div>
+            <div class="lib-album-btns">
+              <button class="lib-act lib-act-play" id="libAlbumPlay" title="play this album" aria-label="play this album">
+                <img src="assets/buttons/play.png" alt="" />
+              </button>
+              <button class="lib-act" id="libAlbumShuffle" title="shuffle this album" aria-label="shuffle this album">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
+              </button>
+              <button class="lib-act" id="libAlbumEdit" title="album properties" aria-label="album properties">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg>
+              </button>
+              <div class="lib-fmt hidden" id="libFormatWrap">
+                <button class="lib-fmt-btn" id="libFormatBtn" title="this album exists in more than one format &mdash; pick the one to listen to">
+                  <span id="libFormatCur"></span><i></i>
+                </button>
+                <div class="lib-fmt-menu hidden" id="libFormatMenu"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="lib-tracks" id="libTracks"></div>
       </div>
     </div>
   </div>
@@ -1922,9 +2269,10 @@
         <span>h</span><span>favorite track</span>
         <span>f</span><span>fullscreen</span>
         <span>1&ndash;9</span><span>load preset</span>
-        <span>alt+d</span><span>debug overlay</span>
-        <span>shift+alt+d</span><span>performance graph</span>
-        <span>esc</span><span>close this / exit mini mode</span>
+        <span class="k-alt-d">alt+d</span><span>debug overlay</span>
+        <span class="k-alt-shift-d">shift+alt+d</span><span>performance graph</span>
+        <span class="k-settings mac-key k-sym">&#8984;,</span><span class="mac-key">options panel</span>
+        <span class="k-esc">esc</span><span>close this / exit mini mode</span>
         <span>?</span><span>show this panel</span>
       </div>
     </div>
@@ -1951,6 +2299,7 @@
       <button class="menu-item" id="plAddUrl"><span>add from url&hellip;</span></button>
       <button class="menu-item" id="plPlaylists"><span>playlists&hellip;</span></button>
       <button class="menu-item" id="plRecentItem"><span>recently added&hellip;</span></button>
+      <button class="menu-item" id="plLibraryItem"><span>add from library&hellip;</span></button>
     </div>
     <div class="pl-menu hidden" id="plMinusMenu">
       <button class="menu-item" id="plRemoveMode"><span>remove tracks&hellip;</span></button>
@@ -1960,6 +2309,18 @@
       <input type="text" id="plUrlInput" placeholder="https://&hellip;" />
       <button id="plUrlAdd">add</button>
     </div>
+  </div>
+
+  <div class="mac-traffic" id="macTraffic">
+    <button class="tl tl-close" id="tlClose" title="close" aria-label="close">
+      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3.8" y1="3.8" x2="8.2" y2="8.2"/><line x1="8.2" y1="3.8" x2="3.8" y2="8.2"/></svg>
+    </button>
+    <button class="tl tl-min" id="tlMin" title="minimize" aria-label="minimize">
+      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3.2" y1="6" x2="8.8" y2="6"/></svg>
+    </button>
+    <button class="tl tl-zoom" id="tlZoom" title="zoom" aria-label="zoom">
+      <svg viewBox="0 0 12 12" fill="currentColor"><path d="M3.2 3.2h4.1L3.2 7.3z"/><path d="M8.8 8.8H4.7L8.8 4.7z"/></svg>
+    </button>
   </div>
 
   <div class="corner-controls">
@@ -2601,7 +2962,11 @@
     <div class="drop-card">
       <img class="drop-icon" src="assets/logo.png" alt="" />
       <h1>drop your audio file</h1>
-      <label class="browse">browse files<input type="file" id="fileInput" accept="audio/*,video/mp4,video/webm,video/quicktime,.mid,.midi" multiple hidden /></label>
+      <div class="drop-or">or</div>
+      <div class="drop-actions">
+        <label class="browse">browse files<input type="file" id="fileInput" accept="audio/*,video/mp4,video/webm,video/quicktime,.mid,.midi" multiple hidden /></label>
+        <button type="button" class="browse" id="dropLibraryBtn">library</button>
+      </div>
     </div>
     <button class="resume-note hidden" id="resumeNote">resume previous session?</button>
   </div>
@@ -2665,7 +3030,7 @@
     discordEnabled: true, discordClientId: '', discordImageKey: 'noting',
     lastfmEnabled: false, lastfmSessionKey: '', lastfmUsername: '',
     gain: 100, eq0: 0, eq1: 0, eq2: 0, eq3: 0, eq4: 0, eq5: 0, eq6: 0, eq7: 0, eq8: 0, eq9: 0,
-    shuffle: false, repeat: 'off', playbackRate: 1, drunkMode: '', normalize: false, crossfade: false, crossfadeDur: 4, autoplaySimilar: false, libraryFolders: [], icueEnabled: false,
+    shuffle: false, repeat: 'off', playbackRate: 1, drunkMode: '', normalize: false, crossfade: false, crossfadeDur: 4, autoplaySimilar: false, libraryFolders: [], libraryFormat: '', icueEnabled: false,
     notifyTrack: true, notifyEnd: true, easterEggs: true,
     specFftSize: 4096, specWindow: 'blackman', specSineExp: 3,
     specLogScale: true, specMirror: false, specChannel: 'mono',
@@ -3993,17 +4358,17 @@
     navigator.clipboard.writeText(text).then(() => toast('debug log copied'), () => toast('copy failed', { error: true }));
   });
   window.addEventListener('keydown', e => {
-    if (e.altKey && e.shiftKey && (e.key === 'c' || e.key === 'C')) {
+    if (e.altKey && e.shiftKey && e.code === 'KeyC') {
       e.preventDefault();
       coverLogOn = !coverLogOn;
       $('coverLog').classList.toggle('show', coverLogOn);
       if (coverLogOn) { renderCoverLog(); $('coverLogBody').scrollTop = $('coverLogBody').scrollHeight; }
-    } else if (e.altKey && e.shiftKey && (e.key === 'd' || e.key === 'D')) {
+    } else if (e.altKey && e.shiftKey && e.code === 'KeyD') {
       e.preventDefault();
       perfOn = !perfOn;
       $('perfOverlay').classList.toggle('show', perfOn);
       if (perfOn) perfLastPaint = 0;
-    } else if (e.altKey && !e.shiftKey && (e.key === 'd' || e.key === 'D')) {
+    } else if (e.altKey && !e.shiftKey && e.code === 'KeyD') {
       e.preventDefault();
       debugOn = !debugOn;
       $('debugOverlay').classList.toggle('show', debugOn);
@@ -4955,6 +5320,7 @@
       renderRepairList();
       repairSyncApply();
     }
+    libraryTagsChanged(sel.filter(r => r.result === 'ok').map(r => r.path));
     const rewritten = sel.filter(r => r.result === 'ok' && r.file);
     if (rewritten.length && window.winControls) {
       try {
@@ -6606,6 +6972,10 @@
     'during recording', 'during performance', 'screen capture', 'bright fish', 'illustration',
     'band logo', 'publisher logo'];
   let propsIdx = -1;
+  // the dialog used to be tied to a playlist row. a library track opens here
+  // without joining the playlist, so -1 means "this file, wherever it lives".
+  let propsStandalone = null;
+  function propsFile() { return propsIdx >= 0 ? playlist[propsIdx] : propsStandalone; }
   let propsPics = [];        // { url, mime, desc, type, bytes, blob? }
   let propsPicSel = -1;
   let propsArtDirty = false;
@@ -6700,8 +7070,8 @@
     });
     $('propSaveCover').disabled = propsPicSel < 0;
     $('propArtRemoveBtn').disabled = propsPicSel < 0;
-    const onDisk = propsIdx >= 0 && playlist[propsIdx] && playlist[propsIdx]._path;
-    const canEmbed = onDisk && /[.](mp3|m4a|flac|ogg|oga|aac|wav|mp4|m4v|mov)$/i.test(playlist[propsIdx]._path);
+    const onDisk = !!(propsFile() && propsFile()._path);
+    const canEmbed = onDisk && /[.](mp3|m4a|flac|ogg|oga|aac|wav|mp4|m4v|mov)$/i.test(propsFile()._path);
     $('propArtNote').textContent = propsPics.length
       ? 'the first image is what players show as the cover. drag is not supported yet, remove and re-add to reorder.'
         + (canEmbed ? '' : ' this container cannot hold artwork, so it will not be saved for this one.')
@@ -6732,7 +7102,7 @@
   $('propSaveCover').addEventListener('click', async () => {
     const p = propsPics[propsPicSel];
     if (!p) return;
-    const f = playlist[propsIdx];
+    const f = propsFile();
     const blob = p.blob || await fetch(p.url).then(r => r.blob());
     const ext = (blob.type || '').indexOf('png') >= 0 ? 'png' : 'jpg';
     const a = document.createElement('a');
@@ -6766,7 +7136,7 @@
     }
   }
   async function refreshPropsLyrics() {
-    const f = playlist[propsIdx];
+    const f = propsFile();
     const state = $('propLyrState');
     $('propLyrResults').classList.add('hidden');
     $('propLyrView').innerHTML = '';
@@ -6791,7 +7161,7 @@
         const r = isNe
           ? await window.winControls.lyricsFetchNeteaseById(pick.slice(3))
           : await window.winControls.lyricsFetchById(pick);
-        if (playlist[propsIdx] !== f) return;
+        if (propsFile() !== f) return;
         const parsed = r && r.synced ? parseLRC(r.synced) : (r && r.plain ? r.plain.split('\n').map(t => ({ t: null, text: t })) : null);
         state.innerHTML = 'linked to <b></b>';
         state.querySelector('b').textContent = label;
@@ -6805,7 +7175,7 @@
     state.textContent = 'nothing linked to this track yet.';
   }
   async function propsLyricsSearch() {
-    const f = playlist[propsIdx];
+    const f = propsFile();
     if (!f || !window.winControls) return;
     const box = $('propLyrResults');
     const q = $('propLyrQuery').value.trim();
@@ -6820,7 +7190,7 @@
         ? await window.winControls.lyricsSearchNetease(q)
         : await window.winControls.lyricsSearch(q);
     } catch (e) {}
-    if (playlist[propsIdx] !== f) return;
+    if (propsFile() !== f) return;
     const hits = (r && r.results) || [];
     box.innerHTML = '';
     if (!hits.length) {
@@ -6871,7 +7241,7 @@
   $('propLyrFileInput').addEventListener('change', async e => {
     const file = e.target.files[0];
     e.target.value = '';
-    const f = playlist[propsIdx];
+    const f = propsFile();
     if (!file || !f) return;
     const text = await file.text();
     const key = trackLyricsKey(f);
@@ -6885,7 +7255,7 @@
     refreshPropsLyrics();
   });
   $('propLyrUnlinkBtn').addEventListener('click', () => {
-    const f = playlist[propsIdx];
+    const f = propsFile();
     if (!f) return;
     const key = trackLyricsKey(f);
     lyricsCacheDrop(key);
@@ -6909,6 +7279,15 @@
     { key: 'genre', label: 'genre', input: 'propGenre' },
     { key: 'trackNo', label: 'track #', input: 'propTrack' },
   ];
+  const META_ALBUM_FIELDS = [
+    { key: 'album', label: 'album', input: 'albumPropName' },
+    { key: 'artist', label: 'album artist', input: 'albumPropArtist' },
+    { key: 'year', label: 'year', input: 'albumPropYear' },
+  ];
+  // the same picker serves the track dialog and the album one; only the fields it
+  // offers and where it writes them back change
+  let metaTarget = 'track';
+  function metaFields() { return metaTarget === 'album' ? META_ALBUM_FIELDS : META_FIELDS; }
   let metaHits = [];
   let metaCovers = [];
 
@@ -7045,7 +7424,7 @@
     metaCovers = [];
     let groups = 0;
 
-    for (const field of META_FIELDS) {
+    for (const field of metaFields()) {
       const current = $(field.input).value.trim();
       const options = metaOptions(field.key);
       if (!options.length) continue;
@@ -7134,19 +7513,23 @@
     $('metaApplyBtn').disabled = !groups;
   }
   async function applyMetaPicks() {
-    const f = playlist[propsIdx];
-    if (!f) return;
+    const forAlbum = metaTarget === 'album';
+    const f = forAlbum ? null : propsFile();
+    if (!forAlbum && !f) return;
     const box = $('metaGroups');
     let changed = 0;
-    for (const field of META_FIELDS) {
+    for (const field of metaFields()) {
       const picked = box.querySelector('input[name="meta-' + field.key + '"]:checked');
       if (!picked || !picked.dataset.value) continue;
       $(field.input).value = picked.dataset.value;
       changed++;
     }
-    $('propHeadTitle').textContent = $('propTitle').value || f.name;
-    $('propHeadArtist').textContent = $('propArtist').value;
-    $('propHeadAlbum').textContent = $('propAlbum').value;
+    if (forAlbum) syncAlbumPropsHead();
+    else {
+      $('propHeadTitle').textContent = $('propTitle').value || f.name;
+      $('propHeadArtist').textContent = $('propArtist').value;
+      $('propHeadAlbum').textContent = $('propAlbum').value;
+    }
 
     const pickedCover = box.querySelector('input[name="meta-cover"]:checked');
     if (pickedCover && pickedCover.dataset.url) {
@@ -7159,8 +7542,17 @@
           if (img && img.data) blob = new Blob([img.data], { type: img.mime || 'image/jpeg' });
         } catch (e) {}
       }
-      if (playlist[propsIdx] !== f) return;
-      if (blob) {
+      if (!forAlbum && propsFile() !== f) return;
+      if (blob && forAlbum) {
+        albumPics.unshift({
+          url: URL.createObjectURL(blob), owned: true, blob: blob,
+          mime: blob.type, desc: $('albumPropName').value || 'front cover', type: 3, bytes: blob.size,
+        });
+        albumPicSel = 0;
+        albumArtDirty = true;
+        renderAlbumArt();
+        changed++;
+      } else if (blob) {
         // the first image is the one players use, so the new cover goes in front
         propsPics.unshift({
           url: URL.createObjectURL(blob), owned: true, blob: blob,
@@ -7183,33 +7575,44 @@
       : 'nothing picked');
   }
   async function runMetaSearch() {
-    const f = playlist[propsIdx];
-    if (!f || !window.winControls || !window.winControls.metaSearch) return;
+    const forAlbum = metaTarget === 'album';
+    const f = forAlbum ? null : propsFile();
+    if ((!forAlbum && !f) || !window.winControls || !window.winControls.metaSearch) return;
     const query = $('propMetaQuery').value.trim();
     if (!query) return;
     metaHits = [];
     metaMsg('searching discogs and musicbrainz…', true);
     let r = null;
     try {
-      // an untagged file still has a filename, and the detector already knows how
-      // to read one. without this the search falls back to loose free text.
-      const guess = guessArtistTitleFromName(f.name, f._path);
-      const artist = $('propArtist').value.trim() || guess.artist;
-      const title = $('propTitle').value.trim() || guess.titleQuery || guess.title;
-      r = await window.winControls.metaSearch({ query: query, artist: artist, title: title });
+      let artist, title;
+      if (forAlbum) {
+        artist = $('albumPropArtist').value.trim();
+        title = $('albumPropName').value.trim();
+      } else {
+        // an untagged file still has a filename, and the detector already knows how
+        // to read one. without this the search falls back to loose free text.
+        const guess = guessArtistTitleFromName(f.name, f._path);
+        artist = $('propArtist').value.trim() || guess.artist;
+        title = $('propTitle').value.trim() || guess.titleQuery || guess.title;
+      }
+      r = await window.winControls.metaSearch({
+        query: query, artist: artist, title: title, kind: forAlbum ? 'album' : 'track',
+      });
     } catch (e) {}
-    if (playlist[propsIdx] !== f || $('metaOverlay').classList.contains('hidden')) return;
+    if ((!forAlbum && propsFile() !== f) || $('metaOverlay').classList.contains('hidden')) return;
     metaHits = (r && r.results) || [];
     if (!metaHits.length) { metaMsg('nothing found for that search'); return; }
     renderMetaPicker();
   }
   function closeMetaPicker() {
+    metaTarget = 'track';
     hideMetaPreview();
     releaseMetaCovers();
     $('metaOverlay').classList.add('hidden');
   }
   $('propMetaBtn').addEventListener('click', () => {
-    if (propsIdx < 0) return;
+    if (!propsFile()) return;
+    metaTarget = 'track';
     $('metaOverlay').classList.remove('hidden');
     runMetaSearch();
   });
@@ -7224,9 +7627,12 @@
   });
   // ── opening ────────────────────────────────────────────────────────────────
   async function openProps(i) {
-    const f = playlist[i];
+    return openPropsFor(playlist[i], i);
+  }
+  async function openPropsFor(f, i) {
     if (!f) return;
-    propsIdx = i;
+    propsIdx = typeof i === 'number' ? i : -1;
+    propsStandalone = propsIdx >= 0 ? null : f;
     propsArtDirty = false;
     let tags = null;
     try { tags = await readTags(f); } catch (e) {}
@@ -7280,7 +7686,7 @@
     $('propTitle').focus();
   }
   $('propDetectBtn').addEventListener('click', async () => {
-    const f = playlist[propsIdx];
+    const f = propsFile();
     if (!f) return;
     const btn = $('propDetectBtn');
     const label = btn.textContent;
@@ -7288,7 +7694,7 @@
     btn.textContent = 'detecting…';
     try {
       const { bpm, key } = await analyzeBpmAndKey(f);
-      if (propsIdx >= 0 && playlist[propsIdx] === f) {
+      if (propsFile() === f) {
         $('propBpm').value = bpm;
         $('propKey').value = key;
       }
@@ -7302,6 +7708,9 @@
     $('propsOverlay').classList.add('hidden');
     releasePropsPics();
     propsArtDirty = false;
+    // a standalone file is held only by this dialog, so let it go with it
+    propsIdx = -1;
+    propsStandalone = null;
   }
   $('propCancelBtn').addEventListener('click', closePropsDialog);
   $('propsOverlay').addEventListener('click', e => { if (e.target === $('propsOverlay')) closePropsDialog(); });
@@ -7312,7 +7721,7 @@
     });
   }
   $('propSaveBtn').addEventListener('click', async () => {
-    const f = playlist[propsIdx];
+    const f = propsFile();
     if (!f || !window.winControls) return;
     const tags = {};
     for (const key of Object.keys(PROP_FIELDS)) tags[key] = $(PROP_FIELDS[key]).value.trim();
@@ -7351,7 +7760,7 @@
     }
     $('propSaveBtn').disabled = true;
     toast('writing metadata…');
-    const editingCurrent = propsIdx === curIndex && !!audio.src && !!f._path;
+    const editingCurrent = propsIdx >= 0 && propsIdx === curIndex && !!audio.src && !!f._path;
     let restore = null;
     if (editingCurrent) {
       restore = { pos: audio.currentTime, wasPlaying: playing };
@@ -7373,20 +7782,27 @@
       if (editingCurrent) { resumePos = restore.pos; await loadCurrent(); if (!restore.wasPlaying) { audio.pause(); setPlay(false); } }
       return;
     }
+    const savedIdx = propsIdx;
     closePropsDialog();
     if (r.inPlace) {
+      libraryTagsChanged([f._path]);
       const restored = await window.winControls.readSessionFiles([f._path]);
       if (restored.length) {
         const nf = new File([restored[0].data], restored[0].name, { type: restored[0].mime });
         nf._path = restored[0].path;
         // no _dur on purpose: it lets ensureProbed re-read the new tags, thumbnail included
-        playlist[propsIdx] = nf;
+        if (savedIdx >= 0) playlist[savedIdx] = nf;
+        else {
+          // not a playlist entry, but the same file may still be queued elsewhere
+          const alsoQueued = playlist.findIndex(x => x._path && x._path === nf._path);
+          if (alsoQueued >= 0) playlist[alsoQueued] = nf;
+        }
         renderPlaylist();
         if (editingCurrent) {
           resumePos = restore.pos;
           loadCurrent();
           if (!restore.wasPlaying) { audio.addEventListener('canplay', () => { audio.pause(); setPlay(false); }, { once: true }); }
-        } else if (propsIdx === curIndex) {
+        } else if (savedIdx >= 0 && savedIdx === curIndex) {
           updateNowPlaying(nf);
         }
       }
@@ -7541,7 +7957,9 @@
     $('transport').classList.remove('hidden');
     audio.play().then(() => setPlay(true)).catch(() => setPlay(false));
   }
-  function appendToPlaylist(files, keepOrder) {
+  // quiet: put the files in the list without touching what is playing. opening a
+  // track's properties is not a request to hear it.
+  function appendToPlaylist(files, keepOrder, quiet) {
     return new Promise(resolveAppend => {
       if (!files.length) { resolveAppend(); return; }
       files = keepOrder ? [...files] : [...files].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
@@ -7558,8 +7976,14 @@
           if (f._path === undefined && window.winControls) f._path = window.winControls.getPathForFile(f);
           playlist.push(f);
         }
-        if (wasEmpty && curIndex < 0) { curIndex = 0; loadCurrent(); }
-        else if (playlistDone && !started) { started = true; curIndex = firstNewIdx; loadCurrent(); }
+        if (wasEmpty && curIndex < 0) {
+          curIndex = 0;
+          loadCurrent();
+          // still loaded, so the transport has something to work with, but held
+          // at the start rather than started
+          if (quiet) audio.addEventListener('canplay', () => { audio.pause(); setPlay(false); }, { once: true });
+        }
+        else if (playlistDone && !started && !quiet) { started = true; curIndex = firstNewIdx; loadCurrent(); }
         else { scheduleRenderPlaylist(); updateTName(); updateNavButtons(); }
         if (i < files.length) requestAnimationFrame(addChunk);
         else { renderPlaylist(); updateNavButtons(); saveSession(true); resolveAppend(); }
@@ -7758,7 +8182,17 @@
   let libraryTagCache = null;
   let libraryTagCacheDirty = false;
   function loadLibraryTagCache() {
-    try { return JSON.parse(localStorage.getItem('bbv_libtags')) || {}; } catch (e) { return {}; }
+    let cache;
+    try { cache = JSON.parse(localStorage.getItem('bbv_libtags')) || {}; } catch (e) { return {}; }
+    // durations briefly got cached as a flat 0 whenever the probe channel wasn't
+    // reachable yet; one pass marks those unknown again so they get re-probed
+    try {
+      if (!localStorage.getItem('bbv_libdurfix')) {
+        for (const k in cache) if (cache[k] && cache[k].dur === 0) cache[k].dur = -1;
+        localStorage.setItem('bbv_libdurfix', '1');
+      }
+    } catch (e) {}
+    return cache;
   }
   function saveLibraryTagCacheDebounced() {
     libraryTagCacheDirty = true;
@@ -7769,26 +8203,91 @@
       try { localStorage.setItem('bbv_libtags', JSON.stringify(libraryTagCache)); } catch (e) {}
     }, 800);
   }
-  async function ensureLibraryTagsCached(paths) {
+  // bump this when a new field is added, so profiles carrying the old shape get
+  // re-read instead of showing half-empty albums forever
+  const LIB_TAG_V = 3;
+  function libTagEmpty() {
+    return { v: LIB_TAG_V, artist: '', title: '', album: '', albumArtist: '', track: '', disc: '', year: '', cover: '', dur: -1 };
+  }
+  async function ensureLibraryTagsCached(paths, onProgress) {
     if (!libraryTagCache) libraryTagCache = loadLibraryTagCache();
-    const missing = paths.filter(p => !libraryTagCache[p]);
+    const missing = paths.filter(p => !libraryTagCache[p] || libraryTagCache[p].v !== LIB_TAG_V);
     if (!missing.length) return;
-    let restored;
-    try { restored = await window.winControls.readFilePrefixes(missing, 1048576); } catch (e) { restored = []; }
-    for (const r of restored) {
-      let tags = null;
-      try {
-        const f = new File([r.data], r.path.split(/[\\/]/).pop());
-        tags = await readTags(f);
-      } catch (e) {}
-      libraryTagCache[r.path] = {
-        artist: (tags && tags.artist) || '',
-        title: (tags && tags.title) || '',
-        album: (tags && tags.album) || '',
-      };
-      releaseTagPictures(tags);
+    // a tag carrying big artwork can be tens of megabytes, so the batches stay
+    // small: this is the read that has to hold whole covers in memory
+    const CHUNK = 10;
+    for (let i = 0; i < missing.length; i += CHUNK) {
+      const slice = missing.slice(i, i + CHUNK);
+      let restored;
+      try { restored = await window.winControls.readFilePrefixes(slice, 1048576); } catch (e) { restored = []; }
+      for (const r of restored) {
+        if (!r) continue;
+        let tags = null;
+        try {
+          const f = new File([r.data], r.path.split(/[\\/]/).pop());
+          tags = await readTags(f);
+        } catch (e) {}
+        const rec = libTagEmpty();
+        if (tags) {
+          rec.artist = tags.artist || '';
+          rec.title = tags.title || '';
+          rec.album = tags.album || '';
+          rec.albumArtist = tags.albumArtist || '';
+          rec.track = tags.track || '';
+          rec.disc = tags.disc || '';
+          rec.year = tags.year || '';
+          const pics = tags.pictures || [];
+          const pic = pics.find(p => p.type === 3) || pics[0];
+          if (pic && pic.url) { try { rec.cover = await libStoreThumb(pic.url); } catch (e) {} }
+        }
+        libraryTagCache[r.path] = rec;
+        releaseTagPictures(tags);
+      }
+      for (const p of slice) {
+        if (!libraryTagCache[p] || libraryTagCache[p].v !== LIB_TAG_V) libraryTagCache[p] = libTagEmpty();
+      }
+      if (onProgress) onProgress(Math.min(i + CHUNK, missing.length), missing.length);
+      await new Promise(r => requestAnimationFrame(r));
     }
-    for (const p of missing) if (!libraryTagCache[p]) libraryTagCache[p] = { artist: '', title: '', album: '' };
+    saveLibraryTagCacheDebounced();
+  }
+  // any tag written outside the library browser leaves its index describing the
+  // old file. dropping just those entries costs one re-read of those files on the
+  // next open, instead of making the user rescan the whole collection.
+  function libraryTagsChanged(paths) {
+    const list = (Array.isArray(paths) ? paths : [paths]).filter(Boolean);
+    if (!list.length) return;
+    if (libraryTagCache) {
+      let hit = false;
+      for (const p of list) if (libraryTagCache[p]) { delete libraryTagCache[p]; hit = true; }
+      if (hit) saveLibraryTagCacheDebounced();
+    }
+    // the album index is held in memory between openings, so it has to go too
+    libAlbums = [];
+    libAlbumsStamp = '';
+  }
+  async function ensureLibraryDurations(paths, onProgress) {
+    if (!libraryTagCache || !window.winControls || !window.winControls.libraryDurations) return;
+    const missing = paths.filter(p => {
+      const rec = libraryTagCache[p];
+      return rec && !(rec.dur >= 0);
+    });
+    if (!missing.length) return;
+    const CHUNK = 60;
+    let ok = false;
+    for (let i = 0; i < missing.length; i += CHUNK) {
+      const slice = missing.slice(i, i + CHUNK);
+      let durs = null;
+      try { durs = await window.winControls.libraryDurations(slice); } catch (e) {}
+      // the whole channel is missing (an old main process still running, say) —
+      // stop rather than walk the library for nothing, and leave them unknown
+      if (!durs) { if (!ok) return; continue; }
+      ok = true;
+      for (const d of durs) {
+        if (d && libraryTagCache[d.path]) libraryTagCache[d.path].dur = d.dur > 0 ? d.dur : 0;
+      }
+      if (onProgress) onProgress(Math.min(i + CHUNK, missing.length), missing.length);
+    }
     saveLibraryTagCacheDebounced();
   }
   async function tryAutoplaySimilar() {
@@ -9205,8 +9704,12 @@
     });
   }
   $('libraryOpenBtn').addEventListener('click', () => { $('libraryOverlay').classList.remove('hidden'); });
-  $('libraryCloseBtn').addEventListener('click', () => { $('libraryOverlay').classList.add('hidden'); });
-  $('libraryOverlay').addEventListener('click', e => { if (e.target === $('libraryOverlay')) $('libraryOverlay').classList.add('hidden'); });
+  $('libraryCloseBtn').addEventListener('click', () => { $('libraryOverlay').classList.add('hidden'); libFoldersDialogClosed(); });
+  $('libraryOverlay').addEventListener('click', e => {
+    if (e.target !== $('libraryOverlay')) return;
+    $('libraryOverlay').classList.add('hidden');
+    libFoldersDialogClosed();
+  });
   $('libraryAddFolderBtn').addEventListener('click', async () => {
     if (!window.winControls) return;
     const dir = await window.winControls.libraryPickFolder();
@@ -9216,6 +9719,1092 @@
     refreshLibraryHasMusic();
     save();
   });
+  // library browser ------------------------------------------------------------
+  // cover thumbnails are far too big for localStorage, so they live in indexeddb
+  // keyed by a hash of the original image bytes: one entry per distinct cover,
+  // however many tracks happen to share it
+  let libDbPromise = null;
+  function libDb() {
+    if (libDbPromise) return libDbPromise;
+    libDbPromise = new Promise((resolve, reject) => {
+      let req;
+      try { req = indexedDB.open('mediyyu-library', 1); } catch (e) { reject(e); return; }
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('thumbs')) db.createObjectStore('thumbs');
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    libDbPromise.catch(() => { libDbPromise = null; });
+    return libDbPromise;
+  }
+  function libThumbGet(key) {
+    return libDb().then(db => new Promise((resolve, reject) => {
+      const rq = db.transaction('thumbs', 'readonly').objectStore('thumbs').get(key);
+      rq.onsuccess = () => resolve(rq.result || null);
+      rq.onerror = () => reject(rq.error);
+    }));
+  }
+  function libThumbPut(key, blob) {
+    return libDb().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction('thumbs', 'readwrite');
+      tx.objectStore('thumbs').put(blob, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    }));
+  }
+  // fnv-1a over a sample of the bytes. two covers colliding here would only ever
+  // swap one thumbnail for another, so a cheap hash buys enough
+  function libHashBytes(bytes) {
+    let h = 0x811c9dc5;
+    const step = Math.max(1, Math.floor(bytes.length / 4096));
+    for (let i = 0; i < bytes.length; i += step) {
+      h ^= bytes[i];
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return h.toString(36) + '-' + bytes.length.toString(36);
+  }
+  async function libMakeThumb(blob) {
+    const bmp = await createImageBitmap(blob);
+    const scale = Math.min(1, 300 / Math.max(bmp.width, bmp.height));
+    const w = Math.max(1, Math.round(bmp.width * scale));
+    const h = Math.max(1, Math.round(bmp.height * scale));
+    const cv = document.createElement('canvas');
+    cv.width = w; cv.height = h;
+    cv.getContext('2d').drawImage(bmp, 0, 0, w, h);
+    bmp.close();
+    return new Promise(res => cv.toBlob(res, 'image/webp', 0.82));
+  }
+  async function libStoreThumb(url) {
+    const blob = await fetch(url).then(r => r.blob());
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    const key = libHashBytes(bytes);
+    let have = null;
+    try { have = await libThumbGet(key); } catch (e) {}
+    if (!have) {
+      const thumb = await libMakeThumb(blob);
+      if (!thumb) return '';
+      try { await libThumbPut(key, thumb); } catch (e) { return ''; }
+    }
+    return key;
+  }
+  let libThumbUrls = new Map();
+  async function libThumbUrl(key) {
+    if (!key) return '';
+    if (libThumbUrls.has(key)) return libThumbUrls.get(key);
+    let url = '';
+    try {
+      const blob = await libThumbGet(key);
+      if (blob) url = URL.createObjectURL(blob);
+    } catch (e) {}
+    libThumbUrls.set(key, url);
+    return url;
+  }
+  function libReleaseThumbUrls() {
+    for (const url of libThumbUrls.values()) if (url) { try { URL.revokeObjectURL(url); } catch (e) {} }
+    libThumbUrls.clear();
+  }
+
+  const LIB_SCAN_CAP = 20000;
+  let libAlbums = [];
+  let libAlbumsStamp = '';
+  let libCurAlbum = null;
+  let libBusy = false;
+  let libAdding = false;
+  let libForceRescan = false;
+  function libExtOf(p) { const m = /\.([a-z0-9]+)$/i.exec(p || ''); return m ? m[1].toLowerCase() : ''; }
+  // when an album offers a choice and nothing has been chosen yet, the better
+  // container wins by default
+  const LIB_FORMAT_RANK = ['flac', 'wav', 'alac', 'm4a', 'aac', 'ogg', 'opus', 'mp3'];
+  function libRankFormat(ext) {
+    const i = LIB_FORMAT_RANK.indexOf(ext);
+    return i < 0 ? LIB_FORMAT_RANK.length : i;
+  }
+  // the album's own choice, falling back to the last one the user made anywhere
+  function libAlbumFmt(al) {
+    if (!al || !al.formats || al.formats.length < 2) return '';
+    if (al.fmt && al.formats.indexOf(al.fmt) >= 0) return al.fmt;
+    const want = (S.libraryFormat || '').toLowerCase();
+    return want && al.formats.indexOf(want) >= 0 ? want : al.formats[0];
+  }
+  // one track twice in two containers is one track; this keeps the chosen one
+  function libAlbumTracks(al) {
+    const pref = libAlbumFmt(al);
+    if (!pref) return al.tracks;
+    return libPreferFormat(al.tracks, pref);
+  }
+  // the same track twice means the same slot on the same disc, whatever the
+  // container. an untitled rip falls back to its filename.
+  function libTrackDupeKey(t) {
+    const name = libNorm(t.title) || libNorm(libBaseName(t.path).replace(/\.[^.]+$/, ''));
+    return (t.disc || 0) + '|' + (t.track || 0) + '|' + name;
+  }
+  function libPreferFormat(tracks, pref) {
+    const byKey = new Map();
+    for (const t of tracks) {
+      const k = libTrackDupeKey(t);
+      const cur = byKey.get(k);
+      if (!cur) { byKey.set(k, t); continue; }
+      // only a real preference displaces what was already there, so an album
+      // that has none of the chosen format keeps every track it has
+      if (libExtOf(t.path) === pref && libExtOf(cur.path) !== pref) byKey.set(k, t);
+    }
+    return [...byKey.values()];
+  }
+  function closeLibFormatMenu() { $('libFormatMenu').classList.add('hidden'); }
+  function syncLibFormatSel(al) {
+    const wrap = $('libFormatWrap');
+    const many = !!(al && al.formats && al.formats.length > 1);
+    wrap.classList.toggle('hidden', !many);
+    closeLibFormatMenu();
+    if (!many) return;
+    const cur = libAlbumFmt(al);
+    $('libFormatCur').textContent = 'listen in ' + cur;
+    const menu = $('libFormatMenu');
+    menu.innerHTML = '';
+    for (const ext of al.formats) {
+      const opt = document.createElement('button');
+      opt.type = 'button';
+      opt.className = 'lib-fmt-opt' + (ext === cur ? ' on' : '');
+      opt.dataset.fmt = ext;
+      opt.textContent = 'listen in ' + ext;
+      opt.addEventListener('click', () => { closeLibFormatMenu(); libPickFormat(ext); });
+      menu.appendChild(opt);
+    }
+  }
+  function libPickFormat(ext) {
+    const al = libCurAlbum;
+    if (!al || ext === libAlbumFmt(al)) return;
+    al.fmt = ext;
+    // remembered so the next album offering the same choice starts there
+    S.libraryFormat = ext;
+    save();
+    libSyncAlbumTotals(al);
+    libFillAlbum(al);
+  }
+  function libStatus(msg) { $('libStatus').textContent = msg || ''; }
+  function libNorm(s) { return (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' '); }
+  function libDirOf(p) { const i = p.search(/[\\/][^\\/]*$/); return i < 0 ? p : p.slice(0, i); }
+  function libBaseName(p) { const i = p.search(/[\\/][^\\/]*$/); return i < 0 ? p : p.slice(i + 1); }
+  function libNumOf(s) { const m = /^(\d+)/.exec((s || '').toString().trim()); return m ? +m[1] : 0; }
+  // "album (disc 2)", "album cd2", "album - disk 3": all of them name one record
+  // that happens to be spread over several discs, not several albums
+  const LIB_DISC_RE = /^(.*?)[\s._-]*[\[(]?\s*(?:disc|disk|cd)\s*([0-9]{1,2})\b[^)\]]*[)\]]?\s*$/i;
+  function libSplitDisc(name) {
+    const raw = (name || '').trim();
+    const m = LIB_DISC_RE.exec(raw);
+    if (!m) return { name: raw, disc: 0 };
+    return { name: m[1].trim().replace(/[\s._-]+$/, ''), disc: +m[2] || 0 };
+  }
+  // for untagged files the folder names the album — unless the folder is itself
+  // just a disc marker, in which case the album is the folder above it
+  function libAlbumDir(dir) {
+    const base = libBaseName(dir);
+    const split = libSplitDisc(base);
+    if (split.disc && !split.name) {
+      const up = libDirOf(dir);
+      return { key: libNorm(up), name: libBaseName(up) || base, disc: split.disc };
+    }
+    if (split.disc) return { key: libNorm(libDirOf(dir)) + '|' + libNorm(split.name), name: split.name, disc: split.disc };
+    return { key: libNorm(dir), name: base, disc: 0 };
+  }
+  function libFoldersStamp() {
+    return (S.libraryFolders || []).map(f => f.path + '|' + (f.recursive !== false)).join('||');
+  }
+  function libShuffled(paths) {
+    const out = [...paths];
+    for (let i = out.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = out[i]; out[i] = out[j]; out[j] = t;
+    }
+    return out;
+  }
+  async function libBuildAlbums(status) {
+    const folders = S.libraryFolders || [];
+    if (!folders.length || !window.winControls) return [];
+    status('scanning folders\u2026');
+    const lists = await Promise.all(folders.map(entry =>
+      window.winControls.scanDirForAudio(entry.path, entry.recursive !== false, LIB_SCAN_CAP).catch(() => [])));
+    const paths = [...new Set([].concat(...lists))];
+    if (!paths.length) return [];
+    // new files turn up on their own, since they are simply not in the cache yet.
+    // a tag edited outside mediyyu would stay cached forever, which is what the
+    // refresh button is for: it throws the cached reads away and starts over.
+    if (libForceRescan) {
+      libForceRescan = false;
+      if (!libraryTagCache) libraryTagCache = loadLibraryTagCache();
+      for (const p of paths) delete libraryTagCache[p];
+    }
+    await ensureLibraryTagsCached(paths, (done, total) => status('reading tags\u2026 ' + done + '/' + total));
+    await ensureLibraryDurations(paths, (done, total) => status('reading lengths\u2026 ' + done + '/' + total));
+    status('grouping albums\u2026');
+    const byKey = new Map();
+    for (const p of paths) {
+      const rec = libraryTagCache[p] || {};
+      const dir = libDirOf(p);
+      // an untagged rip still sits in a folder, and that folder is the best guess
+      // at what its album is called
+      const tagged = libSplitDisc(rec.album || '');
+      const fromDir = libAlbumDir(dir);
+      const album = tagged.name;
+      // the disc tag wins; a marker in the album or folder name is the fallback
+      const disc = libNumOf(rec.disc) || (album ? tagged.disc : fromDir.disc);
+      const nameKey = album ? libNorm(album) : '';
+      const artistKey = album ? libNorm(rec.albumArtist || '') : '';
+      const key = album ? 'a:' + nameKey + '|' + artistKey : 'd:' + fromDir.key;
+      let al = byKey.get(key);
+      if (!al) {
+        al = {
+          key, nameKey, artistKey, dir, artists: new Set(), covers: [], tracks: [], albumArtistRaw: '',
+          album: album || fromDir.name || 'unknown album',
+        };
+        byKey.set(key, al);
+      }
+      const who = (rec.albumArtist || rec.artist || '').trim();
+      if (who) al.artists.add(who);
+      if (!al.albumArtistRaw && rec.albumArtist) al.albumArtistRaw = rec.albumArtist.trim();
+      if (rec.cover && !al.covers.includes(rec.cover)) al.covers.push(rec.cover);
+      al.tracks.push({
+        path: p,
+        title: (rec.title || '').trim() || libBaseName(p).replace(/\.[^.]+$/, ''),
+        artist: (rec.artist || '').trim(),
+        track: libNumOf(rec.track),
+        disc: disc,
+        year: rec.year || '',
+        dur: +rec.dur > 0 ? +rec.dur : 0,
+        cover: rec.cover || '',
+        titleKey: libNorm((rec.title || '').trim() || libBaseName(p).replace(/\.[^.]+$/, '')),
+      });
+    }
+    // a single file missing its album-artist tag (a .wav can't even carry one)
+    // would otherwise split the album in two, so an artist-less group folds into
+    // the named one when exactly one shares its title
+    for (const [key, al] of [...byKey]) {
+      if (!al.nameKey || al.artistKey) continue;
+      const twins = [...byKey.values()].filter(o => o !== al && o.nameKey === al.nameKey && o.artistKey);
+      if (twins.length !== 1) continue;
+      const into = twins[0];
+      // titles already present mean this is a duplicate rip sitting in another
+      // folder, not the rest of the same album, and merging would double it
+      const have = new Set(into.tracks.map(t => t.titleKey));
+      if (al.tracks.some(t => have.has(t.titleKey))) continue;
+      into.tracks.push(...al.tracks);
+      for (const who of al.artists) into.artists.add(who);
+      if (!into.albumArtistRaw) into.albumArtistRaw = al.albumArtistRaw;
+      for (const c of al.covers) if (!into.covers.includes(c)) into.covers.push(c);
+      byKey.delete(key);
+    }
+    const albums = [...byKey.values()];
+    for (const al of albums) {
+      al.formats = [...new Set(al.tracks.map(t => libExtOf(t.path)).filter(Boolean))]
+        .sort((a, b) => libRankFormat(a) - libRankFormat(b) || a.localeCompare(b));
+      al.tracks.sort((a, b) => (a.disc - b.disc) || (a.track - b.track)
+        || a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
+      al.artistLabel = al.artists.size === 0 ? 'unknown artist'
+        : al.artists.size === 1 ? [...al.artists][0] : 'various artists';
+      libSyncAlbumTotals(al);
+    }
+    albums.sort((a, b) => a.album.localeCompare(b.album, undefined, { numeric: true, sensitivity: 'base' }));
+    await libFillFolderCovers(albums, status);
+    return albums;
+  }
+  // everything the album advertises follows the format actually selected
+  function libSyncAlbumTotals(al) {
+    const tracks = libAlbumTracks(al);
+    al.year = (tracks.find(t => t.year) || {}).year || '';
+    al.discs = new Set(tracks.map(t => t.disc).filter(Boolean)).size;
+    al.dur = tracks.reduce((s, t) => s + t.dur, 0);
+    const own = [...new Set(tracks.map(t => t.cover).filter(Boolean))];
+    al.covers = (own.length ? own : al.covers).slice(0, 4);
+  }
+  // nothing embedded means the cover is usually a cover.jpg lying next to the
+  // tracks; the key goes back into the tag cache so this only runs once per album
+  async function libFillFolderCovers(albums, status) {
+    if (!window.winControls || !window.winControls.folderImages) return;
+    const need = albums.filter(al => !al.covers.length);
+    if (!need.length) return;
+    // an album spread over several folders may only have its artwork in one of
+    // them, so each of its folders is a candidate rather than just the first
+    const albumDirs = new Map();
+    for (const al of need) albumDirs.set(al, [...new Set(al.tracks.map(t => libDirOf(t.path)))]);
+    const dirs = [...new Set([].concat(...albumDirs.values()))];
+    const found = new Map();
+    for (let i = 0; i < dirs.length; i += 12) {
+      status('looking for cover files\u2026 ' + Math.min(i + 12, dirs.length) + '/' + dirs.length);
+      let imgs = [];
+      try { imgs = await window.winControls.folderImages(dirs.slice(i, i + 12)); } catch (e) {}
+      for (const img of imgs || []) {
+        if (!img || !img.data) continue;
+        const url = URL.createObjectURL(new Blob([img.data], { type: img.mime || 'image/jpeg' }));
+        let key = '';
+        try { key = await libStoreThumb(url); } catch (e) {}
+        URL.revokeObjectURL(url);
+        if (key) { found.set(img.dir, key); coverLog('library: cover file for ' + img.dir + ' \u2190 ' + (img.file || '?')); }
+      }
+    }
+    for (const al of need) {
+      const key = (albumDirs.get(al) || []).map(d => found.get(d)).find(Boolean);
+      if (!key) { coverLog('library: no artwork found for "' + al.album + '" in ' + al.dir); continue; }
+      al.covers = [key];
+      for (const t of al.tracks) if (libraryTagCache[t.path]) libraryTagCache[t.path].cover = key;
+    }
+    saveLibraryTagCacheDebounced();
+  }
+  function libPaintCover(box, covers) {
+    box.classList.remove('empty', 'split-2', 'split-3', 'split-4');
+    box.innerHTML = '';
+    const keys = (covers || []).slice(0, 4);
+    if (!keys.length) { box.classList.add('empty'); return; }
+    if (keys.length > 1) box.classList.add('split-' + keys.length);
+    keys.forEach(key => {
+      const cell = document.createElement('i');
+      box.appendChild(cell);
+      libThumbUrl(key).then(url => { if (url) cell.style.backgroundImage = 'url("' + url + '")'; });
+    });
+  }
+  function libRenderGrid() {
+    const grid = $('libGrid');
+    grid.innerHTML = '';
+    const q = libNorm($('libSearch').value);
+    const list = q
+      ? libAlbums.filter(al => libNorm(al.album).includes(q) || libNorm(al.artistLabel).includes(q)
+        || al.tracks.some(t => libNorm(t.artist).includes(q) || libNorm(t.title).includes(q)))
+      : libAlbums;
+    if (!list.length) {
+      const empty = document.createElement('div');
+      empty.className = 'lib-empty';
+      empty.textContent = libBusy ? 'reading your library\u2026'
+        : libAlbums.length ? 'nothing matches that search.'
+        : (S.libraryFolders && S.libraryFolders.length)
+          ? 'no audio found in your library folders.'
+          : 'no library folders yet \u2014 add one in settings \u203a audio, then reopen this window.';
+      grid.appendChild(empty);
+      return;
+    }
+    for (const al of list) {
+      const card = document.createElement('div');
+      card.className = 'lib-card';
+      card.tabIndex = 0;
+      const cover = document.createElement('div');
+      cover.className = 'lib-cover';
+      libPaintCover(cover, al.covers);
+      const play = document.createElement('button');
+      play.className = 'lib-play';
+      play.title = 'play this album now';
+      const playIcon = document.createElement('img');
+      playIcon.src = 'assets/buttons/play.png';
+      playIcon.alt = '';
+      play.appendChild(playIcon);
+      play.addEventListener('click', e => { e.stopPropagation(); libPlayAlbum(al, false); });
+      cover.appendChild(play);
+      const name = document.createElement('div');
+      name.className = 'lib-name';
+      name.textContent = al.album;
+      name.title = al.album;
+      const artist = document.createElement('div');
+      artist.className = 'lib-artist';
+      artist.textContent = al.artistLabel;
+      artist.title = al.artistLabel;
+      card.append(cover, name, artist);
+      card._album = al;
+      const open = () => libOpenAlbum(al);
+      card.addEventListener('click', open);
+      card.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+      });
+      grid.appendChild(card);
+    }
+  }
+  function libAlbumCountLabel() {
+    return libAlbums.length ? libAlbums.length + (libAlbums.length === 1 ? ' album' : ' albums') : '';
+  }
+  function libHeadButtons(show) {
+    $('libRescanBtn').classList.toggle('hidden', !show);
+    $('libManageBtn').classList.toggle('hidden', !show);
+  }
+  function libShowGrid() {
+    libCurAlbum = null;
+    closeLibFormatMenu();
+    libClearAlbumBg();
+    $('libAlbum').classList.add('hidden');
+    $('libGrid').classList.remove('hidden');
+    $('libSearch').classList.remove('hidden');
+    libHeadButtons(true);
+    $('libBackBtn').classList.add('hidden');
+    $('libBrowseTitle').textContent = 'library';
+  }
+  const LIB_ANIM_OUT = 120;
+  const LIB_ANIM_IN = 190;
+  let libAnimT = 0;
+  function libClearAnim() {
+    clearTimeout(libAnimT);
+    libAnimT = 0;
+    for (const el of [$('libGrid'), $('libAlbum')]) {
+      el.classList.remove('lib-anim-in-fwd', 'lib-anim-out-fwd', 'lib-anim-in-back', 'lib-anim-out-back');
+    }
+  }
+  // both panes live in the same slot, so the one leaving has to be gone before the
+  // one arriving shows up — otherwise they fight over the box height mid-slide
+  function libSwapPanes(dir, apply) {
+    const leaving = dir === 'fwd' ? $('libGrid') : $('libAlbum');
+    const entering = dir === 'fwd' ? $('libAlbum') : $('libGrid');
+    libClearAnim();
+    leaving.classList.add('lib-anim-out-' + dir);
+    libAnimT = setTimeout(() => {
+      leaving.classList.remove('lib-anim-out-' + dir);
+      apply();
+      entering.classList.add('lib-anim-in-' + dir);
+      libAnimT = setTimeout(() => entering.classList.remove('lib-anim-in-' + dir), LIB_ANIM_IN + 40);
+    }, LIB_ANIM_OUT);
+  }
+  // the icon ships black, so a dark accent needs it flipped and a pale one does not
+  function libIconInvert(hex) {
+    const m = /^#([0-9a-f]{6})$/i.exec(hex || '');
+    if (!m) return 'invert(1)';
+    const n = parseInt(m[1], 16);
+    const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b) > 150 ? 'none' : 'invert(1)';
+  }
+  function libLiftColor(hex) {
+    const m = /^#([0-9a-f]{6})$/i.exec(hex || '');
+    if (!m) return '';
+    const n = parseInt(m[1], 16);
+    let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    const max = Math.max(r, g, b);
+    // a near-black accent would disappear against the dialog, so it gets lifted
+    // rather than dropped: the hue is still the album's own
+    if (max > 0 && max < 140) {
+      const k = 140 / max;
+      r = Math.min(255, Math.round(r * k));
+      g = Math.min(255, Math.round(g * k));
+      b = Math.min(255, Math.round(b * k));
+    }
+    return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+  }
+  let libAccentToken = 0;
+  async function libSetAlbumAccent(al) {
+    const token = ++libAccentToken;
+    const btn = $('libAlbumPlay');
+    btn.style.removeProperty('--album-accent');
+    btn.style.removeProperty('--album-invert');
+    const key = al && al.covers && al.covers[0];
+    if (!key) return;
+    const url = await libThumbUrl(key);
+    if (!url || token !== libAccentToken) return;
+    let colors = null;
+    try { colors = await extractCoverColors(url); } catch (e) {}
+    if (!colors || token !== libAccentToken) return;
+    const accent = libLiftColor(colors.c1);
+    if (!accent) return;
+    btn.style.setProperty('--album-accent', accent);
+    btn.style.setProperty('--album-invert', libIconInvert(accent));
+  }
+  let libAlbumBgToken = 0;
+  function libSetAlbumBg(al) {
+    const token = ++libAlbumBgToken;
+    const cell = $('libAlbumBg').querySelector('i');
+    const key = al && al.covers && al.covers[0];
+    if (!key) {
+      // drop the previous album's image outright rather than just hiding it:
+      // libShowAlbumPane reveals whatever image is still sitting there
+      $('libAlbumBg').classList.remove('on');
+      cell.style.backgroundImage = '';
+      return;
+    }
+    libThumbUrl(key).then(url => {
+      if (token !== libAlbumBgToken || !url) return;
+      cell.style.backgroundImage = 'url("' + url + '")';
+      // only reveal it once the pane it belongs to is actually up
+      if (!$('libAlbum').classList.contains('hidden')) $('libAlbumBg').classList.add('on');
+    });
+  }
+  function libClearAlbumBg() {
+    libAlbumBgToken++;
+    $('libAlbumBg').classList.remove('on');
+  }
+  function libShowAlbumPane() {
+    $('libGrid').classList.add('hidden');
+    $('libSearch').classList.add('hidden');
+    libHeadButtons(false);
+    $('libAlbum').classList.remove('hidden');
+    $('libBackBtn').classList.remove('hidden');
+    $('libBrowseTitle').textContent = 'album';
+    $('libAlbum').scrollTop = 0;
+    if ($('libAlbumBg').querySelector('i').style.backgroundImage) $('libAlbumBg').classList.add('on');
+  }
+  function libBackToGrid() {
+    libSwapPanes('back', () => {
+      libShowGrid();
+      libRenderGrid();
+      libStatus(libAlbumCountLabel());
+    });
+  }
+  function libOpenAlbum(al) {
+    libCurAlbum = al;
+    libFillAlbum(al);
+    libSwapPanes('fwd', libShowAlbumPane);
+  }
+  function libFillAlbum(al) {
+    syncLibFormatSel(al);
+    libSetAlbumBg(al);
+    libSetAlbumAccent(al);
+    libPaintCover($('libAlbumCover'), al.covers);
+    $('libAlbumTitle').textContent = al.album;
+    $('libAlbumArtist').textContent = al.artistLabel;
+    const shown = libAlbumTracks(al);
+    $('libAlbumSub').textContent = shown.length + (shown.length === 1 ? ' track' : ' tracks')
+      + (al.discs > 1 ? ' \u00b7 ' + al.discs + ' discs' : '')
+      + (al.dur > 0 ? ' \u00b7 ' + fmt(al.dur) : '')
+      + (al.year ? ' \u00b7 ' + al.year : '');
+    libStatus('');
+    const box = $('libTracks');
+    box.innerHTML = '';
+    // only an album that really spans discs gets the prefix; every other one
+    // would just be wearing a pointless "1-"
+    const multiDisc = al.discs > 1;
+    box.classList.toggle('multi-disc', multiDisc);
+    libAlbumTracks(al).forEach((t, i) => {
+      const row = document.createElement('div');
+      row.className = 'lib-track';
+      row.tabIndex = 0;
+      row.title = 'play this track now';
+      const num = document.createElement('span');
+      num.className = 'lib-track-num';
+      num.textContent = multiDisc
+        ? (t.disc || 1) + '-' + String(t.track || (i + 1)).padStart(2, '0')
+        : (t.track || (i + 1));
+      const name = document.createElement('span');
+      name.className = 'lib-track-name';
+      name.textContent = t.title;
+      const who = document.createElement('span');
+      who.className = 'lib-track-artist';
+      who.textContent = t.artist;
+      who.title = t.artist;
+      const dur = document.createElement('span');
+      dur.className = 'lib-track-dur';
+      dur.textContent = t.dur > 0 ? fmt(t.dur) : '';
+      row.append(num, name, who, dur);
+      row._track = t;
+      const go = () => libPlayPaths([t.path], false);
+      row.addEventListener('click', go);
+      row.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
+      });
+      box.appendChild(row);
+    });
+  }
+  function libPlayAlbum(al, shuffle) { return libPlayPaths(libAlbumTracks(al).map(t => t.path), shuffle); }
+  async function libPlayPaths(paths, shuffle) {
+    if (libAdding || !paths.length || !window.winControls) return;
+    libAdding = true;
+    try {
+      let list = await filterDuplicatePaths(paths);
+      if (!list.length) { toast('everything was already in the playlist'); return; }
+      if (!(await confirmBigImport(list.length))) return;
+      if (shuffle) list = libShuffled(list);
+      const firstNewIdx = playlist.length;
+      let jumped = false;
+      await readPathsWithProgress(list, 'loading from library', async chunk => {
+        await appendToPlaylist(restoredToFiles(chunk), true);
+        // the first chunk is enough to start on: the rest streams in behind it
+        if (jumped) return;
+        jumped = true;
+        if (curIndex !== firstNewIdx) transitionTo(firstNewIdx);
+      });
+      if (!jumped) { toast('those files could not be read', { error: true }); return; }
+      closeLibBrowse();
+    } catch (e) {
+      toast('could not add those tracks', { error: true });
+    } finally {
+      libAdding = false;
+    }
+  }
+  async function libQueuePaths(paths) {
+    if (libAdding || !paths.length || !window.winControls) return;
+    libAdding = true;
+    try {
+      const list = await filterDuplicatePaths(paths);
+      if (!list.length) { toast('everything was already in the playlist'); return; }
+      if (!(await confirmBigImport(list.length))) return;
+      const added = [];
+      await readPathsWithProgress(list, 'loading from library', async chunk => {
+        const files = restoredToFiles(chunk);
+        added.push(...files);
+        await appendToPlaylist(files, true);
+      });
+      if (!added.length) { toast('those files could not be read', { error: true }); return; }
+      for (const f of added) if (!playNextQueue.includes(f)) playNextQueue.push(f);
+      renderPlaylistWindow(true);
+      updateNavButtons();
+      toast(added.length > 1 ? added.length + ' tracks will play next' : 'will play next');
+    } catch (e) {
+      toast('could not queue those tracks', { error: true });
+    } finally {
+      libAdding = false;
+    }
+  }
+  async function libOpenProps(t) {
+    if (!window.winControls) return;
+    // already queued: edit that entry so the playlist row follows the change
+    const idx = playlist.findIndex(f => f._path === t.path);
+    if (idx >= 0) { closeLibBrowse(); openProps(idx); return; }
+    let restored = [];
+    try { restored = await window.winControls.readSessionFiles([t.path]); } catch (e) {}
+    const files = restoredToFiles(restored);
+    if (!files.length) { toast('that file could not be read', { error: true }); return; }
+    closeLibBrowse();
+    openPropsFor(files[0]);
+  }
+  let libCtx = null;
+  function closeLibMenu() { $('libMenu').classList.add('hidden'); libCtx = null; }
+  function openLibMenu(e, ctx) {
+    e.preventDefault();
+    libCtx = ctx;
+    $('lmProps').classList.remove('hidden');
+    const paths = libCtxPaths();
+    $('lmFolder').classList.toggle('disabled', !(paths.length && window.winControls));
+    const menu = $('libMenu');
+    menu.classList.remove('hidden');
+    const mw = 190, mh = menu.offsetHeight || 120;
+    menu.style.left = Math.min(window.innerWidth - mw - 8, e.clientX) + 'px';
+    menu.style.bottom = 'auto';
+    menu.style.top = Math.min(window.innerHeight - mh - 8, e.clientY) + 'px';
+  }
+  function libCtxPaths() {
+    if (!libCtx) return [];
+    return libCtx.kind === 'track' ? [libCtx.track.path] : libAlbumTracks(libCtx.album).map(t => t.path);
+  }
+  let albumPropsAlbum = null;
+  let albumPropsBusy = false;
+  let albumPics = [];
+  let albumPicSel = -1;
+  let albumArtDirty = false;
+  function setAlbumPropsTab(name) {
+    $('albumPropsTabs').querySelectorAll('button[data-atab]').forEach(b => b.classList.toggle('on', b.dataset.atab === name));
+    $('albumPropsOverlay').querySelectorAll('.props-pane').forEach(p => p.classList.toggle('hidden', p.dataset.atab !== name));
+  }
+  $('albumPropsTabs').querySelectorAll('button[data-atab]').forEach(b => {
+    b.addEventListener('click', () => setAlbumPropsTab(b.dataset.atab));
+  });
+  function albumTrackArtists(al) {
+    return new Set((al.tracks || []).map(t => t.artist).filter(Boolean));
+  }
+  function albumPropsBase(al) {
+    const perTrack = albumTrackArtists(al);
+    return {
+      album: al.album === 'unknown album' ? '' : al.album,
+      artist: al.albumArtistRaw || (al.artists.size === 1 ? [...al.artists][0] : ''),
+      // blank when the tracks disagree, so leaving it alone cannot flatten a
+      // compilation into one name by accident
+      trackArtist: perTrack.size === 1 ? [...perTrack][0] : '',
+      year: al.year || '',
+    };
+  }
+  function syncAlbumPropsHead() {
+    const al = albumPropsAlbum;
+    if (!al) return;
+    $('albumPropHeadTitle').textContent = $('albumPropName').value || al.album;
+    $('albumPropHeadArtist').textContent = $('albumPropArtist').value || al.artistLabel;
+    $('albumPropHeadCount').textContent = al.tracks.length + (al.tracks.length === 1 ? ' track' : ' tracks')
+      + (al.discs > 1 ? ' \u00b7 ' + al.discs + ' discs' : '');
+    const box = $('albumPropCover');
+    if (albumPics.length) {
+      box.classList.remove('empty', 'split-2', 'split-3', 'split-4');
+      box.innerHTML = '';
+      const cell = document.createElement('i');
+      cell.style.backgroundImage = 'url("' + albumPics[0].url + '")';
+      box.appendChild(cell);
+    } else libPaintCover(box, al.covers);
+  }
+  function releaseAlbumPics() {
+    for (const p of albumPics) if (p.owned) { try { URL.revokeObjectURL(p.url); } catch (e) {} }
+    albumPics = [];
+    albumPicSel = -1;
+  }
+  // a shorter cousin of renderPropsArt: same cells and same css, but this grid
+  // stands for the whole album rather than one file
+  function renderAlbumArt() {
+    const grid = $('albumArtGrid');
+    grid.innerHTML = '';
+    if (!albumPics.length) {
+      const empty = document.createElement('div');
+      empty.className = 'props-art-empty';
+      empty.textContent = 'no artwork on this album yet.';
+      grid.appendChild(empty);
+    }
+    albumPics.forEach((p, i) => {
+      const cell = document.createElement('div');
+      cell.className = 'props-art-cell' + (i === albumPicSel ? ' on' : '');
+      cell.tabIndex = 0;
+      const thumb = document.createElement('div');
+      thumb.className = 'props-art-thumb';
+      thumb.style.backgroundImage = 'url("' + p.url + '")';
+      const meta = document.createElement('div');
+      meta.className = 'props-art-meta';
+      meta.textContent = (p.mime || '').replace('image/', '') + ' \u00b7 ' + Math.round((p.bytes || 0) / 1024) + ' kb';
+      const role = document.createElement('select');
+      role.className = 'props-art-role';
+      role.title = 'what this image is';
+      PIC_ROLES.forEach((label, t) => {
+        const opt = document.createElement('option');
+        opt.value = String(t);
+        opt.textContent = label;
+        role.appendChild(opt);
+      });
+      role.value = String(typeof p.type === 'number' && PIC_ROLES[p.type] ? p.type : (i === 0 ? 3 : 0));
+      p.type = Number(role.value);
+      role.addEventListener('click', e => e.stopPropagation());
+      role.addEventListener('change', () => { p.type = Number(role.value); albumArtDirty = true; });
+      cell.append(thumb, meta, role);
+      const pick = () => {
+        albumPicSel = i;
+        renderAlbumArt();
+        $('albumArtRemoveBtn').disabled = false;
+      };
+      cell.addEventListener('click', pick);
+      cell.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); }
+      });
+      grid.appendChild(cell);
+    });
+    $('albumArtRemoveBtn').disabled = albumPicSel < 0 || !albumPics.length;
+    $('albumArtNote').textContent = albumPics.length
+      ? 'saving replaces the artwork of every track in this album with this set.'
+      : 'add an image, or pull one in from discogs / musicbrainz.';
+  }
+  // the album's artwork is whatever its first track carries, which is also what
+  // the grid outside is already showing
+  async function loadAlbumArt(al) {
+    releaseAlbumPics();
+    albumArtDirty = false;
+    renderAlbumArt();
+    const first = al.tracks[0];
+    if (!first || !window.winControls) return;
+    let restored = [];
+    try { restored = await window.winControls.readFilePrefixes([first.path], 1048576); } catch (e) {}
+    if (albumPropsAlbum !== al || !restored || !restored[0]) return;
+    let tags = null;
+    try {
+      const file = new File([restored[0].data], libBaseName(first.path));
+      tags = await readTags(file);
+    } catch (e) {}
+    if (albumPropsAlbum !== al) { releaseTagPictures(tags); return; }
+    // every url readTags minted is taken over here, so none of them is released:
+    // releaseTagPictures would revoke tags.cover, which is the front picture
+    albumPics = (tags && tags.pictures || []).map(p => Object.assign({}, p, { owned: true }));
+    albumPicSel = albumPics.length ? 0 : -1;
+    renderAlbumArt();
+    syncAlbumPropsHead();
+  }
+  function openAlbumProps(al) {
+    if (!al) return;
+    albumPropsAlbum = al;
+    const base = albumPropsBase(al);
+    $('albumPropName').value = base.album;
+    $('albumPropTrackArtist').value = base.trackArtist;
+    $('albumPropArtist').value = base.artist;
+    $('albumPropYear').value = base.year;
+    const perTrack = albumTrackArtists(al);
+    $('albumPropTrackArtist').placeholder = perTrack.size > 1
+      ? perTrack.size + ' different artists \u2014 typing here overwrites them all'
+      : '';
+    $('albumPropStatus').textContent = '';
+    $('albumPropNote').textContent = 'whatever you change here is written into all '
+      + al.tracks.length + ' track' + (al.tracks.length === 1 ? '' : 's') + ' of this album. '
+      + 'each track keeps its own title and number.';
+    $('albumPropSave').disabled = false;
+    setAlbumPropsTab('infos');
+    releaseAlbumPics();
+    albumArtDirty = false;
+    renderAlbumArt();
+    syncAlbumPropsHead();
+    $('albumPropsOverlay').classList.remove('hidden');
+    $('albumPropName').focus();
+    loadAlbumArt(al);
+  }
+  function closeAlbumProps() {
+    $('albumPropsOverlay').classList.add('hidden');
+    releaseAlbumPics();
+    albumArtDirty = false;
+    albumPropsAlbum = null;
+  }
+  async function saveAlbumProps() {
+    const al = albumPropsAlbum;
+    if (!al || albumPropsBusy || !window.winControls) return;
+    const base = albumPropsBase(al);
+    const tags = {};
+    const name = $('albumPropName').value.trim();
+    const artist = $('albumPropArtist').value.trim();
+    const trackArtist = $('albumPropTrackArtist').value.trim();
+    const year = $('albumPropYear').value.trim();
+    if (name !== base.album) tags.album = name;
+    if (artist !== base.artist) tags.albumArtist = artist;
+    if (trackArtist !== base.trackArtist) tags.artist = trackArtist;
+    if (year !== base.year) tags.year = year;
+    let pics = null;
+    if (albumArtDirty) {
+      pics = [];
+      for (const p of albumPics) {
+        try {
+          const blob = p.blob || await fetch(p.url).then(r => r.blob());
+          pics.push({
+            data: await blob.arrayBuffer(), mime: blob.type || p.mime || 'image/jpeg',
+            desc: p.desc || '', type: typeof p.type === 'number' ? p.type : (pics.length ? 0 : 3),
+          });
+        } catch (e) {}
+      }
+    }
+    if (!Object.keys(tags).length && !pics) { toast('nothing changed'); return; }
+    albumPropsBusy = true;
+    $('albumPropSave').disabled = true;
+    const paths = al.tracks.map(t => t.path);
+    // windows keeps the playing file locked, so it has to let go before ffmpeg
+    // can rewrite it in place — same dance the single-track dialog does
+    const curFile = playlist[curIndex];
+    const curPath = curFile && curFile._path;
+    const touchesCurrent = !!curPath && paths.indexOf(curPath) >= 0;
+    const restore = { pos: audio.currentTime, wasPlaying: playing };
+    if (touchesCurrent) {
+      audio.pause(); setPlay(false);
+      audio.removeAttribute('src'); audio.load();
+      await new Promise(res => setTimeout(res, 120));
+    }
+    let done = 0, failed = 0;
+    for (let i = 0; i < paths.length; i++) {
+      $('albumPropStatus').textContent = 'writing ' + (i + 1) + ' / ' + paths.length + '\u2026';
+      const payload = { path: paths[i], name: libBaseName(paths[i]), tags: Object.assign({}, tags) };
+      if (pics) payload.tags.pictures = pics;
+      let out = null;
+      try { out = await window.winControls.writeFileTags(payload); } catch (e) { out = { error: e && e.message }; }
+      if (out && out.ok) done++; else failed++;
+    }
+    // the cached tags have to follow, or the next scan would show the old album
+    let coverKey = '';
+    const front = pics && (albumPics.find(p => p.type === 3) || albumPics[0]);
+    if (front) { try { coverKey = await libStoreThumb(front.url); } catch (e) {} }
+    for (const t of al.tracks) {
+      const rec = libraryTagCache && libraryTagCache[t.path];
+      if (!rec) continue;
+      if (tags.album !== undefined) rec.album = tags.album;
+      if (tags.albumArtist !== undefined) rec.albumArtist = tags.albumArtist;
+      if (tags.artist !== undefined) rec.artist = tags.artist;
+      if (tags.year !== undefined) rec.year = tags.year;
+      if (pics) rec.cover = coverKey;
+    }
+    saveLibraryTagCacheDebounced();
+    // anything from this album already in the playlist is holding stale bytes
+    const affected = [];
+    playlist.forEach((f, i) => { if (f._path && paths.indexOf(f._path) >= 0) affected.push(i); });
+    if (affected.length) {
+      let restored = [];
+      try { restored = await window.winControls.readSessionFiles(affected.map(i => playlist[i]._path)); } catch (e) {}
+      for (const r of restored || []) {
+        const idx = playlist.findIndex(f => f._path === r.path);
+        if (idx < 0) continue;
+        const nf = new File([r.data], r.name, { type: r.mime });
+        nf._path = r.path;
+        playlist[idx] = nf;
+      }
+      renderPlaylist();
+    }
+    if (touchesCurrent) {
+      resumePos = restore.pos;
+      await loadCurrent();
+      if (!restore.wasPlaying) {
+        audio.addEventListener('canplay', () => { audio.pause(); setPlay(false); }, { once: true });
+      }
+    }
+    albumPropsBusy = false;
+    closeAlbumProps();
+    toast(failed ? done + ' written, ' + failed + ' failed' : 'album updated \u2713',
+      failed ? { error: true, duration: 6000 } : {});
+    // the grouping key itself may have moved, so the index is rebuilt from scratch
+    libAlbums = [];
+    libAlbumsStamp = '';
+    if (!$('libBrowseOverlay').classList.contains('hidden')) {
+      libShowGrid();
+      await openLibBrowse();
+    }
+  }
+  $('albumArtAddBtn').addEventListener('click', () => $('albumArtInput').click());
+  $('albumArtInput').addEventListener('change', e => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    for (const file of files) {
+      const blob = file.slice(0, file.size, file.type || 'image/jpeg');
+      albumPics.push({
+        url: URL.createObjectURL(blob), owned: true, blob: blob,
+        mime: file.type || 'image/jpeg', desc: file.name.replace(/[.][^.]+$/, ''),
+        type: albumPics.length === 0 ? 3 : 0, bytes: file.size,
+      });
+    }
+    if (!files.length) return;
+    albumArtDirty = true;
+    albumPicSel = albumPics.length - 1;
+    renderAlbumArt();
+    syncAlbumPropsHead();
+  });
+  $('albumArtRemoveBtn').addEventListener('click', () => {
+    if (albumPicSel < 0) return;
+    const [gone] = albumPics.splice(albumPicSel, 1);
+    if (gone && gone.owned) { try { URL.revokeObjectURL(gone.url); } catch (e) {} }
+    albumPicSel = Math.min(albumPicSel, albumPics.length - 1);
+    albumArtDirty = true;
+    renderAlbumArt();
+    syncAlbumPropsHead();
+  });
+  $('albumMetaBtn').addEventListener('click', () => {
+    if (!albumPropsAlbum) return;
+    metaTarget = 'album';
+    const seed = [$('albumPropArtist').value.trim(), $('albumPropName').value.trim()].filter(Boolean).join(' ');
+    $('propMetaQuery').value = seed || albumPropsAlbum.album;
+    $('metaOverlay').classList.remove('hidden');
+    runMetaSearch();
+  });
+  $('albumPropName').addEventListener('input', syncAlbumPropsHead);
+  $('albumPropArtist').addEventListener('input', syncAlbumPropsHead);
+  $('albumPropCancel').addEventListener('click', () => { if (!albumPropsBusy) closeAlbumProps(); });
+  $('albumPropSave').addEventListener('click', saveAlbumProps);
+  $('albumPropsOverlay').addEventListener('click', e => {
+    if (e.target === $('albumPropsOverlay') && !albumPropsBusy) closeAlbumProps();
+  });
+  async function openLibBrowse() {
+    $('libBrowseOverlay').classList.remove('hidden');
+    $('libSearch').value = '';
+    libShowGrid();
+    if (libBusy) return;
+    const stamp = libFoldersStamp();
+    if (libAlbums.length && stamp === libAlbumsStamp) {
+      libRenderGrid();
+      libStatus(libAlbumCountLabel());
+      return;
+    }
+    libBusy = true;
+    $('libRescanBtn').disabled = true;
+    libRenderGrid();
+    try {
+      libAlbums = await libBuildAlbums(libStatus);
+      libAlbumsStamp = stamp;
+    } catch (e) {
+      libAlbums = [];
+      libAlbumsStamp = '';
+    }
+    libBusy = false;
+    $('libRescanBtn').disabled = false;
+    if (libCurAlbum) return;
+    libRenderGrid();
+    libStatus(libAlbumCountLabel());
+  }
+  function closeLibBrowse() {
+    libClearAnim();
+    closeLibMenu();
+    closeLibFormatMenu();
+    libClearAlbumBg();
+    $('libAlbumBg').querySelector('i').style.backgroundImage = '';
+    $('libBrowseOverlay').classList.add('hidden');
+    $('libGrid').innerHTML = '';
+    libPaintCover($('libAlbumCover'), []);
+    libReleaseThumbUrls();
+    libCurAlbum = null;
+  }
+  $('plLibraryItem').addEventListener('click', () => { closePlMenus(); openLibBrowse(); });
+  $('libCloseBtn').addEventListener('click', closeLibBrowse);
+  $('libBrowseOverlay').addEventListener('click', e => { if (e.target === $('libBrowseOverlay')) closeLibBrowse(); });
+  $('libBackBtn').addEventListener('click', libBackToGrid);
+  $('libRescanBtn').addEventListener('click', async () => {
+    if (libBusy) return;
+    // this is the one action here that re-reads every byte it can find, so it
+    // says how much that is before starting rather than just going quiet
+    const known = libAlbums.reduce((n, al) => n + al.tracks.length, 0);
+    const ok = await confirmDialog(
+      known
+        ? 'rescanning re-reads the tags of all ' + known + ' tracks in your library folders. '
+          + 'on a big collection that can take several minutes. continue?'
+        : 'rescanning re-reads the tags of every file in your library folders. '
+          + 'on a big collection that can take several minutes. continue?',
+      'rescan', 'cancel');
+    if (!ok || libBusy) return;
+    libForceRescan = true;
+    libAlbums = [];
+    libAlbumsStamp = '';
+    libShowGrid();
+    await openLibBrowse();
+    toast('library rescanned');
+  });
+  let libManageStamp = '';
+  $('dropLibraryBtn').addEventListener('click', () => openLibBrowse());
+  $('libManageBtn').addEventListener('click', () => {
+    libManageStamp = libFoldersStamp();
+    syncLibraryFolderList();
+    $('libraryOverlay').classList.remove('hidden');
+  });
+  // folders added or dropped while the browser is open have to land right away
+  async function libFoldersDialogClosed() {
+    if ($('libBrowseOverlay').classList.contains('hidden')) return;
+    if (libFoldersStamp() === libManageStamp || libBusy) return;
+    libAlbums = [];
+    libAlbumsStamp = '';
+    libShowGrid();
+    await openLibBrowse();
+  }
+  $('libFormatBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    $('libFormatMenu').classList.toggle('hidden');
+  });
+  window.addEventListener('mousedown', e => {
+    if (!e.target.closest('#libFormatWrap')) closeLibFormatMenu();
+  });
+  $('libSearch').addEventListener('input', libRenderGrid);
+  $('libSearch').addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    e.stopPropagation();
+    if ($('libSearch').value) { $('libSearch').value = ''; libRenderGrid(); }
+    else closeLibBrowse();
+  });
+  $('libGrid').addEventListener('contextmenu', e => {
+    const card = e.target.closest('.lib-card');
+    if (!card || !card._album) return;
+    openLibMenu(e, { kind: 'album', album: card._album });
+  });
+  $('libTracks').addEventListener('contextmenu', e => {
+    const row = e.target.closest('.lib-track');
+    if (!row || !row._track) return;
+    openLibMenu(e, { kind: 'track', track: row._track });
+  });
+  window.addEventListener('mousedown', e => {
+    if (!e.target.closest('#libMenu')) closeLibMenu();
+  });
+  $('libGrid').addEventListener('scroll', closeLibMenu);
+  $('libAlbum').addEventListener('scroll', closeLibMenu);
+  $('lmPlay').addEventListener('click', () => {
+    const ctx = libCtx;
+    closeLibMenu();
+    if (!ctx) return;
+    if (ctx.kind === 'album') libPlayAlbum(ctx.album, false);
+    else libPlayPaths([ctx.track.path], false);
+  });
+  $('lmAfter').addEventListener('click', () => {
+    const paths = libCtxPaths();
+    closeLibMenu();
+    libQueuePaths(paths);
+  });
+  $('lmProps').addEventListener('click', () => {
+    const ctx = libCtx;
+    closeLibMenu();
+    if (!ctx) return;
+    if (ctx.kind === 'track') libOpenProps(ctx.track);
+    else openAlbumProps(ctx.album);
+  });
+  $('libAlbumEdit').addEventListener('click', () => { if (libCurAlbum) openAlbumProps(libCurAlbum); });
+  $('lmFolder').addEventListener('click', () => {
+    const paths = libCtxPaths();
+    closeLibMenu();
+    if (paths.length && window.winControls) window.winControls.showInFolder(paths[0]);
+  });
+  $('libAlbumPlay').addEventListener('click', () => { if (libCurAlbum) libPlayAlbum(libCurAlbum, false); });
+  $('libAlbumShuffle').addEventListener('click', () => { if (libCurAlbum) libPlayAlbum(libCurAlbum, true); });
+
   function syncSoundfontUI() {
     $('soundfontName').textContent = S.soundfontName || 'none loaded';
     $('soundfontClearBtn').classList.toggle('hidden', !S.soundfontName);
@@ -9357,14 +10946,28 @@
     else if (e.key === 'Escape') {
       if (!$('metaOverlay').classList.contains('hidden')) closeMetaPicker();
       else if (!$('confirmOverlay').classList.contains('hidden')) closeConfirmDialog(false);
+      else if (!$('albumPropsOverlay').classList.contains('hidden')) { if (!albumPropsBusy) closeAlbumProps(); }
+      else if (!$('libFormatMenu').classList.contains('hidden')) closeLibFormatMenu();
+      else if (!$('libMenu').classList.contains('hidden')) closeLibMenu();
+      else if (!$('libraryOverlay').classList.contains('hidden')) {
+        $('libraryOverlay').classList.add('hidden');
+        libFoldersDialogClosed();
+      }
+      else if (!$('libBrowseOverlay').classList.contains('hidden')) {
+        if (libCurAlbum) libBackToGrid();
+        else closeLibBrowse();
+      }
       else if (!$('plsOverlay').classList.contains('hidden')) $('plsOverlay').classList.add('hidden');
       else if (!$('statsOverlay').classList.contains('hidden')) $('statsOverlay').classList.add('hidden');
       else if (!$('recentOverlay').classList.contains('hidden')) $('recentOverlay').classList.add('hidden');
-      else if (!$('libraryOverlay').classList.contains('hidden')) $('libraryOverlay').classList.add('hidden');
       else if (!$('lyricsSearchOverlay').classList.contains('hidden')) closeLyricsSearchOverlay();
       else if (!$('lyricsUrlOverlay').classList.contains('hidden')) closeLyricsUrlOverlay();
       else if (!$('helpOverlay').classList.contains('hidden')) $('helpOverlay').classList.add('hidden');
       else if (miniOn) setMiniMode(false);
+    }
+    else if (e.metaKey && e.key === ',' && document.body.classList.contains('is-mac')) {
+      e.preventDefault();
+      $('gearBtn').click();
     }
     else if (e.key === '?' && !typing) { e.preventDefault(); $('helpOverlay').classList.toggle('hidden'); }
     else if ((e.key === 'ArrowRight' || e.key === 'ArrowLeft') && !typing) {
@@ -9390,14 +10993,48 @@
   $('helpOverlay').addEventListener('click', () => $('helpOverlay').classList.add('hidden'));
 
   if (window.winControls) {
+    const isMac = window.winControls.platform === 'darwin';
+    const nativeButtons = !!window.winControls.nativeWindowButtons;
+    document.body.classList.toggle('is-mac', isMac);
+    // repli : pastilles dessinees en css si le systeme ne fournit pas les siennes
+    document.body.classList.toggle('css-traffic', isMac && !nativeButtons);
+    if (isMac) {
+      // symboles habituels de macOS a la place des noms de touches windows
+      const key = (sel, txt) => {
+        const el = document.querySelector(sel);
+        if (!el) return;
+        el.textContent = txt;
+        el.classList.add('k-sym');
+      };
+      key('.k-alt-d', '\u2325D');
+      key('.k-alt-shift-d', '\u21e7\u2325D');
+      key('.k-esc', '\u238b');
+    }
+    if (isMac && !nativeButtons) {
+      $('tlClose').addEventListener('click', () => window.winControls.close());
+      $('tlMin').addEventListener('click', () => window.winControls.minimize());
+      $('tlZoom').addEventListener('click', () => window.winControls.maximize());
+      window.addEventListener('blur', () => document.body.classList.add('win-blur'));
+      window.addEventListener('focus', () => document.body.classList.remove('win-blur'));
+    }
     $('minBtn').addEventListener('click', () => window.winControls.minimize());
     $('maxBtn').addEventListener('click', () => window.winControls.maximize());
     $('closeBtn').addEventListener('click', () => window.winControls.close());
     window.winControls.onMaximizedChange(isMax => document.body.classList.toggle('maximized', isMax));
+    if (window.winControls.onFullScreenChange) {
+      window.winControls.onFullScreenChange(on => {
+        // borderless couvre deja l'ecran sans plein ecran natif : on n'y touche pas
+        if (!on && S.displayMode === 'borderless') return;
+        const mode = on ? 'fullscreen' : 'windowed';
+        if (S.displayMode === mode) return;
+        applyDisplayMode(mode); syncUI(); save();
+      });
+    }
     window.winControls.setAlwaysOnTop(S.alwaysOnTop);
     applyDisplayMode(S.displayMode);
   } else {
     $('wincontrols').style.display = 'none';
+    $('macTraffic').style.display = 'none';
   }
   $('closeAppBtn').addEventListener('click', () => { if (window.winControls) window.winControls.close(); });
 
