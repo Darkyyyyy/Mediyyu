@@ -710,6 +710,8 @@
     font-family: var(--ui); font-size: 12px; padding: 5px 8px; max-width: 175px; cursor: pointer;
   }
   .row select option { background: #17181c; color: var(--txt); }
+  /* device names run long, and a truncated one is no use for telling two apart */
+  .row select#audioOutSel { max-width: 250px; }
 
   .seg { display: flex; background: rgba(255,255,255,.06); border-radius: 10px; padding: 3px; gap: 3px; }
   .seg button {
@@ -825,6 +827,10 @@
   .patchnotes-content ul { margin: 6px 0; padding-left: 20px; }
   .patchnotes-content li { margin: 4px 0; }
   .patchnotes-content p { margin: 8px 0; }
+  .patchnotes-content img.md-img {
+    display: block; max-width: 100%; height: auto; margin: 10px auto;
+    border-radius: 10px; border: 1px solid var(--line);
+  }
   .patchnotes-content a { color: #8ecbff; }
   .patchnotes-content code { background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 4px; font-family: var(--mono); font-size: 12px; }
   .sec-head { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); margin: 0 0 10px; }
@@ -938,6 +944,10 @@
     padding: 9px 11px; border-radius: 8px; position: relative; box-sizing: border-box;
   }
   .menu-item:hover { background: rgba(255,255,255,.1); }
+  /* menu labels inherit a centred text-align from the page. it stays invisible
+     while a label fits on one line, because the span shrinks to its text, and
+     only shows up as a stray indent once one wraps. */
+  .more-menu .menu-item span { text-align: left; }
   .menu-item.has-sub::after { content: '▸'; color: var(--dim); font-size: 12px; margin-left: -4px; }
   .menu-side { font-size: 12px; color: var(--dim); margin-left: auto; }
   .menu-icon { width: 20px; height: 20px; object-fit: contain; opacity: .75; flex: 0 0 auto; display: block; }
@@ -1660,6 +1670,226 @@
   .lib-grid::-webkit-scrollbar-thumb, .lib-album::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 7px; }
   .lib-card:focus-visible, .lib-track:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 
+  .lib-box {
+    position: relative;
+    width: min(920px, 94vw);
+    /* fixed rather than content-driven: the box used to resize between the grid
+       and every album it opened, which turned the slide into a jump */
+    height: min(660px, calc(100vh - 56px));
+    padding: 16px 18px 18px; display: flex; flex-direction: column; overflow: hidden;
+  }
+  /* z-index -1 paints it above the box's own background but under everything in
+     it, the same trick .pl-bg uses on a playlist row */
+  .lib-album-bg {
+    position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+    opacity: 0; transition: opacity .3s ease;
+    -webkit-mask-image: linear-gradient(to right, #000 0, rgba(0,0,0,.5) 38%, transparent 82%);
+    mask-image: linear-gradient(to right, #000 0, rgba(0,0,0,.5) 38%, transparent 82%);
+  }
+  .lib-album-bg.on { opacity: .55; }
+  /* the inner layer overflows the box so the blur fades out off screen instead
+     of going see-through at the edges */
+  .lib-album-bg i {
+    position: absolute; inset: -14%;
+    background-size: cover; background-position: center;
+    filter: blur(42px) saturate(1.3);
+  }
+  .lib-head { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .lib-head .help-title { margin: 0; flex: 0 0 auto; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lib-back, .lib-close {
+    flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; padding: 0; cursor: pointer;
+    border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--txt); line-height: 1;
+  }
+  .lib-back { font-size: 15px; }
+  .lib-close { font-size: 11px; margin-left: auto; }
+  .lib-back:hover, .lib-close:hover { background: rgba(255,255,255,.2); }
+  .lib-back.hidden, .lib-grid.hidden, .lib-album.hidden, #libSearch.hidden, .lib-head-btn.hidden { display: none; }
+  .lib-head-btn {
+    flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--txt);
+    cursor: pointer; font-family: var(--ui); font-size: 11.5px; white-space: nowrap;
+    border-radius: 8px; padding: 6px 10px; transition: background .13s ease;
+  }
+  /* the icon ships black, like the rest of them */
+  .lib-head-btn img { width: 12px; height: 12px; display: block; filter: invert(1); opacity: .85; }
+  /* a native select draws its list with the os, which ignores every colour in
+     this app, so the menu is built the same way the ••• menus are */
+  .lib-fmt { position: relative; flex: 0 0 auto; margin-left: auto; }
+  .lib-fmt.hidden { display: none; }
+  .lib-fmt-btn {
+    display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+    border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--txt);
+    font-family: var(--ui); font-size: 11.5px; border-radius: 9px; padding: 7px 11px;
+    transition: background .13s ease;
+  }
+  .lib-fmt-btn:hover { background: rgba(255,255,255,.18); }
+  .lib-fmt-btn i {
+    width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent;
+    border-top: 5px solid rgba(255,255,255,.6);
+  }
+  .lib-fmt-menu {
+    position: absolute; right: 0; bottom: calc(100% + 6px); z-index: 30; min-width: 100%; padding: 6px;
+    background-color: rgba(18,19,22,.97);
+    border: 1px solid rgba(255,255,255,.14); border-radius: 11px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.55);
+    opacity: 1; transform: scale(1); transition: opacity .13s ease, transform .13s ease;
+  }
+  .lib-fmt-menu.hidden { opacity: 0; transform: scale(.96); pointer-events: none; }
+  .lib-fmt-opt {
+    display: flex; align-items: center; gap: 8px; width: 100%; white-space: nowrap;
+    border: 0; background: none; color: rgba(255,255,255,.88); cursor: pointer;
+    font-family: var(--ui); font-size: 12px; padding: 7px 10px; border-radius: 7px;
+  }
+  .lib-fmt-opt:hover { background: rgba(255,255,255,.1); }
+  .lib-fmt-opt.on { background: rgba(255,255,255,.14); color: #fff; font-weight: 600; }
+  .lib-head-btn.icon-only { padding: 0; width: 30px; height: 30px; border-radius: 50%; }
+  /* the glyph is already white, so the invert the other header icons need
+     would turn it black */
+  #libFavFilter img { filter: none; opacity: .85; }
+  #libFavFilter.on img { opacity: 1; }
+  .lib-head-btn.on, .lib-head-btn.on:hover { background: rgba(255,90,120,.3); border-color: rgba(255,120,150,.55); color: #ffd8e0; }
+  .lib-head-btn.icon-only img { width: 14px; height: 14px; opacity: .9; }
+  @keyframes lib-spin { to { transform: rotate(360deg); } }
+  /* the button is only disabled while a scan runs, which is exactly when the
+     icon should say something is happening */
+  .lib-head-btn:disabled img { animation: lib-spin 1.1s linear infinite; }
+  .lib-head-btn:hover { background: rgba(255,255,255,.18); }
+  .lib-head-btn:disabled { opacity: .4; cursor: default; background: rgba(255,255,255,.08); }
+  @keyframes lib-in-fwd { from { opacity: 0; transform: translateX(16px) scale(.985); } to { opacity: 1; transform: none; } }
+  @keyframes lib-out-fwd { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(-16px) scale(.985); } }
+  @keyframes lib-in-back { from { opacity: 0; transform: translateX(-16px) scale(.985); } to { opacity: 1; transform: none; } }
+  @keyframes lib-out-back { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(16px) scale(.985); } }
+  .lib-anim-in-fwd { animation: lib-in-fwd .19s ease both; }
+  .lib-anim-out-fwd { animation: lib-out-fwd .12s ease both; }
+  .lib-anim-in-back { animation: lib-in-back .19s ease both; }
+  .lib-anim-out-back { animation: lib-out-back .12s ease both; }
+  #libSearch {
+    flex: 1 1 auto; min-width: 0; border: 1px solid var(--line); border-radius: 8px; outline: none;
+    background: rgba(255,255,255,.05); color: var(--txt); font-family: var(--ui); font-size: 12px; padding: 6px 10px;
+  }
+  #libSearch:focus { border-color: rgba(255,255,255,.3); }
+  .lib-status { font-family: var(--mono); font-size: 10.5px; color: var(--dim); min-height: 13px; margin-bottom: 8px; }
+  .lib-grid {
+    flex: 1 1 auto; min-height: 120px; overflow-y: auto; align-content: start;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(134px, 1fr)); gap: 15px 13px; padding: 2px 4px 4px 2px;
+  }
+  .lib-card { display: flex; flex-direction: column; gap: 7px; min-width: 0; cursor: pointer; }
+  .lib-cover {
+    position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--line); background: rgba(255,255,255,.05);
+    display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr; gap: 1px;
+  }
+  .lib-cover.split-2 { grid-template-columns: 1fr 1fr; }
+  .lib-cover.split-3, .lib-cover.split-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+  .lib-cover.split-3 i:first-child { grid-row: span 2; }
+  .lib-cover i { display: block; min-width: 0; min-height: 0; background: #0d0e11 center/cover no-repeat; }
+  .lib-cover.empty::after {
+    content: ''; position: absolute; inset: 0; opacity: .32;
+    background: url('assets/logo.png') center / 46% auto no-repeat;
+  }
+  .lib-card:hover .lib-cover { border-color: rgba(255,255,255,.34); }
+  /* a favorited album wears its heart at all times; the rest only show the
+     button to press while the card is under the cursor */
+  .lib-fav {
+    position: absolute; left: 7px; top: 7px; width: 26px; height: 26px; border-radius: 50%; padding: 0;
+    border: 0; background: rgba(16,17,20,.72); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity .13s ease, background .13s ease;
+  }
+  .lib-fav img { width: 12px; height: 12px; display: block; opacity: .75; }
+  .lib-card:hover .lib-fav, .lib-fav:focus-visible, .lib-fav.on, .lib-fav.has { opacity: 1; }
+  /* liked outright, against merely holding a liked track */
+  .lib-fav.on { background: rgba(255,90,120,.9); }
+  .lib-fav.has { background: rgba(16,17,20,.82); box-shadow: inset 0 0 0 1.5px rgba(255,90,120,.9); }
+  .lib-fav.on img, .lib-fav.has img { opacity: 1; }
+  .lib-fav:hover { background: rgba(16,17,20,.95); }
+  .lib-fav.on:hover { background: rgba(255,90,120,1); }
+  .lib-play {
+    position: absolute; right: 8px; bottom: 8px; width: 34px; height: 34px; border-radius: 50%; padding: 0;
+    border: 0; background: rgba(16,17,20,.86); color: #fff; cursor: pointer; font-size: 12px;
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(0,0,0,.55);
+    opacity: 0; transform: translateY(6px) scale(.92);
+    transition: opacity .13s ease, transform .13s ease, background .13s ease, color .13s ease;
+  }
+  .lib-card:hover .lib-play, .lib-play:focus-visible { opacity: 1; transform: none; }
+  .lib-play:hover { background: #fff; }
+  /* the icon is black, so it is flipped over the dark pill and left alone once
+     the pill turns white underneath it */
+  .lib-play img { width: 13px; height: 13px; display: block; margin-left: 2px; filter: invert(1); }
+  .lib-play:hover img { filter: none; }
+  .lib-name {
+    font-size: 12px; line-height: 1.25; overflow: hidden;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  }
+  .lib-artist { font-size: 10.5px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lib-empty { grid-column: 1 / -1; padding: 26px 14px; text-align: center; color: var(--dim); font-size: 12px; line-height: 1.5; }
+  .lib-album { flex: 1 1 auto; overflow-y: auto; padding-right: 4px; }
+  .lib-album-head { display: flex; gap: 16px; margin-bottom: 14px; }
+  .lib-album-cover { flex: 0 0 152px; width: 152px; }
+  .lib-album-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+  .lib-album-title { font-size: 17px; font-weight: 600; line-height: 1.25; }
+  .lib-album-artist { font-size: 12.5px; color: rgba(255,255,255,.75); }
+  .lib-album-sub { font-family: var(--mono); font-size: 10.5px; color: var(--dim); }
+  .lib-album-btns { display: flex; gap: 10px; align-items: center; margin-top: auto; padding-top: 12px; }
+  .lib-act {
+    flex: 0 0 auto; display: flex; align-items: center; justify-content: center; padding: 0;
+    width: 38px; height: 38px; border-radius: 50%; cursor: pointer;
+    border: 1px solid var(--line); background: rgba(255,255,255,.1); color: var(--txt);
+    transition: background .14s ease, transform .14s ease;
+  }
+  .lib-act svg { width: 17px; height: 17px; display: block; }
+  .lib-act:hover { background: rgba(255,255,255,.2); transform: scale(1.07); }
+  /* the accent is set per album from its own cover; the blue is only the fallback
+     for a record with no artwork to take a colour from */
+  .lib-act-play {
+    width: 54px; height: 54px; border: 0;
+    background: var(--album-accent, rgba(90,150,255,.92));
+    box-shadow: 0 6px 20px rgba(0,0,0,.45);
+  }
+  .lib-act-play:hover { background: var(--album-accent, rgba(90,150,255,.92)); }
+  /* the app's own play icon is a black glyph, so it is inverted to white over a
+     dark accent and left alone over a pale one */
+  .lib-act-play img {
+    width: 24px; height: 24px; display: block; margin-left: 3px;
+    filter: var(--album-invert, invert(1));
+  }
+  .lib-tracks { display: flex; flex-direction: column; gap: 3px; }
+  .lib-track {
+    display: flex; align-items: center; gap: 10px; padding: 5px 10px; border-radius: 8px;
+    cursor: pointer; background: rgba(255,255,255,.04); transition: background .12s ease;
+  }
+  .lib-track:hover { background: rgba(255,255,255,.12); }
+  .lib-track-num { flex: 0 0 22px; text-align: right; font-family: var(--mono); font-size: 10.5px; color: var(--dim); }
+  .lib-tracks.multi-disc .lib-track-num { flex-basis: 34px; }
+  .lib-track-name { flex: 1 1 auto; min-width: 0; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lib-track-artist {
+    flex: 0 1 30%; text-align: center; font-size: 11px; color: var(--dim);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  /* the slot is always there, favorite or not, so the columns beside it never
+     shift as hearts come and go */
+  .lib-track-fav {
+    flex: 0 0 22px; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    background: rgba(255,255,255,.1);
+    opacity: 0; transition: opacity .12s ease, background .12s ease;
+  }
+  .lib-track-fav img { width: 12px; height: 12px; display: block; opacity: .8; }
+  .lib-track:hover .lib-track-fav, .lib-track-fav:focus-visible { opacity: 1; }
+  .lib-track-fav:hover { background: rgba(255,255,255,.22); }
+  /* the same pink fill the transport's like button turns, so a liked row reads
+     the same wherever it is seen */
+  .lib-track.fav-on .lib-track-fav { opacity: 1; background: rgba(255,90,120,.9); }
+  .lib-track.fav-on .lib-track-fav img { opacity: 1; }
+  .lib-act-fav img { width: 18px; height: 18px; display: block; opacity: .85; }
+  .lib-act-fav.on { background: rgba(255,90,120,.9); }
+  .lib-act-fav.on:hover { background: rgba(255,90,120,1); }
+  .lib-act-fav.on img { opacity: 1; }
+  .lib-track-dur { flex: 0 0 42px; text-align: right; font-family: var(--mono); font-size: 10.5px; color: var(--dim); }
+  .lib-grid::-webkit-scrollbar, .lib-album::-webkit-scrollbar { width: 7px; }
+  .lib-grid::-webkit-scrollbar-thumb, .lib-album::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 7px; }
+  .lib-card:focus-visible, .lib-track:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+
   .props-box {
     max-width: min(620px, 92vw); width: 620px; padding: 18px 20px;
     max-height: calc(100vh - 48px); display: flex; flex-direction: column; overflow: hidden;
@@ -1715,6 +1945,7 @@
   .props-foot button.primary:hover { background: rgba(90,150,255,.4); }
   .props-art-foot button:disabled, .props-lyr-tools button:disabled, .props-foot button:disabled { opacity: .4; cursor: default; }
   .menu-item.disabled { opacity: .35; pointer-events: none; }
+  #libMenu, #trackMenu { width: max-content; min-width: 190px; max-width: 260px; }
   #libMenu .menu-item.hidden { display: none; }
   /* every .help-overlay shares z-index 55 and otherwise stacks by markup order,
      which is no use once one of them opens another. the library window keeps the
@@ -1756,6 +1987,7 @@
   .confirm-actions button:hover { background: rgba(255,255,255,.16); }
   .confirm-actions button.primary { background: rgba(90,150,255,.25); border-color: rgba(120,170,255,.5); color: #fff; }
   .confirm-actions button.primary:hover { background: rgba(90,150,255,.4); }
+  .confirm-actions button.hidden { display: none; }
 
   body.transparent #stage {
     background-color: #1c1c1e;
@@ -1796,6 +2028,20 @@
   .preset-action { padding: 4px 9px; font-size: 11px; }
   .preset-del { color: #ff9b9b; }
   .preset-empty { font-size: 11.5px; color: var(--dim); }
+  .preset-slot {
+    flex: 0 0 20px; height: 20px; border-radius: 6px; background: rgba(255,255,255,.07);
+    font-family: var(--mono); font-size: 11px; color: var(--dim);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .preset-icon { display: flex; align-items: center; justify-content: center; padding: 4px 7px; }
+  .preset-icon svg { width: 13px; height: 13px; display: block; }
+  .preset-file-btn { width: 100%; text-align: center; margin-top: 12px; }
+  #presetImportOverlay { z-index: 96; }
+  .preset-import-name { font-size: 16px; color: #fff; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .preset-import-summary { margin: -6px 0 16px; max-height: clamp(160px, 46vh, 340px); overflow-y: auto; }
+  .preset-import-summary.hidden { display: none; }
+  .preset-import-summary::-webkit-scrollbar { width: 7px; }
+  .preset-import-summary::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 7px; }
 
   .playmini { width: 30px; height: 30px; background: rgba(255,255,255,.1); color: #fff; }
   .playmini svg { width: 13px; height: 13px; }
@@ -1897,7 +2143,7 @@
 
   <div class="toasts" id="toasts"></div>
 
-  <div class="more-menu hidden" id="trackMenu" style="width: 190px; z-index: 70;">
+  <div class="more-menu hidden" id="trackMenu" style="z-index: 70;">
     <button class="menu-item" id="tmNext"><span>play next</span></button>
     <button class="menu-item" id="tmFav"><span>add to favorites</span></button>
     <button class="menu-item" id="tmRemove"><span>remove from playlist</span></button>
@@ -1950,9 +2196,10 @@
   </div>
   <input type="file" id="albumArtInput" accept="image/*" multiple style="display:none" />
 
-  <div class="more-menu hidden" id="libMenu" style="width: 190px; z-index: 80;">
+  <div class="more-menu hidden" id="libMenu" style="z-index: 80;">
     <button class="menu-item" id="lmPlay"><span>play now</span></button>
     <button class="menu-item" id="lmAfter"><span>play after</span></button>
+    <button class="menu-item" id="lmFav"><span>add to favorites</span></button>
     <button class="menu-item" id="lmProps"><span>properties&hellip;</span></button>
     <button class="menu-item" id="lmFolder"><span>open in explorer&hellip;</span></button>
   </div>
@@ -2091,6 +2338,7 @@
         <button class="lib-back hidden" id="libBackBtn" title="back to albums">&lsaquo;</button>
         <div class="help-title" id="libBrowseTitle">library</div>
         <input type="text" id="libSearch" placeholder="search albums, artists&hellip;" />
+        <button class="lib-head-btn icon-only" id="libFavFilter" aria-label="show favorites only" title="show favorites only"><img src="assets/buttons/like.png" alt="" /></button>
         <button class="lib-head-btn icon-only" id="libRescanBtn" aria-label="rescan the library" title="rescan library (can be slow)"><img src="assets/buttons/rescan.png" alt="" /></button>
         <button class="lib-head-btn" id="libManageBtn" title="add or remove library folders">manage library</button>
         <button class="lib-close" id="libCloseBtn" title="close">&#10005;</button>
@@ -2111,6 +2359,7 @@
               <button class="lib-act" id="libAlbumShuffle" title="shuffle this album" aria-label="shuffle this album">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
               </button>
+              <button class="lib-act lib-act-fav" id="libAlbumFav" title="favorite this album" aria-label="favorite this album"><img src="assets/buttons/like.png" alt="" /></button>
               <button class="lib-act" id="libAlbumEdit" title="album properties" aria-label="album properties">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg>
               </button>
@@ -2185,6 +2434,19 @@
       <div class="confirm-actions">
         <button id="confirmCancelBtn">cancel</button>
         <button id="confirmOkBtn" class="primary">continue</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="help-overlay hidden" id="presetImportOverlay">
+    <div class="help-box confirm-box wide">
+      <div class="help-title">import preset</div>
+      <div class="preset-import-name" id="presetImportName"></div>
+      <div class="confirm-msg" id="presetImportMsg"></div>
+      <div class="preset-import-summary" id="presetImportSummary"></div>
+      <div class="confirm-actions">
+        <button id="presetImportCancel">cancel</button>
+        <button id="presetImportOk" class="primary">import</button>
       </div>
     </div>
   </div>
@@ -2586,6 +2848,11 @@
     </div>
 
     <div class="sec" data-tab="audio">
+      <div class="row"><label>output device</label>
+        <select id="audioOutSel"><option value="">system default</option></select>
+      </div>
+      <p class="note" id="audioOutNote">where mediyyu sends its sound. &ldquo;system default&rdquo; follows whatever windows is set to.</p>
+      <div class="sec-divider"></div>
       <div class="row"><label>volume gain</label><input type="range" id="gain" min="0" max="300" value="100" /><span class="val" id="gainVal">100%</span></div>
       <div class="row" style="margin-top:13px;"><label>scroll wheel step (volume)</label><input type="range" id="volWheelStep" min="1" max="20" value="5" /><span class="val" id="volWheelStepVal">5</span></div>
       <div class="row"><label>scroll wheel step (seek)</label><input type="range" id="seekWheelStep" min="1" max="30" value="5" /><span class="val" id="seekWheelStepVal">5s</span></div>
@@ -2842,7 +3109,9 @@
         <button id="presetSaveBtn">save</button>
       </div>
       <div id="presetList"></div>
-      <p class="note">press 1&ndash;9 to load a saved preset instantly.</p>
+      <button class="btn-neutral preset-file-btn" id="presetFileBtn">load preset file (.mdyp)</button>
+      <input type="file" id="presetFileInput" accept=".mdyp" style="display:none" />
+      <p class="note">press 1&ndash;9 to load a saved preset instantly. a preset keeps the look and sound of mediyyu: shape, colors, visualizer, effects, audio, midi, background and interface tint. your library, output device, window mode and integrations are never touched.</p>
       <button class="reset-btn" id="resetAllBtn">reset everything to defaults</button>
     </div>
     </div>
@@ -2979,6 +3248,7 @@
 
   <audio id="audio" crossorigin="anonymous"></audio>
 
+<script src="presets.js"></script>
 <script type="importmap">
 {
   "imports": {
@@ -3009,36 +3279,20 @@
   const audio = $('audio');
   audio.preservesPitch = false;
 
-  const DEFAULTS = {
-    mode: 'solid', color1: '#575757', color2: '#7b5bff', rainbow: false,
-    layout: 'bars', mirror: false, flipH: false, kaleidoscope: false,
-    glow: 20, smooth: 45, fall: 73, sens: 100, count: 110, trails: 0, legacy: false,
-    particles: false, particlesAmt: 50, beatParticles: false, beatParticlesAmt: 50, scaleToSound: false, scaleToSoundAmt: 50, chromaAb: false, chromaAbAmt: 50, bgPulse: 0, flash: 0, reflection: false, vignette: false,
-    peakHold: false, connections: false,
-    winTransparent: false, alwaysOnTop: false,
-    bgCoverArt: false, bgCoverBlur: 46, bgCoverDim: 55,
-    waveStyle: 'line', waveSmooth: 40, fallsSpeed: 50, psyPetals: 9, psySpeed: 50, psyTrail: 50,
+  // preset keys and their defaults come from presets.js
+  const DEFAULTS = Object.assign({}, window.MediyyuPresets.DEFAULTS, {
     lyricsMode: 'compact', lyricsFx: true, lyricsGuessWords: true, lyricsSourcePref: 'lrclib',
-    soundfontPath: '', soundfontName: '', midiParticles: false,
-    volume: 100, volWheelStep: 5, seekWheelStep: 5, seekBarStyle: 'thin',
-    bg: '#0a0b0d',
-    glassTint: '#ffffff', glassTintAuto: false, glassAlpha: 5, glassBlur: true,
+    volume: 100, seekBarStyle: 'thin',
+    alwaysOnTop: false,
     lockResize: false, exportFps: 60, exportQuality: 'balanced', exportRes: 'window', exportLyrics: false,
     displayMode: 'windowed', fullscreenRes: 'native',
     // the discord application id comes from MEDIYYU_DISCORD_CLIENT_ID at build
     // time, so there is none in the source. rich presence stays off without it.
     discordEnabled: true, discordClientId: '', discordImageKey: 'noting',
     lastfmEnabled: false, lastfmSessionKey: '', lastfmUsername: '',
-    gain: 100, eq0: 0, eq1: 0, eq2: 0, eq3: 0, eq4: 0, eq5: 0, eq6: 0, eq7: 0, eq8: 0, eq9: 0,
-    shuffle: false, repeat: 'off', playbackRate: 1, drunkMode: '', normalize: false, crossfade: false, crossfadeDur: 4, autoplaySimilar: false, libraryFolders: [], libraryFormat: '', icueEnabled: false,
-    notifyTrack: true, notifyEnd: true, easterEggs: true,
-    specFftSize: 4096, specWindow: 'blackman', specSineExp: 3,
-    specLogScale: true, specMirror: false, specChannel: 'mono',
-    specTsmooth: 'ema', specInertia: 0.6, specFastPeaks: false, specGravity: 0,
-    specInterp: 'catrom', specFilter: 'gauss', specFilterRadius: 1,
-    specCutoffLow: 0, specCutoffHigh: 14500, specFloor: -50, specCeiling: -10,
-    specSlope: 0, specRolloffQ: 0, specRolloffRate: 0
-  };
+    shuffle: false, repeat: 'off', playbackRate: 1, drunkMode: '', normalize: false, autoplaySimilar: false, libraryFolders: [], libraryFormat: '', audioOutput: '', icueEnabled: false,
+    notifyTrack: true, notifyEnd: true, easterEggs: true
+  });
   let S = Object.assign({}, DEFAULTS);
   try { S = Object.assign(S, JSON.parse(localStorage.getItem('bbv_settings') || '{}')); } catch (e) {}
   S.repeat = 'off';
@@ -3051,14 +3305,7 @@
   if (S.lyricsMode === 'separated') { S.lyricsMode = 'compact'; save(); }
 
   const EQ_FREQS = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
-  const EQ_PRESETS = {
-    flat: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    bass: [6, 5, 4, 2, 0, 0, 0, 0, 0, 0],
-    treble: [0, 0, 0, 0, 0, 1, 2, 4, 5, 6],
-    vshape: [5, 4, 2, 0, -1, -1, 1, 3, 4, 5],
-    vocal: [-2, -1, 0, 2, 4, 4, 3, 1, 0, -1],
-    warm: [3, 2, 1, 0, 0, -1, -2, -3, -3, -4],
-  };
+  const EQ_PRESETS = window.MediyyuPresets.EQ_CURVES;
   let actx, analyser, analyserL, analyserR, chSplitter, srcNode, streamDest, gainNode, mainGain, compNode, postGain, eqNodes = [], ready = false;
   function ensureAudio() {
     if (ready) return;
@@ -3097,7 +3344,76 @@
     applyAudioChain();
     applyFftSize();
     ready = true;
+    applyAudioOutput();
     buildMap();
+  }
+  async function listAudioOutputs() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return [];
+    try {
+      const devs = await navigator.mediaDevices.enumerateDevices();
+      return devs.filter(d => d.kind === 'audiooutput' && d.deviceId !== 'default' && d.deviceId !== 'communications');
+    } catch (e) { return []; }
+  }
+  // true once the context has been pointed somewhere explicitly
+  let sinkApplied = false;
+  async function applyAudioOutput(force) {
+    if (!actx || typeof actx.setSinkId !== 'function') return false;
+    const want = S.audioOutput || '';
+    if (!want && !sinkApplied) return true;
+    try {
+      if (!force && (actx.sinkId || '') === want) return true;
+      await actx.setSinkId(want);
+      sinkApplied = !!want;
+      return true;
+    } catch (e) {
+      if (want) {
+        S.audioOutput = '';
+        save();
+        try { await actx.setSinkId(''); sinkApplied = false; } catch (e2) {}
+        syncAudioOutputUI();
+        toast('that output device is gone \u2014 back to the system default', { error: true });
+      }
+      return false;
+    }
+  }
+  let audioOutputs = [];
+  async function fillAudioOutputs() {
+    audioOutputs = await listAudioOutputs();
+    const sel = $('audioOutSel');
+    const want = S.audioOutput || '';
+    sel.innerHTML = '';
+    const def = document.createElement('option');
+    def.value = '';
+    def.textContent = 'system default';
+    sel.appendChild(def);
+    for (const d of audioOutputs) {
+      const o = document.createElement('option');
+      o.value = d.deviceId;
+      o.textContent = d.label || 'output device';
+      sel.appendChild(o);
+    }
+    if (want && !audioOutputs.some(d => d.deviceId === want)) {
+      const o = document.createElement('option');
+      o.value = want;
+      o.textContent = 'remembered device (not connected)';
+      sel.appendChild(o);
+    }
+    syncAudioOutputUI();
+  }
+  function syncAudioOutputUI() {
+    const sel = $('audioOutSel');
+    if (sel) {
+      sel.value = S.audioOutput || '';
+      // full device name in the tooltip
+      const cur = sel.options[sel.selectedIndex];
+      sel.title = cur ? cur.textContent : '';
+    }
+    const note = $('audioOutNote');
+    if (!note) return;
+    note.textContent = (navigator.mediaDevices && typeof AudioContext !== 'undefined'
+      && 'setSinkId' in AudioContext.prototype)
+      ? 'where mediyyu sends its sound. \u201csystem default\u201d follows whatever windows is set to.'
+      : 'this build cannot switch output device; mediyyu follows the system default.';
   }
   function applyFftSize() {
     if (!analyser) return;
@@ -3203,7 +3519,7 @@
       }
     }
     const synth = await ensureMidiSynth();
-    const midiBytes = await file.arrayBuffer();
+    const midiBytes = await fileBytesOf(file);
     if (!midiSeq) midiSeq = new window.__spessa.Sequencer(synth);
     midiSeq.loadNewSongList([{ binary: midiBytes, fileName: file.name }]);
     const midiData = await midiSeq.getMIDI();
@@ -4746,7 +5062,7 @@
     }
     if (audio.duration && isFinite(audio.duration) && audio.duration > WAVE_MAX_DURATION) return;
     try {
-      const buf = await file.arrayBuffer();
+      const buf = await fileBytesOf(file);
       const audioBuf = await actx.decodeAudioData(buf.slice(0));
       const numCh = audioBuf.numberOfChannels;
       const channels = [];
@@ -5490,17 +5806,16 @@
   // the window falls through to black.
   let curHasPicture = false;
   let curIndex = -1;
+  function isPresetFile(f) { return f.name.toLowerCase().endsWith('.' + window.MediyyuPresets.EXT); }
   function isAudioFile(f) { return f.type.startsWith('audio') || f.type.startsWith('video') || /\.(mp3|wav|ogg|m4a|flac|aac|mp4|webm|mov|m4v|mid|midi)$/i.test(f.name); }
   function isVideoFile(f) { return (f.type && f.type.startsWith('video')) || /\.(mp4|webm|mov|m4v)$/i.test(f.name); }
   function isMidiFile(f) { return /\.(mid|midi)$/i.test(f.name); }
 
+  // every tag parser goes through here, several times per file. a FileReader
+  // costs an allocation and an event round trip each time; the blob does the
+  // same read as a plain promise.
   function readSlice(file, start, len) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsArrayBuffer(file.slice(start, start + len));
-    });
+    return file.slice(start, start + len).arrayBuffer();
   }
   const synchSafe = (b0, b1, b2, b3) => ((b0 & 0x7f) << 21) | ((b1 & 0x7f) << 14) | ((b2 & 0x7f) << 7) | (b3 & 0x7f);
   function decodeID3Text(bytes) {
@@ -5997,7 +6312,7 @@
     checkBloodLyrics(file.name, '', '');
     coverLog(`── track: ${file.name}`);
     let tags = null;
-    try { tags = await readTags(file); } catch {}
+    try { tags = await readTags(await tagSourceFor(file)); } catch {}
     releaseTagPictures(tags, tags && tags.cover);
     if (playlist[curIndex] !== myFile) {
       if (tags && tags.cover) { try { URL.revokeObjectURL(tags.cover); } catch (e) {} }
@@ -6256,7 +6571,7 @@
   }
   async function processFile(f) {
     try {
-      const tags = await readTags(f);
+      const tags = await readTags(await tagSourceFor(f));
       if (tags) {
         if (f._title === undefined) f._title = tags.title || '';
         if (f._trackNo === undefined) { const tn = tags.track ? String(tags.track).match(/^\d+/) : null; f._trackNo = tn ? +tn[0] : 0; }
@@ -6265,7 +6580,7 @@
       }
     } catch (e) {}
     await new Promise(res => {
-      const a = new Audio(), url = URL.createObjectURL(f);
+      const a = new Audio(), url = playbackUrlFor(f);
       a.preload = 'metadata';
       const done = () => { try { URL.revokeObjectURL(url); } catch (e) {} a.src = ''; res(); };
       a.onloadedmetadata = () => { f._dur = isFinite(a.duration) ? a.duration : 0; done(); };
@@ -6280,6 +6595,7 @@
     setTimeout(() => { renderScheduled = false; renderPlaylist(); }, 250);
   }
   function resetToEmpty() {
+    autoplayNotified = false;
     audio.pause();
     setPlay(false);
     if (audio.src) { if (ghostOwnsUrl) ghostOwnsUrl = false; else URL.revokeObjectURL(audio.src); }
@@ -6501,24 +6817,31 @@
   }
   function hideLoadProgress() { $('loadProgress').classList.remove('show'); }
   const READ_CHUNK = 15;
+  // describing is cheap, so the batches can be much larger than a read's
+  const DESCRIBE_CHUNK = 400;
   const BIG_IMPORT_THRESHOLD = 150;
+  // this used to read every file into memory just to put its name in a list.
+  // it now only describes them; the bytes are fetched when they are played.
   async function readPathsWithProgress(paths, label, onBatch) {
     if (!window.winControls) return [];
-    if (paths.length <= READ_CHUNK) {
-      const restored = await window.winControls.readSessionFiles(paths);
-      if (onBatch && restored.length) await onBatch(restored);
-      return restored;
+    const describe = ps => window.winControls.describeFiles
+      ? window.winControls.describeFiles(ps)
+      : window.winControls.readSessionFiles(ps);
+    if (paths.length <= DESCRIBE_CHUNK) {
+      const described = await describe(paths);
+      if (onBatch && described.length) await onBatch(described);
+      return described;
     }
     showLoadProgress(label);
     updateLoadProgress(0, paths.length);
     const out = [];
     try {
-      for (let i = 0; i < paths.length; i += READ_CHUNK) {
-        const chunk = paths.slice(i, i + READ_CHUNK);
-        const restored = await window.winControls.readSessionFiles(chunk);
-        out.push(...restored);
-        if (onBatch && restored.length) await onBatch(restored);
-        updateLoadProgress(Math.min(i + READ_CHUNK, paths.length), paths.length);
+      for (let i = 0; i < paths.length; i += DESCRIBE_CHUNK) {
+        const chunk = paths.slice(i, i + DESCRIBE_CHUNK);
+        const described = await describe(chunk);
+        out.push(...described);
+        if (onBatch && described.length) await onBatch(described);
+        updateLoadProgress(Math.min(i + DESCRIBE_CHUNK, paths.length), paths.length);
         await new Promise(r => requestAnimationFrame(r));
       }
     } finally {
@@ -6695,6 +7018,7 @@
     if (!k) { toast("can't favorite this track.", { error: true }); return; }
     if (favorites.has(k)) { favorites.delete(k); toast('removed from favorites'); }
     else { favorites.add(k); toast('added to favorites ♥'); }
+    libTrackLiked(f && f._path, favorites.has(k));
     saveFavorites();
     updateFavoriteIcon();
     scheduleRenderPlaylist();
@@ -6775,8 +7099,62 @@
     await appendFilesWithDupeCheck(restoredToFiles(restored));
   });
 
+  // A playlist entry used to be a File carrying the whole track in memory, which
+  // cost hundreds of megabytes on a large session. An entry that lives on disk is
+  // now an empty shell that knows its path; the bytes are fetched only by the few
+  // things that genuinely need them, and playback reads straight off disk.
+  function fileUrlOf(p) {
+    const norm = String(p || '').replace(/\\/g, '/');
+    const enc = s => s.split('/').map(encodeURIComponent).join('/');
+    if (norm.startsWith('//')) return 'file:////' + enc(norm.slice(2));
+    return 'file:///' + enc(norm).replace(/^([A-Za-z])%3A/, '$1:');
+  }
+  function lazyFile(desc) {
+    const f = new File([], desc.name, { type: desc.mime || '' });
+    f._path = desc.path;
+    f._lazy = true;
+    f._size = desc.size || 0;
+    return f;
+  }
+  async function pathsToFiles(paths) {
+    if (!window.winControls || !window.winControls.describeFiles) return [];
+    let desc = [];
+    try { desc = await window.winControls.describeFiles(paths); } catch (e) { desc = []; }
+    return (desc || []).map(lazyFile);
+  }
+  // the whole track, for the few callers that decode or rewrite it
+  async function fileBytesOf(f) {
+    if (f && f._lazy && f._path && window.winControls) {
+      try {
+        const [r] = await window.winControls.readSessionFiles([f._path]);
+        if (r && r.data) return r.data;
+      } catch (e) {}
+    }
+    return f.arrayBuffer();
+  }
+  // tag parsers only ever read the front of a file, so that is all we fetch
+  async function tagSourceFor(f) {
+    if (f && f._lazy && f._path && window.winControls) {
+      try {
+        const [r] = await window.winControls.readFilePrefixes([f._path], 1048576);
+        if (r && r.data) {
+          const src = new File([r.data], f.name, { type: f.type });
+          src._path = f._path;
+          return src;
+        }
+      } catch (e) {}
+    }
+    return f;
+  }
+  // what the audio element should point at: the file itself when it has a path
+  function playbackUrlFor(f) {
+    return f && f._path ? fileUrlOf(f._path) : URL.createObjectURL(f);
+  }
+  // takes either shape: a full read keeps its bytes, a description becomes a
+  // shell that will fetch them if it is ever asked to
   function restoredToFiles(restored) {
     return restored.map(r => {
+      if (!r.data) return lazyFile(r);
       const f = new File([r.data], r.name, { type: r.mime });
       f._path = r.path;
       return f;
@@ -6931,7 +7309,7 @@
     $('tmFolder').classList.toggle('disabled', !(f && f._path && window.winControls));
     const menu = $('trackMenu');
     menu.classList.remove('hidden');
-    const mw = 190, mh = menu.offsetHeight || 110;
+    const mw = menu.offsetWidth || 190, mh = menu.offsetHeight || 110;
     menu.style.left = Math.min(window.innerWidth - mw - 8, e.clientX) + 'px';
     menu.style.bottom = 'auto';
     menu.style.top = Math.min(window.innerHeight - mh - 8, e.clientY) + 'px';
@@ -7635,7 +8013,7 @@
     propsStandalone = propsIdx >= 0 ? null : f;
     propsArtDirty = false;
     let tags = null;
-    try { tags = await readTags(f); } catch (e) {}
+    try { tags = await readTags(await tagSourceFor(f)); } catch (e) {}
     tags = tags || {};
     for (const [key, id] of Object.entries(PROP_FIELDS)) $(id).value = tags[key] || '';
 
@@ -7913,7 +8291,7 @@
       audio.src = file._transcodedUrl;
       audio._isTranscodedSrc = true;
     } else {
-      audio.src = URL.createObjectURL(file);
+      audio.src = playbackUrlFor(file);
       audio._isTranscodedSrc = false;
     }
     audio.defaultPlaybackRate = S.playbackRate;
@@ -8238,7 +8616,7 @@
           rec.year = tags.year || '';
           const pics = tags.pictures || [];
           const pic = pics.find(p => p.type === 3) || pics[0];
-          if (pic && pic.url) { try { rec.cover = await libStoreThumb(pic.url); } catch (e) {} }
+          if (pic && pic.url) rec.cover = await libStoreThumbFor(libDirOf(r.path), pic);
         }
         libraryTagCache[r.path] = rec;
         releaseTagPictures(tags);
@@ -8290,6 +8668,7 @@
     }
     saveLibraryTagCacheDebounced();
   }
+  let autoplayNotified = false;
   async function tryAutoplaySimilar() {
     if (!S.autoplaySimilar || !window.winControls || !playlist.length) return -1;
     const file = playlist[curIndex];
@@ -8466,6 +8845,7 @@
       return;
     }
     curIndex = Number(item.dataset.idx);
+    autoplayNotified = false;
     loadCurrent();
   });
   renderPlaylist();
@@ -8514,17 +8894,22 @@
     e.preventDefault();
     if (plDragIdx >= 0) return;
     dragDepth = 0; document.body.classList.remove('dragging');
+    const plWasAutoOpened = plAutoOpened;
     plAutoOpened = false;
     const files = [], dirs = [];
+    let presetFile = null;
     for (const it of e.dataTransfer.items || []) {
       if (it.kind !== 'file') continue;
       const entry = it.webkitGetAsEntry ? it.webkitGetAsEntry() : null;
       const f = it.getAsFile();
       if (!f) continue;
       if (entry && entry.isDirectory) dirs.push(f);
+      else if (isPresetFile(f)) presetFile = presetFile || f;
       else if (isAudioFile(f)) files.push(f);
     }
-    if (!files.length && !dirs.length) files.push(...[...(e.dataTransfer.files || [])].filter(isAudioFile));
+    if (!files.length && !dirs.length && !presetFile) files.push(...[...(e.dataTransfer.files || [])].filter(isAudioFile));
+    if (presetFile && !files.length && !dirs.length && plWasAutoOpened) setPlaylistOpen(false);
+    if (presetFile) presetFile.text().then(offerPresetImport);
     if (files.length) appendFilesWithDupeCheck(files);
     if (dirs.length) addDroppedFolders(dirs);
   });
@@ -8652,6 +9037,12 @@
       play: thumbIcon(['M8 5v14l11-7z']),
       pause: thumbIcon(['M6 5h4v14H6z', 'M14 5h4v14h-4z']),
       next: thumbIcon(['M16 5h2v14h-2z', 'M4 5v14l11-7z']),
+    });
+    if (window.winControls.onRecovered) window.winControls.onRecovered(() => {
+      const note = $('resumeNote');
+      const resumable = !note.classList.contains('hidden');
+      if (resumable) note.click();
+      toast(resumable ? 'mediyyu crashed and was reloaded — picking up where you were.' : 'mediyyu crashed and was reloaded.', { error: true, duration: 7000 });
     });
     window.winControls.onFadeOut(() => {
       saveSession(true);
@@ -9637,6 +10028,21 @@
     toast(S.lyricsGuessWords ? 'word timing estimated when the file has none' : 'word by word only when the file really has it');
     closeMoreMenu();
   });
+  $('audioOutSel').addEventListener('change', async e => {
+    S.audioOutput = e.target.value || '';
+    save();
+    if (!actx) { toast(S.audioOutput ? 'output set \u2014 takes effect on the next track' : 'back to the system default'); return; }
+    if (await applyAudioOutput()) {
+      const name = e.target.options[e.target.selectedIndex];
+      toast(S.audioOutput ? 'now playing through ' + (name ? name.textContent : 'that device') : 'back to the system default');
+    }
+  });
+  if (navigator.mediaDevices) {
+    navigator.mediaDevices.addEventListener('devicechange', () => {
+      fillAudioOutputs().then(() => { if (S.audioOutput) applyAudioOutput(); });
+    });
+  }
+  fillAudioOutputs();
   $('xfadeSeg').querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => { S.crossfade = btn.dataset.val === 'on'; syncUI(); save(); });
   });
@@ -9776,6 +10182,18 @@
     bmp.close();
     return new Promise(res => cv.toBlob(res, 'image/webp', 0.82));
   }
+  // fetching the blob back, hashing it and asking indexeddb costs about as much
+  // as making the thumbnail, and an album repeats all of it once per track for
+  // one image. same folder, same type, same byte count is that same image.
+  const libThumbSeen = new Map();
+  async function libStoreThumbFor(dir, pic) {
+    const quick = dir + '|' + (pic.mime || '') + '|' + (pic.bytes || 0);
+    if (libThumbSeen.has(quick)) return libThumbSeen.get(quick);
+    let key = '';
+    try { key = await libStoreThumb(pic.url); } catch (e) {}
+    libThumbSeen.set(quick, key);
+    return key;
+  }
   async function libStoreThumb(url) {
     const blob = await fetch(url).then(r => r.blob());
     const bytes = new Uint8Array(await blob.arrayBuffer());
@@ -9806,6 +10224,64 @@
     libThumbUrls.clear();
   }
 
+  // liked tracks from outside the library folders
+  function loadLooseTracks() { try { return new Set(JSON.parse(localStorage.getItem('bbv_libloose')) || []); } catch (e) { return new Set(); } }
+  let libLoose = loadLooseTracks();
+  function saveLooseTracks() { try { localStorage.setItem('bbv_libloose', JSON.stringify([...libLoose])); } catch (e) {} }
+  function libNormPath(p) { return String(p || '').replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase(); }
+  function libPathInFolders(p) {
+    const f = libNormPath(p);
+    if (!f) return false;
+    return (S.libraryFolders || []).some(entry => {
+      const dir = libNormPath(entry.path);
+      if (!dir || f.indexOf(dir + '/') !== 0) return false;
+      return entry.recursive !== false || f.slice(dir.length + 1).indexOf('/') < 0;
+    });
+  }
+  function libTrackLiked(path, on) {
+    if (!path) return;
+    const had = libLoose.has(path);
+    if (on && !had && !libPathInFolders(path)) libLoose.add(path);
+    else if (!on && had) libLoose.delete(path);
+    else return;
+    saveLooseTracks();
+    libAlbums = [];
+    libAlbumsStamp = '';
+  }
+  // album favorites, keyed like libBuildAlbums
+  function loadFavAlbums() { try { return new Set(JSON.parse(localStorage.getItem('bbv_favalbums')) || []); } catch (e) { return new Set(); } }
+  let favAlbums = loadFavAlbums();
+  let libFavOnly = false;
+  function saveFavAlbums() { try { localStorage.setItem('bbv_favalbums', JSON.stringify([...favAlbums])); } catch (e) {} }
+  function isFavAlbum(al) { return !!(al && al.key && favAlbums.has(al.key)); }
+  function libTrackIsFav(t) { return !!(t && t.path && isFavorite({ _path: t.path })); }
+  function libAlbumHasFav(al) { return isFavAlbum(al) || al.tracks.some(libTrackIsFav); }
+  function toggleFavAlbum(al) {
+    if (!al || !al.key) return;
+    if (favAlbums.has(al.key)) { favAlbums.delete(al.key); toast('album removed from favorites'); }
+    else { favAlbums.add(al.key); toast('album added to favorites \u2665'); }
+    saveFavAlbums();
+    syncAlbumFavButton();
+    libRefreshGrid();
+  }
+  function toggleLibTrackFav(t) {
+    if (!t || !t.path) return;
+    toggleFavorite({ _path: t.path, name: t.title });
+    libSyncTrackRow(t);
+    libRefreshGrid();
+  }
+  function libRefreshGrid() { if (!$('libGrid').classList.contains('hidden')) libRenderGrid(); }
+  function libSyncTrackRow(t) {
+    for (const row of $('libTracks').children) {
+      if (row._track === t) row.classList.toggle('fav-on', libTrackIsFav(t));
+    }
+  }
+  function syncAlbumFavButton() {
+    const on = isFavAlbum(libCurAlbum);
+    const btn = $('libAlbumFav');
+    btn.classList.toggle('on', on);
+    btn.title = on ? 'remove this album from favorites' : 'favorite this album';
+  }
   const LIB_SCAN_CAP = 20000;
   let libAlbums = [];
   let libAlbumsStamp = '';
@@ -9910,7 +10386,8 @@
     return { key: libNorm(dir), name: base, disc: 0 };
   }
   function libFoldersStamp() {
-    return (S.libraryFolders || []).map(f => f.path + '|' + (f.recursive !== false)).join('||');
+    return (S.libraryFolders || []).map(f => f.path + '|' + (f.recursive !== false)).join('||')
+      + '#' + [...libLoose].sort().join('|');
   }
   function libShuffled(paths) {
     const out = [...paths];
@@ -9922,17 +10399,27 @@
   }
   async function libBuildAlbums(status) {
     const folders = S.libraryFolders || [];
-    if (!folders.length || !window.winControls) return [];
+    if (!window.winControls) return [];
+    if (!folders.length && !libLoose.size) return [];
     status('scanning folders\u2026');
     const lists = await Promise.all(folders.map(entry =>
       window.winControls.scanDirForAudio(entry.path, entry.recursive !== false, LIB_SCAN_CAP).catch(() => [])));
     const paths = [...new Set([].concat(...lists))];
+    if (libLoose.size) {
+      const loose = [...libLoose].filter(p => !libPathInFolders(p) && isFavorite({ _path: p }));
+      let alive = loose;
+      try { alive = ((await window.winControls.describeFiles(loose)) || []).map(d => d.path); } catch (e) {}
+      if (alive.length !== libLoose.size) { libLoose = new Set(alive); saveLooseTracks(); }
+      const seen = new Set(paths);
+      for (const p of alive) if (!seen.has(p)) paths.push(p);
+    }
     if (!paths.length) return [];
     // new files turn up on their own, since they are simply not in the cache yet.
     // a tag edited outside mediyyu would stay cached forever, which is what the
     // refresh button is for: it throws the cached reads away and starts over.
     if (libForceRescan) {
       libForceRescan = false;
+      libThumbSeen.clear();
       if (!libraryTagCache) libraryTagCache = loadLibraryTagCache();
       for (const p of paths) delete libraryTagCache[p];
     }
@@ -10053,7 +10540,9 @@
   }
   function libPaintCover(box, covers) {
     box.classList.remove('empty', 'split-2', 'split-3', 'split-4');
-    box.innerHTML = '';
+    // only the cover cells: painting now happens after the card is built, and
+    // wiping the box would take the hover play button with it
+    for (const cell of [...box.querySelectorAll('i')]) cell.remove();
     const keys = (covers || []).slice(0, 4);
     if (!keys.length) { box.classList.add('empty'); return; }
     if (keys.length > 1) box.classList.add('split-' + keys.length);
@@ -10063,18 +10552,41 @@
       libThumbUrl(key).then(url => { if (url) cell.style.backgroundImage = 'url("' + url + '")'; });
     });
   }
+  // a thousand albums would otherwise mint a thousand blob urls and decode a
+  // thousand images the moment the window opens. covers are painted as they come
+  // near the viewport instead.
+  let libCoverObs = null;
+  function libObserveCover(box, covers) {
+    if (!covers || !covers.length) { libPaintCover(box, []); return; }
+    if (!('IntersectionObserver' in window)) { libPaintCover(box, covers); return; }
+    if (!libCoverObs) {
+      libCoverObs = new IntersectionObserver(entries => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          libCoverObs.unobserve(e.target);
+          libPaintCover(e.target, e.target._covers || []);
+        }
+      }, { root: $('libGrid'), rootMargin: '400px 0px' });
+    }
+    box._covers = covers;
+    libCoverObs.observe(box);
+  }
   function libRenderGrid() {
     const grid = $('libGrid');
+    if (libCoverObs) libCoverObs.disconnect();
     grid.innerHTML = '';
     const q = libNorm($('libSearch').value);
-    const list = q
+    let list = q
       ? libAlbums.filter(al => libNorm(al.album).includes(q) || libNorm(al.artistLabel).includes(q)
         || al.tracks.some(t => libNorm(t.artist).includes(q) || libNorm(t.title).includes(q)))
       : libAlbums;
+    if (libFavOnly) list = list.filter(libAlbumHasFav);
+    libShownAlbums = list.length;
     if (!list.length) {
       const empty = document.createElement('div');
       empty.className = 'lib-empty';
       empty.textContent = libBusy ? 'reading your library\u2026'
+        : libFavOnly && libAlbums.length ? 'no favorites yet \u2014 press the heart on an album, or on a track inside one.'
         : libAlbums.length ? 'nothing matches that search.'
         : (S.libraryFolders && S.libraryFolders.length)
           ? 'no audio found in your library folders.'
@@ -10088,7 +10600,7 @@
       card.tabIndex = 0;
       const cover = document.createElement('div');
       cover.className = 'lib-cover';
-      libPaintCover(cover, al.covers);
+      libObserveCover(cover, al.covers);
       const play = document.createElement('button');
       play.className = 'lib-play';
       play.title = 'play this album now';
@@ -10097,7 +10609,15 @@
       playIcon.alt = '';
       play.appendChild(playIcon);
       play.addEventListener('click', e => { e.stopPropagation(); libPlayAlbum(al, false); });
-      cover.appendChild(play);
+      const fav = document.createElement('button');
+      const own = isFavAlbum(al);
+      fav.className = 'lib-fav' + (own ? ' on' : libAlbumHasFav(al) ? ' has' : '');
+      fav.innerHTML = '<img src="assets/buttons/like.png" alt="" />';
+      fav.title = own ? 'remove this album from favorites'
+        : libAlbumHasFav(al) ? 'holds a favorite track \u2014 press to favorite the album'
+        : 'favorite this album';
+      fav.addEventListener('click', e => { e.stopPropagation(); toggleFavAlbum(al); });
+      cover.append(play, fav);
       const name = document.createElement('div');
       name.className = 'lib-name';
       name.textContent = al.album;
@@ -10116,10 +10636,12 @@
       grid.appendChild(card);
     }
   }
+  let libShownAlbums = 0;
   function libAlbumCountLabel() {
     return libAlbums.length ? libAlbums.length + (libAlbums.length === 1 ? ' album' : ' albums') : '';
   }
   function libHeadButtons(show) {
+    $('libFavFilter').classList.toggle('hidden', !show);
     $('libRescanBtn').classList.toggle('hidden', !show);
     $('libManageBtn').classList.toggle('hidden', !show);
   }
@@ -10249,6 +10771,7 @@
     syncLibFormatSel(al);
     libSetAlbumBg(al);
     libSetAlbumAccent(al);
+    syncAlbumFavButton();
     libPaintCover($('libAlbumCover'), al.covers);
     $('libAlbumTitle').textContent = al.album;
     $('libAlbumArtist').textContent = al.artistLabel;
@@ -10284,7 +10807,13 @@
       const dur = document.createElement('span');
       dur.className = 'lib-track-dur';
       dur.textContent = t.dur > 0 ? fmt(t.dur) : '';
-      row.append(num, name, who, dur);
+      const fav = document.createElement('button');
+      fav.className = 'lib-track-fav';
+      fav.innerHTML = '<img src="assets/buttons/like.png" alt="" />';
+      fav.title = 'favorite this track';
+      fav.addEventListener('click', e => { e.stopPropagation(); toggleLibTrackFav(t); });
+      row.classList.toggle('fav-on', libTrackIsFav(t));
+      row.append(num, name, who, fav, dur);
       row._track = t;
       const go = () => libPlayPaths([t.path], false);
       row.addEventListener('click', go);
@@ -10362,11 +10891,13 @@
     e.preventDefault();
     libCtx = ctx;
     $('lmProps').classList.remove('hidden');
+    const already = ctx.kind === 'track' ? libTrackIsFav(ctx.track) : isFavAlbum(ctx.album);
+    $('lmFav').querySelector('span').textContent = already ? 'remove from favorites' : 'add to favorites';
     const paths = libCtxPaths();
     $('lmFolder').classList.toggle('disabled', !(paths.length && window.winControls));
     const menu = $('libMenu');
     menu.classList.remove('hidden');
-    const mw = 190, mh = menu.offsetHeight || 120;
+    const mw = menu.offsetWidth || 190, mh = menu.offsetHeight || 120;
     menu.style.left = Math.min(window.innerWidth - mw - 8, e.clientX) + 'px';
     menu.style.bottom = 'auto';
     menu.style.top = Math.min(window.innerHeight - mh - 8, e.clientY) + 'px';
@@ -10619,6 +11150,13 @@
     closeAlbumProps();
     toast(failed ? done + ' written, ' + failed + ' failed' : 'album updated \u2713',
       failed ? { error: true, duration: 6000 } : {});
+    if (favAlbums.has(al.key)) {
+      const newName = tags.album !== undefined ? tags.album : al.album;
+      const newArtist = tags.albumArtist !== undefined ? tags.albumArtist : al.artistKey;
+      const nameKey = libNorm(libSplitDisc(newName || '').name);
+      const moved = nameKey ? 'a:' + nameKey + '|' + libNorm(newArtist) : al.key;
+      if (moved !== al.key) { favAlbums.delete(al.key); favAlbums.add(moved); saveFavAlbums(); }
+    }
     // the grouping key itself may have moved, so the index is rebuilt from scratch
     libAlbums = [];
     libAlbumsStamp = '';
@@ -10699,6 +11237,7 @@
   function closeLibBrowse() {
     libClearAnim();
     closeLibMenu();
+    if (libCoverObs) libCoverObs.disconnect();
     closeLibFormatMenu();
     libClearAlbumBg();
     $('libAlbumBg').querySelector('i').style.backgroundImage = '';
@@ -10789,6 +11328,13 @@
     closeLibMenu();
     libQueuePaths(paths);
   });
+  $('lmFav').addEventListener('click', () => {
+    const ctx = libCtx;
+    closeLibMenu();
+    if (!ctx) return;
+    if (ctx.kind === 'track') toggleLibTrackFav(ctx.track);
+    else toggleFavAlbum(ctx.album);
+  });
   $('lmProps').addEventListener('click', () => {
     const ctx = libCtx;
     closeLibMenu();
@@ -10801,6 +11347,17 @@
     const paths = libCtxPaths();
     closeLibMenu();
     if (paths.length && window.winControls) window.winControls.showInFolder(paths[0]);
+  });
+  $('libAlbumFav').addEventListener('click', () => { if (libCurAlbum) toggleFavAlbum(libCurAlbum); });
+  $('libFavFilter').addEventListener('click', () => {
+    libFavOnly = !libFavOnly;
+    const btn = $('libFavFilter');
+    btn.classList.toggle('on', libFavOnly);
+    btn.title = libFavOnly ? 'show every album' : 'show favorites only';
+    libRenderGrid();
+    libStatus(libFavOnly
+      ? libShownAlbums + (libShownAlbums === 1 ? ' favorite' : ' favorites')
+      : libAlbumCountLabel());
   });
   $('libAlbumPlay').addEventListener('click', () => { if (libCurAlbum) libPlayAlbum(libCurAlbum, false); });
   $('libAlbumShuffle').addEventListener('click', () => { if (libCurAlbum) libPlayAlbum(libCurAlbum, true); });
@@ -10935,7 +11492,14 @@
     if (n >= 0) { transitionTo(n); return; }
     const endedFile = playlist[curIndex];
     const simIdx = await tryAutoplaySimilar();
-    if (simIdx >= 0 && playlist[curIndex] === endedFile && !playing) { transitionTo(simIdx); return; }
+    if (simIdx >= 0) {
+      if (playlist[curIndex] === endedFile && !playing) transitionTo(simIdx);
+      if (!autoplayNotified) {
+        autoplayNotified = true;
+        if (S.notifyEnd) notify('autoplay', 'playlist finished! now playing similar tracks from your library.');
+      }
+      return;
+    }
     if (S.notifyEnd) notify('playlist finished', 'all tracks played.');
   });
   audio.addEventListener('seeked', () => sendDiscordActivity());
@@ -11644,10 +12208,31 @@
   $('eeTableOverlay').addEventListener('click', e => { if (e.target === $('eeTableOverlay')) $('eeTableOverlay').classList.add('hidden'); });
 
   function escapeHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  // a release body is escaped on purpose: nothing written in it can inject html
+  // into the app. an image still has to show, so only its source is pulled out
+  // and a plain <img> is built here from values we checked ourselves.
+  function mdImage(src, alt, width) {
+    const url = String(src || '').replace(/&amp;/g, '&');
+    if (!/^https:\/\/[^\s"'<>]+$/i.test(url)) return '';
+    const w = /^\d{1,4}$/.test(String(width || '')) ? ' style="max-width:' + width + 'px"' : '';
+    return '<img class="md-img" src="' + escapeHtml(url) + '" alt="' + escapeHtml(String(alt || '')) + '"' + w + ' loading="lazy" />';
+  }
   function inlineMd(s) {
     let out = escapeHtml(s);
     out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
     out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    // ![alt](url), before the link rule below can claim the bracketed part
+    out = out.replace(/!\[([^\]]*)\]\((https?:[^)\s]+)\)/g, (m, alt, src) => mdImage(src, alt));
+    // <img ...>, which github accepts and which arrives here escaped
+    out = out.replace(/&lt;img\b[\s\S]*?&gt;/gi, tag => {
+      const src = /src\s*=\s*"([^"]+)"/i.exec(tag) || /src\s*=\s*'([^']+)'/i.exec(tag) || /src\s*=\s*([^\s&]+)/i.exec(tag);
+      const alt = /alt\s*=\s*"([^"]*)"/i.exec(tag) || /alt\s*=\s*'([^']*)'/i.exec(tag);
+      const w = /width\s*=\s*"?'?(\d{1,4})/i.exec(tag);
+      return src ? mdImage(src[1], alt && alt[1], w && w[1]) : '';
+    });
+    // layout wrappers a readme-style body carries mean nothing in this panel,
+    // and printing them as text is worse than dropping them
+    out = out.replace(/&lt;\/?(?:p|div|br|center|span|em|b|i|small|picture|source)\b[\s\S]*?&gt;/gi, '');
     out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" data-ext-link>$1</a>');
     return out;
   }
@@ -11663,7 +12248,10 @@
       const bullet = line.match(/^[-*]\s+(.*)$/);
       if (bullet) { if (!inList) { html += '<ul>'; inList = true; } html += `<li>${inlineMd(bullet[1])}</li>`; continue; }
       closeList();
-      html += `<p>${inlineMd(line)}</p>`;
+      // a line that was nothing but a layout tag renders to nothing, and an
+      // empty paragraph would just leave a gap
+      const body = inlineMd(line);
+      if (body.trim()) html += `<p>${body}</p>`;
     }
     closeList();
     return html || '<p class="pls-empty">no description</p>';
@@ -11736,9 +12324,16 @@
   setInterval(() => { if (S.discordEnabled && discordAppId()) applyDiscordConnection(); }, 20000);
   applyDiscordConnection();
 
+  const MP = window.MediyyuPresets;
   let userPresets = [];
   try { userPresets = JSON.parse(localStorage.getItem('bbv_presets') || '[]'); } catch (e) { userPresets = []; }
+  userPresets = (Array.isArray(userPresets) ? userPresets : [])
+    .filter(p => p && typeof p === 'object')
+    .slice(0, MP.MAX_SLOTS)
+    .map(p => ({ name: MP.cleanName(p.name) || 'preset', settings: MP.pick(p.settings) }));
   function saveUserPresets() { try { localStorage.setItem('bbv_presets', JSON.stringify(userPresets)); } catch (e) {} }
+  saveUserPresets();
+  const PRESET_EXPORT_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>';
   function renderPresetList() {
     const el = $('presetList');
     el.innerHTML = '';
@@ -11752,43 +12347,123 @@
     userPresets.forEach((p, idx) => {
       const row = document.createElement('div');
       row.className = 'preset-row';
+      const slot = document.createElement('span');
+      slot.className = 'preset-slot';
+      slot.textContent = idx + 1;
       const label = document.createElement('span');
       label.className = 'preset-name';
-      label.textContent = `${idx + 1}. ${p.name}`;
+      label.textContent = p.name;
+      label.title = p.name;
       const loadBtn = document.createElement('button');
       loadBtn.className = 'preset-action';
       loadBtn.textContent = 'load';
       loadBtn.addEventListener('click', () => applyPreset(idx));
+      const exportBtn = document.createElement('button');
+      exportBtn.className = 'preset-action preset-icon';
+      exportBtn.title = `export as ${MP.fileName(p.name)}`;
+      exportBtn.innerHTML = PRESET_EXPORT_SVG;
+      exportBtn.addEventListener('click', () => exportPreset(idx));
       const delBtn = document.createElement('button');
       delBtn.className = 'preset-action preset-del';
-      delBtn.textContent = '✕';
+      delBtn.textContent = '\u2715';
+      delBtn.title = 'delete';
       delBtn.addEventListener('click', () => { userPresets.splice(idx, 1); saveUserPresets(); renderPresetList(); });
-      row.append(label, loadBtn, delBtn);
+      row.append(slot, label, loadBtn, exportBtn, delBtn);
       el.appendChild(row);
     });
   }
-  function applyPreset(idx) {
+  async function soundfontExists(p) {
+    if (!p) return false;
+    if (!window.winControls || !window.winControls.fileExists) return true;
+    try { return await window.winControls.fileExists(p); } catch (e) { return false; }
+  }
+  async function applyPreset(idx) {
     const p = userPresets[idx];
     if (!p) return;
-    S = Object.assign({}, DEFAULTS, p.settings);
-    ensureBufs(S.count); applyFftSize(); buildMap();
-    if (window.winControls) window.winControls.setAlwaysOnTop(S.alwaysOnTop);
-    applyDisplayMode(S.displayMode);
+    const next = Object.assign({}, MP.DEFAULTS, p.settings);
+    let missingFont = '';
+    if (!next.soundfontPath || next.soundfontPath === S.soundfontPath) {
+      next.soundfontPath = S.soundfontPath; next.soundfontName = S.soundfontName;
+    } else if (!(await soundfontExists(next.soundfontPath))) {
+      missingFont = next.soundfontName || next.soundfontPath;
+      next.soundfontPath = S.soundfontPath; next.soundfontName = S.soundfontName;
+    }
+    const fontChanged = next.soundfontPath !== S.soundfontPath;
+    S = Object.assign({}, S, next);
+    ensureBufs(S.count); applyFftSize(); buildMap(); applyAudioChain();
     syncUI(); save();
+    if (fontChanged && midiBankLoaded) {
+      try { await loadSavedSoundfont(); } catch (e) { midiBankLoaded = false; }
+    }
+    if (missingFont) toast(`the soundfont "${missingFont}" can't be found \u2014 kept your current one.`, { error: true, duration: 6000 });
   }
   $('presetSaveBtn').addEventListener('click', () => {
-    if (userPresets.length >= 9) { toast('max 9 presets - delete one first.', { error: true }); return; }
-    const name = ($('presetName').value || '').trim() || `preset ${userPresets.length + 1}`;
-    userPresets.push({ name, settings: Object.assign({}, S) });
+    if (userPresets.length >= MP.MAX_SLOTS) { toast(`max ${MP.MAX_SLOTS} presets - delete one first.`, { error: true }); return; }
+    const name = MP.cleanName($('presetName').value) || `preset ${userPresets.length + 1}`;
+    userPresets.push({ name, settings: MP.pick(S) });
     saveUserPresets(); renderPresetList();
     $('presetName').value = '';
     toast(`preset "${name}" saved (press ${userPresets.length})`);
   });
+  async function exportPreset(idx) {
+    const p = userPresets[idx];
+    if (!p || !window.winControls) return;
+    const r = await window.winControls.exportPreset(MP.fileName(p.name), MP.serialize(p.name, p.settings, window.winControls.appVersion));
+    if (!r || r.canceled) return;
+    if (!r.ok) { toast("couldn't export the preset: " + (r.error || 'unknown error'), { error: true, duration: 6000 }); return; }
+    toast(`exported "${p.name}"`, { actionLabel: 'show in folder', onAction: () => window.winControls.showInFolder(r.path) });
+  }
+
+  let presetImportPending = null;
+  async function offerPresetImport(text) {
+    let preset;
+    try { preset = MP.parse(text); }
+    catch (err) { toast(err.message, { error: true, duration: 6000 }); return; }
+    const full = userPresets.length >= MP.MAX_SLOTS;
+    const missing = !!preset.settings.soundfontPath && !(await soundfontExists(preset.settings.soundfontPath));
+    presetImportPending = full ? null : preset;
+    $('presetImportName').textContent = preset.name;
+    $('presetImportMsg').textContent = full
+      ? `all ${MP.MAX_SLOTS} preset slots are full. delete one in settings \u2192 presets, then open the file again.`
+      : `will be saved to slot ${userPresets.length + 1}. here's what it brings:`;
+    const sum = $('presetImportSummary');
+    sum.innerHTML = '';
+    sum.classList.toggle('hidden', full);
+    if (!full) sum.appendChild(MP.renderSummary(MP.summarize(preset.settings, { soundfontMissing: missing })));
+    $('presetImportOk').classList.toggle('hidden', full);
+    $('presetImportCancel').textContent = full ? 'close' : 'cancel';
+    $('presetImportOverlay').classList.remove('hidden');
+  }
+  function closePresetImport() {
+    presetImportPending = null;
+    $('presetImportOverlay').classList.add('hidden');
+  }
+  $('presetImportCancel').addEventListener('click', closePresetImport);
+  $('presetImportOverlay').addEventListener('click', e => { if (e.target === $('presetImportOverlay')) closePresetImport(); });
+  $('presetImportOk').addEventListener('click', () => {
+    const preset = presetImportPending;
+    closePresetImport();
+    if (!preset) return;
+    if (userPresets.length >= MP.MAX_SLOTS) { toast(`max ${MP.MAX_SLOTS} presets - delete one first.`, { error: true }); return; }
+    userPresets.push(preset);
+    saveUserPresets(); renderPresetList();
+    const idx = userPresets.length - 1;
+    toast(`preset "${preset.name}" saved to slot ${idx + 1}`, { actionLabel: 'load it', onAction: () => applyPreset(idx), duration: 6000 });
+  });
+  $('presetFileBtn').addEventListener('click', () => $('presetFileInput').click());
+  $('presetFileInput').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (file) offerPresetImport(await file.text());
+  });
+  if (window.winControls && window.winControls.onOpenPreset) {
+    window.winControls.onOpenPreset(({ text }) => offerPresetImport(text));
+  }
   renderPresetList();
   $('resetAllBtn').addEventListener('click', () => {
     if (!confirm('reset all settings to their defaults? your saved presets (1-9) are kept.')) return;
     S = Object.assign({}, DEFAULTS);
-    ensureBufs(S.count); applyFftSize(); buildMap();
+    ensureBufs(S.count); applyFftSize(); buildMap(); applyAudioChain();
     if (window.winControls) window.winControls.setAlwaysOnTop(S.alwaysOnTop);
     applyDisplayMode(S.displayMode);
     syncUI(); save();
@@ -11865,6 +12540,7 @@
       $('eq' + i + 'Val').textContent = (S['eq' + i] > 0 ? '+' : '') + S['eq' + i];
     });
     syncEqPresetSel();
+    syncAudioOutputUI();
     $('xfadeSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.crossfade));
     $('xfadeDur').value = S.crossfadeDur;
     $('xfadeDurVal').textContent = S.crossfadeDur + 's';
