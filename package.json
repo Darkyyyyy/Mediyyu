@@ -1,8 +1,8 @@
 {
   "name": "mediyyu",
-  "version": "1.4.0",
-  "description": "Mediyyu audio visualizer desktop app",
-  "author": "Wiliam",
+  "version": "1.4.1",
+  "description": "Mediyyu, an audio visualizer desktop app",
+  "author": "Darkyyu",
   "main": "main.js",
   "scripts": {
     "start": "node scripts/start.js",
@@ -29,6 +29,8 @@
       "preload.js",
       "Visualizer.html",
       "lyrics.html",
+      "preset-import.html",
+      "presets.js",
       "fonts/**/*",
       "assets/**/*",
       "libs/**/*",
@@ -54,6 +56,13 @@
         "description": "Audio file",
         "role": "Viewer",
         "icon": "build/fileicon.ico"
+      },
+      {
+        "ext": "mdyp",
+        "name": "Mediyyu Preset",
+        "description": "Mediyyu preset",
+        "role": "Editor",
+        "icon": "build/preseticon.ico"
       }
     ],
     "win": {

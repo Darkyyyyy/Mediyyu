@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Mediyyu — import preset</title>
+<style>
+  @font-face {
+    font-family: 'Renogare';
+    src: url('fonts/Renogare-Regular.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  :root {
+    --ui: 'Renogare', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --line: rgba(255, 255, 255, 0.14);
+    --txt: rgba(255, 255, 255, 0.92);
+    --dim: rgba(255, 255, 255, 0.5);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: transparent; overflow: hidden; }
+  body { font-family: var(--ui); color: var(--txt); user-select: none; cursor: default; padding: 10px; }
+  .box {
+    background: rgba(18,19,22,.97); border: 1px solid var(--line); border-radius: 15px;
+    padding: 18px 22px 20px; box-shadow: 0 8px 26px rgba(0,0,0,.45);
+    opacity: 0; transform: scale(.96) translateY(4px); transition: opacity .16s ease, transform .16s ease;
+  }
+  body.ready .box { opacity: 1; transform: none; }
+  .bar { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; -webkit-app-region: drag; }
+  .bar img { width: 18px; height: 18px; border-radius: 4px; }
+  .title { flex: 1; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--dim); }
+  .x {
+    -webkit-app-region: no-drag; width: 24px; height: 24px; border: 0; border-radius: 7px;
+    background: rgba(255,255,255,.07); color: rgba(255,255,255,.75); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .x:hover { background: rgba(255,255,255,.16); color: #fff; }
+  .x svg { width: 12px; height: 12px; }
+  .name { font-size: 16px; color: #fff; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .msg { font-size: 12.5px; color: rgba(255,255,255,.85); line-height: 1.5; margin-bottom: 16px; }
+  .msg.err { color: #ff9b9b; }
+  .summary { margin: -6px 0 16px; max-height: 420px; overflow-y: auto; }
+  .summary:empty { display: none; }
+  .summary::-webkit-scrollbar { width: 7px; }
+  .summary::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 7px; }
+  .actions { display: flex; justify-content: flex-end; gap: 10px; }
+  .actions button {
+    border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--txt); cursor: pointer;
+    font-family: var(--ui); font-size: 12px; border-radius: 8px; padding: 7px 15px;
+  }
+  .actions button:hover { background: rgba(255,255,255,.16); }
+  .actions button.primary { background: rgba(90,150,255,.25); border-color: rgba(120,170,255,.5); color: #fff; }
+  .actions button.primary:hover { background: rgba(90,150,255,.4); }
+  .actions button:focus { outline: none; }
+  .actions button:focus-visible { box-shadow: 0 0 0 2px rgba(120,170,255,.55); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+  <div class="box" id="box">
+    <div class="bar">
+      <img src="assets/logo.png" alt="" />
+      <span class="title">import preset</span>
+      <button class="x" id="xBtn" title="close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="name" id="name"></div>
+    <div class="msg" id="msg">reading the preset&hellip;</div>
+    <div class="summary" id="summary"></div>
+    <div class="actions">
+      <button id="cancelBtn">cancel</button>
+      <button id="openBtn" class="primary hidden">open mediyyu</button>
+      <button id="importBtn" class="primary hidden">import</button>
+    </div>
+  </div>
+<script src="presets.js"></script>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const MP = window.MediyyuPresets;
+  const wc = window.winControls;
+  let preset = null;
+
+  const fit = () => {
+    if (wc) wc.presetWinFit(Math.ceil(document.body.getBoundingClientRect().height));
+    requestAnimationFrame(() => document.body.classList.add('ready'));
+  };
+  const close = () => window.close();
+  $('xBtn').addEventListener('click', close);
+  $('cancelBtn').addEventListener('click', close);
+  $('openBtn').addEventListener('click', () => wc.presetWinOpenApp());
+  window.addEventListener('keydown', e => {
+    if (e.key === 'Escape') close();
+    else if (e.key === 'Enter' && !$('importBtn').classList.contains('hidden')) $('importBtn').click();
+  });
+
+  function readPresets() {
+    try {
+      const list = JSON.parse(localStorage.getItem('bbv_presets') || '[]');
+      return Array.isArray(list) ? list : [];
+    } catch (e) { return []; }
+  }
+
+  function showError(text) {
+    $('msg').textContent = text;
+    $('msg').classList.add('err');
+    $('cancelBtn').textContent = 'close';
+    fit();
+  }
+
+  $('importBtn').addEventListener('click', () => {
+    const list = readPresets();
+    if (list.length >= MP.MAX_SLOTS) { showError(`all ${MP.MAX_SLOTS} preset slots are full. delete one in mediyyu first.`); return; }
+    list.push(preset);
+    try { localStorage.setItem('bbv_presets', JSON.stringify(list)); }
+    catch (e) { showError("couldn't save the preset: " + e.message); return; }
+    $('msg').textContent = `saved to slot ${list.length}. press ${list.length} in mediyyu to load it.`;
+    $('summary').innerHTML = '';
+    $('importBtn').classList.add('hidden');
+    $('openBtn').classList.remove('hidden');
+    $('cancelBtn').textContent = 'close';
+    fit();
+  });
+
+  async function init() {
+    const data = wc ? await wc.presetWinData() : { error: 'no preset file.' };
+    if (!data || data.error) { showError((data && data.error) || 'no preset file.'); return; }
+    try { preset = MP.parse(data.text); }
+    catch (err) { showError(err.message); return; }
+    $('name').textContent = preset.name;
+    const slots = readPresets().length;
+    if (slots >= MP.MAX_SLOTS) {
+      showError(`all ${MP.MAX_SLOTS} preset slots are full. delete one in mediyyu, then open the file again.`);
+      return;
+    }
+    const missing = !!preset.settings.soundfontPath && !(await wc.fileExists(preset.settings.soundfontPath));
+    $('msg').textContent = `will be saved to slot ${slots + 1}. here's what it brings:`;
+    $('summary').appendChild(MP.renderSummary(MP.summarize(preset.settings, { soundfontMissing: missing })));
+    $('importBtn').classList.remove('hidden');
+    fit();
+    $('importBtn').focus();
+  }
+  init();
+})();
+</script>
+</body>
+</html>

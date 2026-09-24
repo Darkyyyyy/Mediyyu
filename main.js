@@ -9,13 +9,6 @@ const os = require('os');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
 
-// ── build-time configuration ────────────────────────────────────────────────
-// no api credential is kept in the source. released builds get theirs from a
-// .env the release workflow writes and packages; anyone building from source
-// supplies their own. no dependency here: the format is simple enough.
-//
-// first file found wins per key, so an external .env overrides a packaged one,
-// and a real environment variable overrides both.
 function loadDotEnv() {
   const spots = [
     path.join(process.cwd(), '.env'),
@@ -35,14 +28,11 @@ function loadDotEnv() {
       let value = line.slice(eq + 1).trim();
       const quote = value[0];
       if ((quote === '"' || quote === "'") && value.endsWith(quote) && value.length > 1) value = value.slice(1, -1);
-      // a real environment variable always outranks the file
       if (process.env[key] === undefined) process.env[key] = value;
     }
   }
 }
 loadDotEnv();
-// a pair is only usable when both halves are there; otherwise the feature that
-// needs it reports itself as unconfigured rather than failing obscurely
 const envPair = (key) => {
   const a = (process.env[key + '_KEY'] || '').trim();
   const b = (process.env[key + '_SECRET'] || '').trim();
@@ -57,6 +47,24 @@ const AUDIO_EXT_RE = /\.(mp3|wav|ogg|m4a|flac|aac|mp4|webm|mov|m4v|mid|midi)$/i;
 const AUDIO_MIME = { mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', m4a: 'audio/mp4', flac: 'audio/flac', aac: 'audio/aac', mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', m4v: 'video/mp4', mid: 'audio/midi', midi: 'audio/midi' };
 function findAudioArg(argv) {
   return argv.find(a => AUDIO_EXT_RE.test(a) && fs.existsSync(a));
+}
+const PRESET_EXT_RE = /\.mdyp$/i;
+const PRESET_MAX_BYTES = 1024 * 1024;
+function findPresetArg(argv) {
+  return argv.find(a => PRESET_EXT_RE.test(a) && fs.existsSync(a));
+}
+function readPresetFile(filePath) {
+  try {
+    if (fs.statSync(filePath).size > PRESET_MAX_BYTES) return { error: "this file is too big to be a mediyyu preset." };
+    return { text: fs.readFileSync(filePath, 'utf8'), path: filePath };
+  } catch (err) {
+    return { error: "couldn't read the preset file: " + err.message };
+  }
+}
+function sendOpenPreset(win, filePath) {
+  const r = readPresetFile(filePath);
+  if (r.error) console.error('[open-preset]', r.error);
+  else win.webContents.send('preset:open', r);
 }
 function sendOpenFile(win, filePath) {
   try {
@@ -130,10 +138,6 @@ function trackNormalBounds(win) {
   normalBoundsMap.set(win, win.getBounds());
 }
 
-// chromium answers f11 by itself, behind the app's back: it calls setFullScreen
-// directly, so displayMode still says windowed, the edge-to-edge flag is never
-// set and the saved window bounds are lost. the app's own f key does all of that
-// properly, so the native shortcut is taken out of the way.
 function blockNativeFullscreenKey(win) {
   win.webContents.on('before-input-event', (e, input) => {
     if (input.type === 'keyDown' && input.key === 'F11') e.preventDefault();
@@ -205,7 +209,7 @@ function defaultWindowSize() {
 
 let mainWindow = null;
 
-function createWindow() {
+function createWindow(opts = {}) {
   const win = new BrowserWindow({
     title: 'Mediyyu',
     ...defaultWindowSize(),
@@ -226,11 +230,34 @@ function createWindow() {
     if (lyricsWin && !lyricsWin.isDestroyed()) lyricsWin.close();
   });
 
+  let rendererGone = false;
+  let crashTimes = [];
+  let recovering = false;
+  win.webContents.on('render-process-gone', (e, details) => {
+    rendererGone = true;
+    logError('main', `renderer gone: ${details.reason} (exit code ${details.exitCode})`);
+    if (closeAnimated || win.isDestroyed() || details.reason === 'clean-exit') return;
+    const now = Date.now();
+    crashTimes = crashTimes.filter(t => now - t < 60000).concat(now);
+    if (crashTimes.length > 3) {
+      logError('main', 'renderer keeps crashing, giving up on reloading it');
+      win.close();
+      return;
+    }
+    recovering = true;
+    win.webContents.reload();
+  });
+  win.webContents.on('did-finish-load', () => {
+    rendererGone = false;
+    if (recovering) { recovering = false; win.webContents.send('app:recovered'); }
+  });
+
   let closeAnimated = false;
   win.on('close', (e) => {
     if (closeAnimated) return;
-    e.preventDefault();
     closeAnimated = true;
+    if (rendererGone || win.webContents.isLoading()) return;
+    e.preventDefault();
     win.webContents.send('app:fadeout');
     const start = Date.now();
     const dur = 320;
@@ -256,6 +283,7 @@ function createWindow() {
     coldStartFileHandled = true;
     const filePath = findAudioArg(process.argv);
     if (filePath) sendOpenFile(win, filePath);
+    if (opts.presetPath) sendOpenPreset(win, opts.presetPath);
   });
 
   win.on('maximize', () => win.webContents.send('win:maximized', true));
@@ -293,7 +321,7 @@ function startLyricsHoverWatch() {
     try {
       const pt = screen.getCursorScreenPoint();
       const b = lyricsWin.getBounds();
-      const edge = 6; // reach a little past the frame, where resizing happens
+      const edge = 6;
       inside = pt.x >= b.x - edge && pt.x <= b.x + b.width + edge
         && pt.y >= b.y - edge && pt.y <= b.y + b.height + edge;
     } catch (err) {}
@@ -378,14 +406,90 @@ async function discordConnect(clientId) {
 }
 
 app.on('second-instance', (event, argv) => {
-  if (!mainWindow) return;
+  const presetPath = findPresetArg(argv);
+  if (!mainWindow) {
+    if (!presetWin) return;
+    if (!presetPath && !findAudioArg(argv)) { openAppFromPresetWin(); return; }
+    if (presetPath) { presetWinPath = presetPath; presetWin.webContents.reload(); }
+    presetWin.focus();
+    return;
+  }
   if (mainWindow.isMinimized()) mainWindow.restore();
   mainWindow.focus();
   const filePath = findAudioArg(argv);
   if (filePath) sendOpenFile(mainWindow, filePath);
+  if (presetPath) sendOpenPreset(mainWindow, presetPath);
 });
 
-app.whenReady().then(createWindow);
+// ── preset import popup ──────────────────────────────────────────────────────
+let presetWin = null;
+let presetWinPath = null;
+function createPresetWindow(filePath) {
+  presetWinPath = filePath;
+  presetWin = new BrowserWindow({
+    title: 'Mediyyu — import preset',
+    width: 460, height: 420, useContentSize: true,
+    resizable: false, maximizable: false, fullscreenable: false,
+    frame: false, transparent: true, show: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      devTools: !app.isPackaged,
+    },
+  });
+  presetWin.loadFile('preset-import.html');
+  blockNativeFullscreenKey(presetWin);
+  presetWin.on('closed', () => { presetWin = null; });
+}
+function openAppFromPresetWin() {
+  const pending = presetWinPath;
+  if (!mainWindow) createWindow({ presetPath: pending });
+  if (presetWin && !presetWin.isDestroyed()) presetWin.close();
+}
+ipcMain.handle('presetwin:data', () => (presetWinPath ? readPresetFile(presetWinPath) : { error: 'no preset file.' }));
+ipcMain.on('presetwin:fit', (e, height) => {
+  if (!presetWin || presetWin.isDestroyed()) return;
+  const h = Math.max(200, Math.min(Math.round(Number(height) || 420), screen.getPrimaryDisplay().workAreaSize.height - 80));
+  presetWin.setContentSize(460, h);
+  presetWin.center();
+  if (!presetWin.isVisible()) presetWin.show();
+});
+ipcMain.on('presetwin:openApp', () => { presetWinPath = null; openAppFromPresetWin(); });
+
+ipcMain.handle('preset:export', async (e, { fileName, text }) => {
+  const win = BrowserWindow.fromWebContents(e.sender);
+  try {
+    const { canceled, filePath } = await dialog.showSaveDialog(win, {
+      defaultPath: path.join(app.getPath('documents'), String(fileName || 'preset.mdyp')),
+      filters: [{ name: 'Mediyyu preset', extensions: ['mdyp'] }],
+    });
+    if (canceled || !filePath) return { canceled: true };
+    await fs.promises.writeFile(filePath, String(text), 'utf8');
+    return { ok: true, path: filePath };
+  } catch (err) {
+    return { error: err.message };
+  }
+});
+ipcMain.handle('files:exists', (e, p) => {
+  try { return typeof p === 'string' && !!p && fs.existsSync(p); } catch { return false; }
+});
+
+let pendingMacPreset = null;
+app.on('open-file', (event, filePath) => {
+  if (!PRESET_EXT_RE.test(filePath)) return;
+  event.preventDefault();
+  if (!app.isReady()) { pendingMacPreset = filePath; return; }
+  if (mainWindow) { mainWindow.focus(); sendOpenPreset(mainWindow, filePath); }
+  else if (presetWin) { presetWinPath = filePath; presetWin.webContents.reload(); presetWin.focus(); }
+  else createPresetWindow(filePath);
+});
+
+app.whenReady().then(() => {
+  const presetPath = pendingMacPreset || findPresetArg(process.argv);
+  if (presetPath && !findAudioArg(process.argv)) createPresetWindow(presetPath);
+  else createWindow({ presetPath });
+});
 
 const { autoUpdater } = require('electron-updater');
 autoUpdater.autoDownload = false;
@@ -401,8 +505,33 @@ autoUpdater.on('error', (err) => {
   console.error('[updater]', err.message);
   sendUpdate('update:error', err.message);
 });
+function updaterCacheDir() {
+  const base = process.platform === 'win32'
+    ? (process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'))
+    : process.platform === 'darwin'
+      ? path.join(os.homedir(), 'Library', 'Caches')
+      : (process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache'));
+  return path.join(base, 'mediyyu-updater');
+}
+const versionParts = (v) => String(v).split('.').map(n => parseInt(n, 10) || 0);
+function versionAtMost(a, b) {
+  const x = versionParts(a), y = versionParts(b);
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0);
+  }
+  return true;
+}
+function clearInstalledPendingUpdate() {
+  const pending = path.join(updaterCacheDir(), 'pending');
+  try {
+    const info = JSON.parse(fs.readFileSync(path.join(pending, 'update-info.json'), 'utf8'));
+    const m = String(info.fileName || '').match(/(\d+\.\d+\.\d+)/);
+    if (m && versionAtMost(m[1], app.getVersion())) fs.rmSync(pending, { recursive: true, force: true });
+  } catch {}
+}
 if (app.isPackaged) {
   app.whenReady().then(() => {
+    clearInstalledPendingUpdate();
     setTimeout(() => autoUpdater.checkForUpdates().catch(() => {}), 3000);
   });
 }
@@ -544,8 +673,6 @@ function buildTagArgs(tags, ext) {
   const extra = /\.mp3$/i.test(ext) ? ['-id3v2_version', '3', '-write_id3v1', '1'] : [];
   return { meta, extra };
 }
-// cover art can only be attached cleanly to audio-only containers. in a video file the
-// stream indexes shift and the existing artwork survives, so we leave those alone.
 const COVER_EMBED_RE = /[.](mp3|m4a|flac|ogg|oga|aac|wav|mp4|m4v|mov)$/i;
 const COVER_VIDEO_RE = /[.](mp4|m4v|mov)$/i;
 async function downloadCover(url) {
@@ -563,9 +690,6 @@ async function downloadCover(url) {
     return p;
   } catch (err) { return null; }
 }
-// ffmpeg writes every attached picture as apic type 0 ("other"), so the roles the
-// dialog shows have to be stamped back into the frames once it is done. only id3
-// carries roles: mp4 has a single cover atom and no notion of one.
 function stampApicTypes(file, types) {
   try {
     if (!types.some(t => t)) return;
@@ -581,9 +705,9 @@ function stampApicTypes(file, types) {
       const size = ver >= 4 ? syncsafe(p + 4) : b.readUInt32BE(p + 4);
       if (size <= 0 || p + 10 + size > end) break;
       if (id === 'APIC') {
-        let q = p + 11;                       // past the frame header and the encoding byte
-        while (q < end && b[q] !== 0) q++;    // past the mime string
-        q++;                                  // and its terminator: the picture type
+        let q = p + 11;                       
+        while (q < end && b[q] !== 0) q++;    
+        q++;
         const want = types[n++] & 0xff;
         if (q < p + 10 + size && b[q] !== want) { b[q] = want; dirty = true; }
       }
@@ -609,7 +733,6 @@ ipcMain.handle('file:writeTags', async (e, { path: srcPath, buffer, name, tags }
       const { meta, extra } = buildTagArgs(tags, ext);
       const tmpOut = srcPath + '.tagtmp' + ext;
       let coverTmp = null;
-      // the properties dialog sends the full artwork set; the batch repair sends one url
       const artOk = COVER_EMBED_RE.test(ext);
       const artIsVideo = COVER_VIDEO_RE.test(ext);
       const picTmps = [];
@@ -631,21 +754,14 @@ ipcMain.handle('file:writeTags', async (e, { path: srcPath, buffer, name, tags }
       const replacingArt = picTmps.length > 0 || (artOk && tags && Array.isArray(tags.pictures));
       const inputs = ['-i', srcPath];
       for (const pic of picTmps) inputs.push('-i', pic.path);
-      // copying the picture streams keeps a png cover a png. a few images cannot be
-      // muxed as-is, so fall back to re-encoding rather than failing the whole save.
       const buildMaps = (videoCodec) => {
         if (!replacingArt) return ['-map', '0', '-c', 'copy'];
-        // 0:V is every real video stream without the attached pictures, so a video
-        // keeps its picture and loses only the cover it used to carry. an audio file
-        // has nothing but covers to drop, so its audio is all that is kept.
         const m = artIsVideo
           ? ['-map', '0:V?', '-map', '0:a?', '-map', '0:s?']
           : ['-map', '0:a'];
-        // the movie itself is video stream 0 of the output, so the covers start after it
         const vAt = i => i + (artIsVideo ? 1 : 0);
         picTmps.forEach((pic, i) => m.push('-map', String(i + 1)));
         m.push('-c', 'copy');
-        // re-encoding must never reach the movie stream, only the covers
         if (picTmps.length) {
           if (artIsVideo) picTmps.forEach((pic, i) => m.push('-c:v:' + vAt(i), videoCodec));
           else m.push('-c:v', videoCodec);
@@ -822,8 +938,6 @@ ipcMain.handle('lyrics:searchNetease', async (e, query) => {
   } catch (err) { return { results: [] }; }
 });
 ipcMain.handle('lyrics:fetchNeteaseById', async (e, id) => {
-  // netease does not always put the words in lrc: plenty of tracks carry them on the
-  // media endpoint instead, and a few only have the translation. try each in turn.
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
   const grab = async (url) => {
@@ -1010,7 +1124,6 @@ function icueBuildTargets() {
     const spanX = maxX - minX, spanY = maxY - minY;
     const mapped = leds.map(l => {
       const tx = spanX > 0 ? (l.cx - minX) / spanX : 0.5;
-      // ny is 0 on the bottom row and 1 on the top row, so bars grow upwards
       const ny = spanY > 0 ? 1 - (l.cy - minY) / spanY : 0;
       let band = Math.round(tx * (ICUE_BANDS - 1));
       if (band < 0) band = 0;
