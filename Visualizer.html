@@ -23,6 +23,18 @@
     font-weight: 200 900;
     font-style: italic;
   }
+  @font-face {
+    font-family: 'Pusab';
+    src: url('fonts/8-bit-pusab.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Excelsior Sans';
+    src: url('fonts/ExcelsiorSans.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
   :root {
     --ui: 'Renogare', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     --mono: 'Nunito', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
@@ -107,6 +119,78 @@
   }
   #coverBgFade { opacity: 0; }
   body.bg-cover-art #coverBg, body.bg-cover-art #coverBgFade { display: block; }
+  #wingsBg {
+    position: absolute; z-index: 0; inset: -6%; display: none;
+    background: url('assets/flymywings.jpg') center / cover no-repeat;
+    filter: blur(8px) brightness(.6);
+    transform: scale(1.12);
+  }
+  body.wings-bg #wingsBg { display: block; }
+  /* skies forever blue: a banded 8-bit sky, the clouds drawn on top of it */
+  #skyBg, #skyClouds { position: absolute; inset: 0; z-index: 0; display: none; width: 100%; height: 100%; }
+  #skyBg {
+    background: linear-gradient(180deg,
+      #2f6fd6 0%, #2f6fd6 16%, #3d82e3 16%, #3d82e3 32%, #4d95ec 32%, #4d95ec 48%,
+      #62a8f2 48%, #62a8f2 63%, #7cbcf6 63%, #7cbcf6 78%, #9bd0fa 78%, #9bd0fa 100%);
+  }
+  #skyClouds { image-rendering: pixelated; }
+  #compassScene { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; display: none; transform-origin: 50% 100%; }
+  body.compass-scene #compassScene { display: block; }
+  body.egg-8bit #skyBg, body.egg-8bit #skyClouds { display: block; }
+
+  /* ----- 8-bit interface ----- */
+  body.egg-8bit { --px: 3px; --px-edge: #ffffff; --px-fill: #1c3f8c; --px-fill-hi: #2c5bb8; --px-shade: #0b1f4d; }
+  body.egg-8bit .glass-blur { display: none !important; }
+  body.egg-8bit #panel, body.egg-8bit #transport, body.egg-8bit #plDrawer, body.egg-8bit #topbar, body.egg-8bit #wincontrols {
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  }
+  body.egg-8bit .transport, body.egg-8bit .panel, body.egg-8bit .playlist-drawer, body.egg-8bit .more-menu,
+  body.egg-8bit .toast, body.egg-8bit .help-box, body.egg-8bit .topbar, body.egg-8bit .wincontrols,
+  body.egg-8bit .load-progress, body.egg-8bit .vol-popup {
+    background: var(--px-fill) !important; background-image: none !important;
+    border: 0 !important; border-radius: 0 !important;
+    box-shadow:
+      0 calc(-1 * var(--px)) 0 0 var(--px-edge), 0 var(--px) 0 0 var(--px-edge),
+      calc(-1 * var(--px)) 0 0 0 var(--px-edge), var(--px) 0 0 0 var(--px-edge),
+      calc(2 * var(--px)) calc(2 * var(--px) + var(--px)) 0 0 rgba(8,24,64,.45) !important;
+  }
+  body.egg-8bit .btn, body.egg-8bit .play, body.egg-8bit .playlist-tab, body.egg-8bit .preset-action,
+  body.egg-8bit .preset-add button, body.egg-8bit .btn-neutral, body.egg-8bit .confirm-actions button,
+  body.egg-8bit .lib-head-btn, body.egg-8bit .lib-fmt-btn, body.egg-8bit .pls-foot button {
+    border-radius: 0 !important; border: 0 !important; background-image: none !important;
+    background-color: var(--px-fill-hi) !important; color: #fff !important;
+    box-shadow: inset calc(-1 * var(--px)) calc(-1 * var(--px)) 0 0 var(--px-shade), inset var(--px) var(--px) 0 0 rgba(255,255,255,.35) !important;
+  }
+  body.egg-8bit .btn:hover, body.egg-8bit .play:hover, body.egg-8bit .preset-action:hover, body.egg-8bit .btn-neutral:hover,
+  body.egg-8bit .confirm-actions button:hover, body.egg-8bit .lib-head-btn:hover, body.egg-8bit .pls-foot button:hover {
+    background-color: #3b72d6 !important; transform: none !important;
+  }
+  body.egg-8bit .play:active, body.egg-8bit .btn:active {
+    box-shadow: inset var(--px) var(--px) 0 0 var(--px-shade) !important; transform: none !important;
+  }
+  body.egg-8bit #playBtn { background-color: #ffffff !important; box-shadow: inset calc(-1 * var(--px)) calc(-1 * var(--px)) 0 0 #9bb7e6 !important; }
+  body.egg-8bit .topbar .btn, body.egg-8bit .wincontrols .btn { box-shadow: none !important; background-color: transparent !important; }
+  body.egg-8bit .topbar .btn:hover, body.egg-8bit .wincontrols .btn:hover { background-color: var(--px-fill-hi) !important; }
+  body.egg-8bit .seg { border-radius: 0; background: var(--px-shade); }
+  body.egg-8bit .seg button { border-radius: 0; }
+  body.egg-8bit .seg button.on { background: #fff; color: var(--px-fill); }
+  body.egg-8bit .panel-nav button { border-radius: 0; }
+  body.egg-8bit .panel-nav button.on { background: var(--px-fill-hi); color: #fff; }
+  body.egg-8bit .menu-item, body.egg-8bit .lib-fmt-opt { border-radius: 0; }
+  body.egg-8bit .menu-item:hover, body.egg-8bit .lib-fmt-opt:hover { background: var(--px-fill-hi); }
+  body.egg-8bit input[type=range], body.egg-8bit .seek {
+    height: 6px; border-radius: 0;
+    background: linear-gradient(to right, #ffffff 0%, #ffffff var(--fill, 0%), var(--px-shade) var(--fill, 0%));
+  }
+  body.egg-8bit input[type=range]::-webkit-slider-thumb, body.egg-8bit .seek::-webkit-slider-thumb {
+    width: 12px; height: 12px; border-radius: 0; background: #fff; box-shadow: inset -3px -3px 0 0 #9bb7e6;
+  }
+  body.egg-8bit #seek { background: transparent; }
+  body.egg-8bit .np-cover { border-radius: 0; box-shadow: 0 0 0 var(--px) #fff, 6px 9px 0 0 rgba(8,24,64,.45); }
+  body.egg-8bit .nowplaying .np-title, body.egg-8bit .nowplaying .np-artist {
+    text-shadow: -2px 0 0 #1a4396, 2px 0 0 #1a4396, 0 -2px 0 #1a4396, 0 2px 0 #1a4396, 3px 4px 0 #0b2a6b;
+  }
+  body.egg-8bit input[type=text], body.egg-8bit select, body.egg-8bit .settings-search { border-radius: 0 !important; }
   #clipBg {
     position: absolute;
     z-index: 0;
@@ -223,6 +307,20 @@
     from { opacity: 1; transform: none; }
     to { opacity: 0; transform: translateY(-16px); }
   }
+  /* backing vocals, on a row reserved only in songs that have them */
+  .lyric-back {
+    display: none; min-height: 21px; margin-top: 3px;
+    font-size: 15px; font-style: italic; letter-spacing: .02em; color: rgba(255,236,205,.9);
+    text-shadow: 0 1px 8px rgba(0,0,0,.85);
+  }
+  .lyrics-box.has-back .lyric-back { display: block; }
+  .lyric-back .bv {
+    display: inline-block; margin: 0 .4em; opacity: 0;
+    transform: translateY(7px) scale(.9); filter: blur(4px);
+    transition: opacity .45s ease, transform .55s cubic-bezier(.2,.9,.3,1.25), filter .45s ease;
+  }
+  .lyric-back .bv.in { opacity: .85; transform: none; filter: none; animation: lyricBackSway 3.4s ease-in-out .55s infinite; }
+  @keyframes lyricBackSway { 0%, 100% { translate: 0 0; } 50% { translate: 0 -2px; } }
   .lyric-next {
     margin-top: 7px; font-size: 14px; color: rgba(255,255,255,.55);
     text-shadow: 0 1px 8px rgba(0,0,0,.8);
@@ -240,9 +338,11 @@
   .blood-lyrics {
     position: absolute; inset: 0; z-index: 24; pointer-events: none;
   }
+  .wings-flash { position: absolute; inset: 0; z-index: 24; pointer-events: none; background: #fff; opacity: 0; }
+  .wings-snow { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 24; pointer-events: none; }
   .blood-line {
     position: absolute; white-space: pre;
-    font-family: var(--ui); font-size: 44px; font-weight: 400; letter-spacing: .03em;
+    font-family: 'Excelsior Sans', var(--ui); font-size: 44px; font-weight: 400; letter-spacing: .03em;
     transform: translate(-50%, -50%);
     transition: transform 6.4s linear, opacity .6s ease;
     animation: bloodFloat 4.6s ease-in-out infinite;
@@ -263,6 +363,23 @@
     color: #fff3d6;
     -webkit-text-stroke: 1px rgba(220,180,110,.7);
     text-shadow: 0 0 8px rgba(255,224,150,.9), 0 0 20px rgba(255,205,110,.65), 0 0 44px rgba(255,190,90,.45);
+  }
+  .blood-line.blood-wings .blood-char {
+    color: #ffffff;
+    -webkit-text-stroke: 1px rgba(255,196,60,.95);
+    text-shadow: 0 0 6px rgba(255,210,90,.95), 0 0 16px rgba(255,190,50,.75), 0 0 36px rgba(240,160,30,.55);
+  }
+  .blood-line.blood-sky { font-family: 'Pusab', monospace; font-size: 30px; letter-spacing: 0; left: 50%; top: 40%; text-align: center; }
+  .blood-line.blood-sky.show { transform: translate(-50%, -50%); }
+  .blood-line.blood-sky.hide { transition: opacity .35s ease; }
+  .blood-line.blood-sky .sky-row { display: block; }
+  .blood-line.blood-sky .sky-row + .sky-row { margin-top: .5em; }
+  .blood-line.blood-sky .blood-char {
+    color: #ffffff;
+    -webkit-text-stroke: 0;
+    /* a hard pixel outline, so white letters still read over a white cloud */
+    text-shadow: -3px 0 0 #1a4396, 3px 0 0 #1a4396, 0 -3px 0 #1a4396, 0 3px 0 #1a4396,
+      -3px -3px 0 #1a4396, 3px -3px 0 #1a4396, -3px 3px 0 #1a4396, 3px 3px 0 #1a4396, 6px 7px 0 #0b2a6b;
   }
   .blood-indent { display: block; margin-top: .25em; padding-left: 1.6em; }
   .blood-wrap { display: block; margin-top: .15em; text-align: center; }
@@ -513,9 +630,13 @@
   }
   .library-folder-row:hover { background: rgba(255,255,255,.05); }
   .library-folder-top { display: flex; align-items: center; gap: 8px; }
+  .library-folder-hint { font-size: 10.5px; color: #ffc07a; }
+  .library-excl-head { margin-top: 14px; }
   .library-folder-path {
     font-size: 11.5px; color: var(--txt); flex: 1; min-width: 0;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    /* long paths lose their start rather than the folder name at the end */
+    direction: rtl; text-align: left;
   }
   .library-folder-remove {
     border: 0; background: transparent; color: var(--dim); cursor: pointer;
@@ -795,6 +916,14 @@
   .ee-table tr:last-child td { border-bottom: 0; }
   .ee-table-wrap::-webkit-scrollbar { width: 7px; }
   .ee-table-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 7px; }
+  .about-btns { display: flex; gap: 8px; }
+  .help-box.credits-box { width: min(640px, 92vw); }
+  .credits-wrap { max-height: min(460px, 62vh); }
+  .credits-wrap .sec-head { margin: 16px 0 4px; }
+  .credits-wrap .sec-head:first-child { margin-top: 0; }
+  .credits-wrap .ee-table td:first-child { width: 34%; }
+  .credits-wrap .ee-table td:last-child { width: 26%; color: var(--dim); }
+  .credits-wrap .ee-table td { padding: 7px 10px 7px 0; }
   .toast-action {
     display: inline-block; margin-left: 8px; color: #fff; font-weight: 600;
     text-decoration: underline dotted rgba(255,255,255,.5); cursor: pointer;
@@ -1012,7 +1141,7 @@
   body.mini .playlist-tab, body.mini .playlist-drawer, body.mini .nowplaying,
   body.mini .wincontrols, body.mini #dragbar,
   body.mini .recbadge, body.mini .compiling, body.mini .more-menu, body.mini .debug-overlay, body.mini .perf-overlay,
-  body.mini .update-pill, body.mini .lyrics-box, body.mini .lyrics-loading, body.mini .lyrics-sugg-menu, body.mini .blood-lyrics { display: none !important; }
+  body.mini .update-pill, body.mini .lyrics-box, body.mini .lyrics-loading, body.mini .lyrics-sugg-menu, body.mini .blood-lyrics, body.mini .wings-flash, body.mini .wings-snow, body.mini #compassScene { display: none !important; }
   .transport-seekrow { display: flex; align-items: center; gap: 5px; }
   .transport-row { display: flex; align-items: center; gap: 14px; }
   .transport-cluster { display: flex; align-items: center; gap: 6px; }
@@ -1490,185 +1619,6 @@
     padding: 1px 10px;
   }
 
-  .lib-box {
-    position: relative;
-    width: min(920px, 94vw);
-    /* fixed rather than content-driven: the box used to resize between the grid
-       and every album it opened, which turned the slide into a jump */
-    height: min(660px, calc(100vh - 56px));
-    padding: 16px 18px 18px; display: flex; flex-direction: column; overflow: hidden;
-  }
-  /* z-index -1 paints it above the box's own background but under everything in
-     it, the same trick .pl-bg uses on a playlist row */
-  .lib-album-bg {
-    position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
-    opacity: 0; transition: opacity .3s ease;
-    -webkit-mask-image: linear-gradient(to right, #000 0, rgba(0,0,0,.5) 38%, transparent 82%);
-    mask-image: linear-gradient(to right, #000 0, rgba(0,0,0,.5) 38%, transparent 82%);
-  }
-  .lib-album-bg.on { opacity: .55; }
-  /* the inner layer overflows the box so the blur fades out off screen instead
-     of going see-through at the edges */
-  .lib-album-bg i {
-    position: absolute; inset: -14%;
-    background-size: cover; background-position: center;
-    filter: blur(42px) saturate(1.3);
-  }
-  .lib-head { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
-  .lib-head .help-title { margin: 0; flex: 0 0 auto; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .lib-back, .lib-close {
-    flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; padding: 0; cursor: pointer;
-    border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--txt); line-height: 1;
-  }
-  .lib-back { font-size: 15px; }
-  .lib-close { font-size: 11px; margin-left: auto; }
-  .lib-back:hover, .lib-close:hover { background: rgba(255,255,255,.2); }
-  .lib-back.hidden, .lib-grid.hidden, .lib-album.hidden, #libSearch.hidden, .lib-head-btn.hidden { display: none; }
-  .lib-head-btn {
-    flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--txt);
-    cursor: pointer; font-family: var(--ui); font-size: 11.5px; white-space: nowrap;
-    border-radius: 8px; padding: 6px 10px; transition: background .13s ease;
-  }
-  /* the icon ships black, like the rest of them */
-  .lib-head-btn img { width: 12px; height: 12px; display: block; filter: invert(1); opacity: .85; }
-  /* a native select draws its list with the os, which ignores every colour in
-     this app, so the menu is built the same way the ••• menus are */
-  .lib-fmt { position: relative; flex: 0 0 auto; margin-left: auto; }
-  .lib-fmt.hidden { display: none; }
-  .lib-fmt-btn {
-    display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
-    border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--txt);
-    font-family: var(--ui); font-size: 11.5px; border-radius: 9px; padding: 7px 11px;
-    transition: background .13s ease;
-  }
-  .lib-fmt-btn:hover { background: rgba(255,255,255,.18); }
-  .lib-fmt-btn i {
-    width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent;
-    border-top: 5px solid rgba(255,255,255,.6);
-  }
-  .lib-fmt-menu {
-    position: absolute; right: 0; bottom: calc(100% + 6px); z-index: 30; min-width: 100%; padding: 6px;
-    background-color: rgba(18,19,22,.97);
-    border: 1px solid rgba(255,255,255,.14); border-radius: 11px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.55);
-    opacity: 1; transform: scale(1); transition: opacity .13s ease, transform .13s ease;
-  }
-  .lib-fmt-menu.hidden { opacity: 0; transform: scale(.96); pointer-events: none; }
-  .lib-fmt-opt {
-    display: flex; align-items: center; gap: 8px; width: 100%; white-space: nowrap;
-    border: 0; background: none; color: rgba(255,255,255,.88); cursor: pointer;
-    font-family: var(--ui); font-size: 12px; padding: 7px 10px; border-radius: 7px;
-  }
-  .lib-fmt-opt:hover { background: rgba(255,255,255,.1); }
-  .lib-fmt-opt.on { background: rgba(255,255,255,.14); color: #fff; font-weight: 600; }
-  .lib-head-btn.icon-only { padding: 0; width: 30px; height: 30px; border-radius: 50%; }
-  .lib-head-btn.icon-only img { width: 14px; height: 14px; opacity: .9; }
-  @keyframes lib-spin { to { transform: rotate(360deg); } }
-  /* the button is only disabled while a scan runs, which is exactly when the
-     icon should say something is happening */
-  .lib-head-btn:disabled img { animation: lib-spin 1.1s linear infinite; }
-  .lib-head-btn:hover { background: rgba(255,255,255,.18); }
-  .lib-head-btn:disabled { opacity: .4; cursor: default; background: rgba(255,255,255,.08); }
-  @keyframes lib-in-fwd { from { opacity: 0; transform: translateX(16px) scale(.985); } to { opacity: 1; transform: none; } }
-  @keyframes lib-out-fwd { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(-16px) scale(.985); } }
-  @keyframes lib-in-back { from { opacity: 0; transform: translateX(-16px) scale(.985); } to { opacity: 1; transform: none; } }
-  @keyframes lib-out-back { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(16px) scale(.985); } }
-  .lib-anim-in-fwd { animation: lib-in-fwd .19s ease both; }
-  .lib-anim-out-fwd { animation: lib-out-fwd .12s ease both; }
-  .lib-anim-in-back { animation: lib-in-back .19s ease both; }
-  .lib-anim-out-back { animation: lib-out-back .12s ease both; }
-  #libSearch {
-    flex: 1 1 auto; min-width: 0; border: 1px solid var(--line); border-radius: 8px; outline: none;
-    background: rgba(255,255,255,.05); color: var(--txt); font-family: var(--ui); font-size: 12px; padding: 6px 10px;
-  }
-  #libSearch:focus { border-color: rgba(255,255,255,.3); }
-  .lib-status { font-family: var(--mono); font-size: 10.5px; color: var(--dim); min-height: 13px; margin-bottom: 8px; }
-  .lib-grid {
-    flex: 1 1 auto; min-height: 120px; overflow-y: auto; align-content: start;
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(134px, 1fr)); gap: 15px 13px; padding: 2px 4px 4px 2px;
-  }
-  .lib-card { display: flex; flex-direction: column; gap: 7px; min-width: 0; cursor: pointer; }
-  .lib-cover {
-    position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden;
-    border: 1px solid var(--line); background: rgba(255,255,255,.05);
-    display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr; gap: 1px;
-  }
-  .lib-cover.split-2 { grid-template-columns: 1fr 1fr; }
-  .lib-cover.split-3, .lib-cover.split-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
-  .lib-cover.split-3 i:first-child { grid-row: span 2; }
-  .lib-cover i { display: block; min-width: 0; min-height: 0; background: #0d0e11 center/cover no-repeat; }
-  .lib-cover.empty::after {
-    content: ''; position: absolute; inset: 0; opacity: .32;
-    background: url('assets/logo.png') center / 46% auto no-repeat;
-  }
-  .lib-card:hover .lib-cover { border-color: rgba(255,255,255,.34); }
-  .lib-play {
-    position: absolute; right: 8px; bottom: 8px; width: 34px; height: 34px; border-radius: 50%; padding: 0;
-    border: 0; background: rgba(16,17,20,.86); color: #fff; cursor: pointer; font-size: 12px;
-    display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(0,0,0,.55);
-    opacity: 0; transform: translateY(6px) scale(.92);
-    transition: opacity .13s ease, transform .13s ease, background .13s ease, color .13s ease;
-  }
-  .lib-card:hover .lib-play, .lib-play:focus-visible { opacity: 1; transform: none; }
-  .lib-play:hover { background: #fff; }
-  /* the icon is black, so it is flipped over the dark pill and left alone once
-     the pill turns white underneath it */
-  .lib-play img { width: 13px; height: 13px; display: block; margin-left: 2px; filter: invert(1); }
-  .lib-play:hover img { filter: none; }
-  .lib-name {
-    font-size: 12px; line-height: 1.25; overflow: hidden;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-  }
-  .lib-artist { font-size: 10.5px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .lib-empty { grid-column: 1 / -1; padding: 26px 14px; text-align: center; color: var(--dim); font-size: 12px; line-height: 1.5; }
-  .lib-album { flex: 1 1 auto; overflow-y: auto; padding-right: 4px; }
-  .lib-album-head { display: flex; gap: 16px; margin-bottom: 14px; }
-  .lib-album-cover { flex: 0 0 152px; width: 152px; }
-  .lib-album-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
-  .lib-album-title { font-size: 17px; font-weight: 600; line-height: 1.25; }
-  .lib-album-artist { font-size: 12.5px; color: rgba(255,255,255,.75); }
-  .lib-album-sub { font-family: var(--mono); font-size: 10.5px; color: var(--dim); }
-  .lib-album-btns { display: flex; gap: 10px; align-items: center; margin-top: auto; padding-top: 12px; }
-  .lib-act {
-    flex: 0 0 auto; display: flex; align-items: center; justify-content: center; padding: 0;
-    width: 38px; height: 38px; border-radius: 50%; cursor: pointer;
-    border: 1px solid var(--line); background: rgba(255,255,255,.1); color: var(--txt);
-    transition: background .14s ease, transform .14s ease;
-  }
-  .lib-act svg { width: 17px; height: 17px; display: block; }
-  .lib-act:hover { background: rgba(255,255,255,.2); transform: scale(1.07); }
-  /* the accent is set per album from its own cover; the blue is only the fallback
-     for a record with no artwork to take a colour from */
-  .lib-act-play {
-    width: 54px; height: 54px; border: 0;
-    background: var(--album-accent, rgba(90,150,255,.92));
-    box-shadow: 0 6px 20px rgba(0,0,0,.45);
-  }
-  .lib-act-play:hover { background: var(--album-accent, rgba(90,150,255,.92)); }
-  /* the app's own play icon is a black glyph, so it is inverted to white over a
-     dark accent and left alone over a pale one */
-  .lib-act-play img {
-    width: 24px; height: 24px; display: block; margin-left: 3px;
-    filter: var(--album-invert, invert(1));
-  }
-  .lib-tracks { display: flex; flex-direction: column; gap: 3px; }
-  .lib-track {
-    display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px;
-    cursor: pointer; background: rgba(255,255,255,.04); transition: background .12s ease;
-  }
-  .lib-track:hover { background: rgba(255,255,255,.12); }
-  .lib-track-num { flex: 0 0 22px; text-align: right; font-family: var(--mono); font-size: 10.5px; color: var(--dim); }
-  .lib-tracks.multi-disc .lib-track-num { flex-basis: 34px; }
-  .lib-track-name { flex: 1 1 auto; min-width: 0; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .lib-track-artist {
-    flex: 0 1 30%; text-align: center; font-size: 11px; color: var(--dim);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-  .lib-track-dur { flex: 0 0 42px; text-align: right; font-family: var(--mono); font-size: 10.5px; color: var(--dim); }
-  .lib-grid::-webkit-scrollbar, .lib-album::-webkit-scrollbar { width: 7px; }
-  .lib-grid::-webkit-scrollbar-thumb, .lib-album::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 7px; }
-  .lib-card:focus-visible, .lib-track:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 
   .lib-box {
     position: relative;
@@ -1742,6 +1692,16 @@
   }
   .lib-fmt-opt:hover { background: rgba(255,255,255,.1); }
   .lib-fmt-opt.on { background: rgba(255,255,255,.14); color: #fff; font-weight: 600; }
+  .lib-sort { margin-left: 0; }
+  .lib-sort.hidden { display: none; }
+  .lib-sort .lib-fmt-menu { top: calc(100% + 6px); bottom: auto; left: 0; right: auto; transform-origin: top left; }
+  .lib-group {
+    grid-column: 1 / -1; display: flex; align-items: baseline; gap: 9px;
+    padding: 10px 2px 2px; border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .lib-group:first-child { padding-top: 0; }
+  .lib-group-name { font-size: 14px; color: #fff; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lib-group-count { flex: 0 0 auto; font-size: 10.5px; color: var(--dim); }
   .lib-head-btn.icon-only { padding: 0; width: 30px; height: 30px; border-radius: 50%; }
   /* the glyph is already white, so the invert the other header icons need
      would turn it black */
@@ -2091,6 +2051,10 @@
   <div id="stage">
     <div id="coverBg"></div>
     <div id="coverBgFade"></div>
+    <div id="wingsBg"></div>
+    <div id="skyBg"></div>
+    <canvas id="compassScene"></canvas>
+    <canvas id="skyClouds"></canvas>
     <video id="clipBg" muted playsinline></video>
     <canvas id="viz" width="1920" height="1080"></canvas>
   </div>
@@ -2105,10 +2069,14 @@
 
   <div class="lyrics-box off" id="lyricsBox">
     <div class="lyric-cur" id="lyricCur"></div>
+    <div class="lyric-back" id="lyricBack"></div>
     <div class="lyric-gap-bar" id="lyricGapBar"><div class="lyric-gap-fill" id="lyricGapFill"></div></div>
     <div class="lyric-next" id="lyricNext"></div>
   </div>
   <div class="blood-lyrics" id="bloodLyrics"></div>
+  <div class="wings-flash" id="wingsFlash"></div>
+  <div class="wings-flash" id="compassFlash"></div>
+  <canvas class="wings-snow" id="wingsSnow"></canvas>
   <div class="lyrics-loading" id="lyricsLoading"><span class="lyr-spin"></span>loading lyrics</div>
   <div class="lyrics-loading" id="lyricsNotFound">no lyrics found</div>
   <div class="lyrics-sugg-menu hidden" id="lyricsSuggMenu"></div>
@@ -2324,8 +2292,12 @@
       <div class="help-title">library folders</div>
       <p class="note" style="margin-top:-2px;">autoplay similar searches these when it can't find a match in your current playlist.</p>
       <div class="pls-list" id="libraryFolderList"></div>
+      <p class="sec-head library-excl-head">excluded folders</p>
+      <p class="note" style="margin-top:-4px;">skipped when scanning, along with everything inside them.</p>
+      <div class="pls-list" id="libraryExcludeList"></div>
       <div class="pls-foot">
         <button id="libraryAddFolderBtn">add folder&hellip;</button>
+        <button id="libraryExcludeBtn">exclude folder&hellip;</button>
         <button id="libraryCloseBtn">close</button>
       </div>
     </div>
@@ -2338,6 +2310,10 @@
         <button class="lib-back hidden" id="libBackBtn" title="back to albums">&lsaquo;</button>
         <div class="help-title" id="libBrowseTitle">library</div>
         <input type="text" id="libSearch" placeholder="search albums, artists&hellip;" />
+        <div class="lib-fmt lib-sort" id="libSortWrap">
+          <button class="lib-fmt-btn" id="libSortBtn" title="how the albums are ordered"><span id="libSortCur"></span><i></i></button>
+          <div class="lib-fmt-menu hidden" id="libSortMenu"></div>
+        </div>
         <button class="lib-head-btn icon-only" id="libFavFilter" aria-label="show favorites only" title="show favorites only"><img src="assets/buttons/like.png" alt="" /></button>
         <button class="lib-head-btn icon-only" id="libRescanBtn" aria-label="rescan the library" title="rescan library (can be slow)"><img src="assets/buttons/rescan.png" alt="" /></button>
         <button class="lib-head-btn" id="libManageBtn" title="add or remove library folders">manage library</button>
@@ -2451,6 +2427,16 @@
     </div>
   </div>
 
+  <div class="help-overlay hidden" id="creditsOverlay">
+    <div class="help-box pls-box credits-box">
+      <div class="help-title">credits</div>
+      <div class="ee-table-wrap credits-wrap" id="creditsList"></div>
+      <div class="pls-foot" style="justify-content:flex-end; margin-top:10px;">
+        <button id="creditsCloseBtn">close</button>
+      </div>
+    </div>
+  </div>
+
   <div class="help-overlay hidden" id="eeTableOverlay">
     <div class="help-box pls-box" style="width: 520px;">
       <div class="help-title">easter eggs</div>
@@ -2461,6 +2447,9 @@
             <tr><td>Toby Fox</td><td>Megalovania</td><td>undertale-style boss-fight visual &mdash; screen shake, bones, blasters</td></tr>
             <tr><td>Mili</td><td>Between Two Worlds</td><td>cascading blood-red lyrics, pale gold during the slow intro (before 2:00)</td></tr>
             <tr><td>Mili</td><td>Through Patches of Violet</td><td>cascading blood-red lyrics</td></tr>
+            <tr><td>Toby Fox &amp; Itoki Hana</td><td>Skies Forever Blue</td><td>8-bit lyrics, a blue pixel sky with drifting clouds, and an 8-bit interface</td></tr>
+            <tr><td>Mili</td><td>Compass</td><td>gold lyrics turning blood-red at "I wanted blood" and gold again after a white flash, then a violet night over the sea with stars and an aurora, fading back out at "high tide"</td></tr>
+            <tr><td>Mili</td><td>Fly, My Wings</td><td>cascading blood-red lyrics, a white flash at 2:10 and glowing snow drifting upward</td></tr>
             <tr><td>&mdash;</td><td>Bad Apple!! (video)</td><td>visualizer bars become a perfect black/white negative over the sharp, unblurred video</td></tr>
           </tbody>
         </table>
@@ -3061,7 +3050,10 @@
       <p class="note">some tracks trigger hidden visual effects. turn this off if you'd rather never run into one, or click <span class="ee-link" id="eeLink">here</span> to see exactly what they are first.</p>
 
       <p class="sec-head" style="margin-top:20px;">about</p>
-      <button class="btn-neutral" id="readPatchNotesBtn">read patch notes</button>
+      <div class="about-btns">
+        <button class="btn-neutral" id="readPatchNotesBtn">read patch notes</button>
+        <button class="btn-neutral" id="creditsBtn">credits</button>
+      </div>
     </div>
 
     <div class="sec" data-tab="export">
@@ -3279,18 +3271,15 @@
   const audio = $('audio');
   audio.preservesPitch = false;
 
-  // preset keys and their defaults come from presets.js
   const DEFAULTS = Object.assign({}, window.MediyyuPresets.DEFAULTS, {
     lyricsMode: 'compact', lyricsFx: true, lyricsGuessWords: true, lyricsSourcePref: 'lrclib',
     volume: 100, seekBarStyle: 'thin',
     alwaysOnTop: false,
     lockResize: false, exportFps: 60, exportQuality: 'balanced', exportRes: 'window', exportLyrics: false,
     displayMode: 'windowed', fullscreenRes: 'native',
-    // the discord application id comes from MEDIYYU_DISCORD_CLIENT_ID at build
-    // time, so there is none in the source. rich presence stays off without it.
     discordEnabled: true, discordClientId: '', discordImageKey: 'noting',
     lastfmEnabled: false, lastfmSessionKey: '', lastfmUsername: '',
-    shuffle: false, repeat: 'off', playbackRate: 1, drunkMode: '', normalize: false, autoplaySimilar: false, libraryFolders: [], libraryFormat: '', audioOutput: '', icueEnabled: false,
+    shuffle: false, repeat: 'off', playbackRate: 1, drunkMode: '', normalize: false, autoplaySimilar: false, libraryFolders: [], libraryExcludes: [], libraryFormat: '', librarySort: 'album', audioOutput: '', icueEnabled: false,
     notifyTrack: true, notifyEnd: true, easterEggs: true
   });
   let S = Object.assign({}, DEFAULTS);
@@ -3300,8 +3289,6 @@
   if (!S.lyricsMode) S.lyricsMode = S.lyricsOn === false ? 'off' : 'compact';
   delete S.lyricsOn;
   const save = () => { try { localStorage.setItem('bbv_settings', JSON.stringify(S)); } catch (e) {} };
-  // the separated window does not come back on its own after a restart, so start
-  // from compact rather than leaving the mode pointing at a window that is gone
   if (S.lyricsMode === 'separated') { S.lyricsMode = 'compact'; save(); }
 
   const EQ_FREQS = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
@@ -3354,7 +3341,6 @@
       return devs.filter(d => d.kind === 'audiooutput' && d.deviceId !== 'default' && d.deviceId !== 'communications');
     } catch (e) { return []; }
   }
-  // true once the context has been pointed somewhere explicitly
   let sinkApplied = false;
   async function applyAudioOutput(force) {
     if (!actx || typeof actx.setSinkId !== 'function') return false;
@@ -3404,7 +3390,6 @@
     const sel = $('audioOutSel');
     if (sel) {
       sel.value = S.audioOutput || '';
-      // full device name in the tooltip
       const cur = sel.options[sel.selectedIndex];
       sel.title = cur ? cur.textContent : '';
     }
@@ -3806,6 +3791,17 @@
       g.addColorStop(0, '#f7c948'); g.addColorStop(1, '#e8820c');
       return g;
     }
+    if (wingsPaletteOn()) {
+      const [a, b] = wingsColors();
+      const g = c.createLinearGradient(0, 0, W, 0);
+      g.addColorStop(0, a); g.addColorStop(1, b);
+      return g;
+    }
+    if (skyEggOn()) {
+      const g = c.createLinearGradient(0, 0, W, 0);
+      g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#e4f2ff');
+      return g;
+    }
     if (S.rainbow) {
       const g = c.createLinearGradient(0, 0, W, 0);
       const t = (performance.now() / 4000) % 1;
@@ -3986,33 +3982,36 @@
     return s / NUM;
   }
   let scalePulse = 0;
+  function scaleToSoundOn() { return S.scaleToSound || compassShown; }
+  function scaleToSoundAmt() { return compassShown ? 30 : S.scaleToSoundAmt; }
   function updateScalePulse() {
-    if (!S.scaleToSound && !S.chromaAb) { scalePulse = 0; return; }
+    if (!scaleToSoundOn() && !S.chromaAb) { scalePulse = 0; return; }
     const target = overallEnergy();
     scalePulse += (target - scalePulse) * (target > scalePulse ? 0.5 : 0.08);
   }
   function vizPulseScale() {
-    return S.scaleToSound ? 1 + scalePulse * (S.scaleToSoundAmt / 100) * 0.18 : 1;
+    return scaleToSoundOn() ? 1 + scalePulse * (scaleToSoundAmt() / 100) * 0.18 : 1;
   }
   function coverPulseScale() {
-    return S.scaleToSound ? 1 + scalePulse * (S.scaleToSoundAmt / 100) * 0.18 * 0.35 : 1;
+    return scaleToSoundOn() ? 1 + scalePulse * (scaleToSoundAmt() / 100) * 0.18 * 0.35 : 1;
   }
   let vizXformLast = null;
   let lyricsXformLast = null;
   let bloodXformLast = null;
   function applyVizPulse() {
     const scale = vizPulseScale();
-    const xform = S.scaleToSound ? `scale(${scale.toFixed(4)})` : '';
+    const xform = scaleToSoundOn() ? `scale(${scale.toFixed(4)})` : '';
     if (vizXformLast !== xform) {
       vizXformLast = xform;
       $('viz').style.transform = xform;
+      $('compassScene').style.transform = xform;
     }
-    const lyricsXform = S.scaleToSound && S.lyricsFx ? `translateX(-50%) scale(${scale.toFixed(4)})` : '';
+    const lyricsXform = scaleToSoundOn() && S.lyricsFx ? `translateX(-50%) scale(${scale.toFixed(4)})` : '';
     if (lyricsXformLast !== lyricsXform) {
       lyricsXformLast = lyricsXform;
       $('lyricsBox').style.transform = lyricsXform;
     }
-    const bloodXform = S.scaleToSound && S.lyricsFx ? `scale(${scale.toFixed(4)})` : '';
+    const bloodXform = scaleToSoundOn() && S.lyricsFx ? `scale(${scale.toFixed(4)})` : '';
     if (bloodXformLast !== bloodXform) {
       bloodXformLast = bloodXform;
       $('bloodLyrics').style.transform = bloodXform;
@@ -4111,6 +4110,9 @@
   function accentColor() {
     if (megaMode) return '#37d8ff';
     if (bloodEggActive && bloodEggTrack === 'btw') return '#f0a520';
+    if (compassShown) return '#ffd27a';
+    if (wingsPaletteOn()) return wingsColors()[2];
+    if (skyEggOn()) return '#ffffff';
     if (S.rainbow) return `hsl(${((performance.now() / 4000) % 1) * 360},85%,60%)`;
     if (S.mode === 'cover' && coverColors) return coverColors.c1;
     if (S.mode === 'split') return '#ffd23b';
@@ -4259,6 +4261,18 @@
       c.globalAlpha = additive ? 0.55 : 0.4;
       c.drawImage(g2, 0, 0, W, H);
       c.globalAlpha = 1;
+    }
+    if (wingsPaletteOn()) {
+      const gold = wingsGoldMix();
+      c.save();
+      c.globalCompositeOperation = 'source-over';
+      c.lineJoin = 'round';
+      c.strokeStyle = gold > 0.5 ? '#fff0b8' : '#e8b640';
+      c.lineWidth = 1.5 + gold;
+      c.shadowColor = gold > 0.5 ? 'rgba(255,215,80,1)' : 'rgba(240,190,70,.75)';
+      c.shadowBlur = 7 + gold * 19;
+      c.stroke(path);
+      c.restore();
     }
     c.filter = 'none';
     c.globalCompositeOperation = 'source-over';
@@ -4698,6 +4712,7 @@
   }
   let megaMode = false, megaStart = 0, megaShake = 0, megaShaken = false;
   let megaBlasters = [], megaBones = [], megaLastBlaster = 0, megaNextBone = 0;
+  let megaBassHist = [], megaPrevBass = 0;
   const megaHeart = { y: 0, vy: 0, grounded: true };
   function checkMegalovania(name, title) {
     const on = S.easterEggs && wordMatch((name || '') + ' ' + (title || ''), 'megalovania');
@@ -4705,6 +4720,7 @@
       megaStart = performance.now();
       megaBlasters = []; megaBones = [];
       megaLastBlaster = 0; megaNextBone = 0;
+      megaBassHist = []; megaPrevBass = 0;
       megaHeart.y = 0; megaHeart.vy = 0; megaHeart.grounded = true;
     }
     megaMode = on;
@@ -4716,15 +4732,38 @@
   let bloodEggActive = false;
   let bloodEggTrack = null;
   const BLOOD_EGG_TRACKS = {
-    btw: { match: ['between two worlds'], lrcId: 25215258, slowIntro: true },
-    violet: { match: ['through patches of violet'], lrcId: 22434851, slowIntro: false },
+    btw: { artists: ['mili'], match: ['between two worlds'], lrcId: 25215258, slowIntro: true },
+    violet: { artists: ['mili'], match: ['through patches of violet'], lrcId: 22434851, slowIntro: false },
+    wings: { artists: ['mili'], match: ['fly, my wings', 'fly my wings'], lrcId: 2689907, slowIntro: false },
+    compass: { artists: ['mili'], match: ['compass'], lrcId: 18459159, slowIntro: false },
+    sky: { artists: ['toby fox', 'itoki hana'], match: ['skies forever blue'], lrcId: 36935336, dur: 277, alts: [{ dur: 293, lrcId: 9395934 }], slowIntro: false },
   };
+  function trackDurationSoon() {
+    if (isFinite(audio.duration) && audio.duration > 0) return Promise.resolve(audio.duration);
+    return new Promise(resolve => {
+      const done = () => {
+        audio.removeEventListener('loadedmetadata', done);
+        clearTimeout(timer);
+        resolve(isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 0);
+      };
+      const timer = setTimeout(done, 4000);
+      audio.addEventListener('loadedmetadata', done);
+    });
+  }
+  async function bloodEggLrcId(egg) {
+    if (!egg.alts || !egg.alts.length) return egg.lrcId;
+    const dur = await trackDurationSoon();
+    if (!dur) return egg.lrcId;
+    return [{ dur: egg.dur, lrcId: egg.lrcId }, ...egg.alts]
+      .reduce((best, v) => Math.abs(v.dur - dur) < Math.abs(best.dur - dur) ? v : best).lrcId;
+  }
   function checkBloodLyrics(name, title, artist) {
     const hay = (name || '') + ' ' + (title || '') + ' ' + (artist || '');
     bloodEggTrack = null;
-    if (S.easterEggs && wordMatch(hay, 'mili')) {
+    if (S.easterEggs) {
       for (const key in BLOOD_EGG_TRACKS) {
-        if (BLOOD_EGG_TRACKS[key].match.some(m => wordMatch(hay, m))) { bloodEggTrack = key; break; }
+        const egg = BLOOD_EGG_TRACKS[key];
+        if (egg.artists.some(a => wordMatch(hay, a)) && egg.match.some(m => wordMatch(hay, m))) { bloodEggTrack = key; break; }
       }
     }
     bloodEggActive = !!bloodEggTrack;
@@ -4747,11 +4786,13 @@
   }
   function spawnBloodLine(text) {
     const now = performance.now();
+    const sky = bloodEggTrack === 'sky';
     for (const entry of bloodActiveLines) {
       const elapsed = now - entry.spawnT;
-      scheduleBloodRetire(entry, Math.max(0, 3000 - elapsed));
+      scheduleBloodRetire(entry, sky ? 0 : Math.max(0, 3000 - elapsed));
     }
     if (!text) return;
+    if (sky) { spawnSkyLine(text, now); return; }
     const el = document.createElement('div');
     el.className = 'blood-line';
     el.style.left = (32 + Math.random() * 36).toFixed(1) + '%';
@@ -4760,6 +4801,9 @@
     const slowIntro = bloodEggTrack && BLOOD_EGG_TRACKS[bloodEggTrack].slowIntro;
     const introGold = slowIntro && audio.currentTime < 120;
     if (introGold) el.classList.add('blood-gold');
+    const compassRed = bloodEggTrack === 'compass' && audio.currentTime >= COMPASS_BLOOD_AT && audio.currentTime < COMPASS_PEAK;
+    if (bloodEggTrack === 'wings' || (bloodEggTrack === 'compass' && !compassRed)) el.classList.add('blood-wings');
+    if (bloodEggTrack === 'sky') el.classList.add('blood-sky');
     const perCharDelay = (!slowIntro || audio.currentTime >= 120)
       ? Math.min(0.05, 1.3 / Math.max(1, text.length))
       : Math.min(0.16, 3.6 / Math.max(1, text.length));
@@ -4827,6 +4871,45 @@
     scheduleBloodRetire(entry, 6000);
     bloodActiveLines.push(entry);
   }
+  const skyMeasure = document.createElement('canvas').getContext('2d');
+  function spawnSkyLine(text, now) {
+    const el = document.createElement('div');
+    el.className = 'blood-line blood-sky';
+    el.style.animationDelay = (-Math.random() * 4.6).toFixed(2) + 's';
+    skyMeasure.font = "30px 'Pusab'";
+    const width = t => skyMeasure.measureText(t).width;
+    const maxW = window.innerWidth * 0.86;
+    const target = width(text) / Math.ceil(width(text) / maxW);
+    const rows = [];
+    let row = '';
+    for (const word of text.split(/\s+/).filter(Boolean)) {
+      const next = row ? row + ' ' + word : word;
+      if (row && width(next) > target * 1.08) { rows.push(row); row = word; }
+      else row = next;
+    }
+    if (row) rows.push(row);
+    const perChar = Math.min(0.05, 1.3 / Math.max(1, text.length));
+    let delay = 0;
+    for (const r of rows) {
+      const line = document.createElement('div');
+      line.className = 'sky-row';
+      for (const ch of r) {
+        const span = document.createElement('span');
+        span.className = 'blood-char';
+        span.textContent = ch;
+        span.style.transitionDelay = delay.toFixed(3) + 's';
+        delay += perChar;
+        line.appendChild(span);
+      }
+      el.appendChild(line);
+    }
+    $('bloodLyrics').appendChild(el);
+    void el.offsetWidth;
+    requestAnimationFrame(() => el.classList.add('show'));
+    const entry = { el, spawnT: now, timer: null };
+    scheduleBloodRetire(entry, 6000);
+    bloodActiveLines.push(entry);
+  }
   function updateBloodLyrics() {
     if (!lyricsLines || !ready) return;
     const t = audio.currentTime + 0.05;
@@ -4838,6 +4921,493 @@
     if (idx === bloodIdx) return;
     bloodIdx = idx;
     spawnBloodLine(idx >= 0 ? lyricsLines[idx].text : '');
+  }
+  // ── fly, my wings: white flash into 2:10, then glowing snow rising ──
+  const WINGS_FLASH_IN = 128, WINGS_PEAK = 130, WINGS_FLASH_OUT = 131;
+  const WINGS_SNOW_END = 156.63; // "that's all"
+  let wingsFlakes = [];
+  let wingsPrevT = -1, wingsLastTs = 0, wingsFlashShown = -1, wingsDirty = false;
+  let wingsSprite = null;
+  let wingsBgShown = false;
+  let wingsBgFade = '';
+  const WINGS_GRAY_FOR = 15; 
+  const WINGS_AGE_FOR = 12; 
+  let wingsBgPreloaded = false;
+  function wingsPaletteOn() { return bloodEggActive && (bloodEggTrack === 'wings' || bloodEggTrack === 'compass'); }
+  function wingsGoldMix() {
+    if (!ready || bloodEggTrack !== 'wings') return 0;
+    const t = audio.currentTime;
+    return t >= WINGS_PEAK ? 1 : t > WINGS_PEAK - 0.5 ? (t - (WINGS_PEAK - 0.5)) / 0.5 : 0;
+  }
+  const WINGS_BROWN = ['#5a3317', '#3b220f', '#8a5424'];
+  const WINGS_GOLD = ['#ffc83a', '#e39a12', '#ffc03a'];
+  function wingsColors() {
+    const k = wingsGoldMix();
+    if (k <= 0) return WINGS_BROWN;
+    if (k >= 1) return WINGS_GOLD;
+    return WINGS_BROWN.map((c, i) => {
+      const a = icueHexToRgb(c), b = icueHexToRgb(WINGS_GOLD[i]);
+      return '#' + a.map((v, j) => Math.round(v + (b[j] - v) * k).toString(16).padStart(2, '0')).join('');
+    });
+  }
+  function wingsFlashLevel(t) {
+    if (t >= WINGS_FLASH_IN && t < WINGS_PEAK) { const x = (t - WINGS_FLASH_IN) / (WINGS_PEAK - WINGS_FLASH_IN); return x * x; }
+    if (t >= WINGS_PEAK && t < WINGS_FLASH_OUT) return 1 - (t - WINGS_PEAK) / (WINGS_FLASH_OUT - WINGS_PEAK);
+    return 0;
+  }
+  function wingsFlakeSprite() {
+    if (wingsSprite) return wingsSprite;
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const g = c.getContext('2d');
+    const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0, 'rgba(255,255,255,1)');
+    grad.addColorStop(0.16, 'rgba(255,255,255,.95)');
+    grad.addColorStop(0.35, 'rgba(235,242,255,.4)');
+    grad.addColorStop(1, 'rgba(220,232,255,0)');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 64, 64);
+    return (wingsSprite = c);
+  }
+  function spawnWingsFlake(w, h, dpr, anywhere) {
+    wingsFlakes.push({
+      x: Math.random() * w,
+      y: anywhere ? Math.random() * h : h + 20 * dpr,
+      vy: -(35 + Math.random() * 95) * dpr,
+      sway: (8 + Math.random() * 22) * dpr,
+      swaySpeed: 0.6 + Math.random() * 1.4,
+      phase: Math.random() * Math.PI * 2,
+      size: (5 + Math.random() * 13) * dpr,
+      life: 3.5 + Math.random() * 4,
+      age: 0,
+    });
+  }
+  function updateWingsEgg(nowTs) {
+    const active = bloodEggActive && bloodEggTrack === 'wings' && ready;
+    const t = active ? audio.currentTime : -1;
+    const level = active ? wingsFlashLevel(t) : 0;
+    if (active && !wingsBgPreloaded) { wingsBgPreloaded = true; new Image().src = 'assets/flymywings.jpg'; }
+    const bgOn = active && !midiActive && wingsGoldMix() >= 1;
+    if (bgOn !== wingsBgShown) {
+      wingsBgShown = bgOn;
+      document.body.classList.toggle('wings-bg', bgOn);
+      applyCoverBgStyle();
+    }
+    if (bgOn) {
+      const clamp01 = v => Math.round(Math.min(1, Math.max(0, v)) * 100) / 100;
+      const gray = clamp01((t - WINGS_SNOW_END) / WINGS_GRAY_FOR);
+      const age = clamp01((t - WINGS_SNOW_END - WINGS_GRAY_FOR) / WINGS_AGE_FOR);
+      const key = gray + '|' + age;
+      if (key !== wingsBgFade) {
+        wingsBgFade = key;
+        const bright = 0.6 - 0.06 * gray + 0.04 * age;
+        $('wingsBg').style.filter = `blur(8px) brightness(${bright.toFixed(3)}) grayscale(${gray}) sepia(${(0.95 * age).toFixed(3)}) contrast(${(1 - 0.14 * age).toFixed(3)})`;
+      }
+    }
+    const rounded = Math.round(level * 1000) / 1000;
+    if (rounded !== wingsFlashShown) { $('wingsFlash').style.opacity = rounded; wingsFlashShown = rounded; }
+
+    const cv = $('wingsSnow');
+    const dt = playing ? Math.min(0.05, Math.max(0, (nowTs - wingsLastTs) / 1000)) : 0;
+    wingsLastTs = nowTs;
+    if (!active || t < WINGS_FLASH_IN) wingsFlakes = [];
+    if (!wingsFlakes.length && !(active && t >= WINGS_PEAK && t < WINGS_SNOW_END)) {
+      if (wingsDirty) { cv.getContext('2d').clearRect(0, 0, cv.width, cv.height); wingsDirty = false; }
+      wingsPrevT = t;
+      return;
+    }
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+
+    if (wingsPrevT >= 0 && wingsPrevT < WINGS_PEAK && t >= WINGS_PEAK && t - wingsPrevT < 1) {
+      for (let i = 0; i < 160; i++) spawnWingsFlake(w, h, dpr, true);
+    }
+    wingsPrevT = t;
+    if (playing && t >= WINGS_PEAK && t < WINGS_SNOW_END) {
+      const rate = t < WINGS_PEAK + 3 ? 70 - 8 * (t - WINGS_PEAK) : 46;
+      let n = rate * dt;
+      while (n > 0) { if (n >= 1 || Math.random() < n) spawnWingsFlake(w, h, dpr, false); n -= 1; }
+    }
+
+    const g = cv.getContext('2d');
+    g.clearRect(0, 0, w, h);
+    g.globalCompositeOperation = 'lighter';
+    const sprite = wingsFlakeSprite();
+    for (const f of wingsFlakes) {
+      f.age += dt;
+      f.y += f.vy * dt;
+      const fadeIn = Math.min(1, f.age / 0.4);
+      const fadeOut = Math.min(1, (f.life - f.age) / (f.life * 0.35));
+      const twinkle = 0.75 + 0.25 * Math.sin(f.age * 5 + f.phase);
+      g.globalAlpha = Math.max(0, fadeIn * fadeOut * twinkle);
+      const x = f.x + Math.sin(f.age * f.swaySpeed + f.phase) * f.sway;
+      g.drawImage(sprite, x - f.size, f.y - f.size, f.size * 2, f.size * 2);
+    }
+    g.globalAlpha = 1;
+    g.globalCompositeOperation = 'source-over';
+    wingsFlakes = wingsFlakes.filter(f => f.age < f.life && f.y > -40 * dpr);
+    wingsDirty = true;
+  }
+  // ── compass ──
+  const COMPASS_BLOOD_AT = 86.5;      // "I wanted blood"
+  const COMPASS_FLASH_IN = 106.4;     // fade in blanc...
+  const COMPASS_PEAK = 107.9;         // ...max avant "Hold on tight"
+  const COMPASS_FLASH_OUT = 109.4;
+  const COMPASS_FADE_AT = 132.19;     // "High tide, low tide"
+  const COMPASS_FADE_FOR = 5;
+  let compassShown = false;
+  let compassFlashShown = -1, compassSceneOpacity = -1;
+  let compassBase = null, compassBaseKey = '';
+  let compassStars = [];
+  let compassShooting = null, compassNextShoot = 0;
+  let compassAurora = null;
+  let compassRefl = null;
+  let compassDrawnAt = 0;
+  function compassFlashLevel(t) {
+    if (t >= COMPASS_FLASH_IN && t < COMPASS_PEAK) { const x = (t - COMPASS_FLASH_IN) / (COMPASS_PEAK - COMPASS_FLASH_IN); return x * x; }
+    if (t >= COMPASS_PEAK && t < COMPASS_FLASH_OUT) return 1 - (t - COMPASS_PEAK) / (COMPASS_FLASH_OUT - COMPASS_PEAK);
+    return 0;
+  }
+
+  const COMPASS_HORIZON = 0.62;
+  function compassVizState(t) {
+    const out = COMPASS_FADE_AT + 1.2, back = out + 3.3;
+    if (t < COMPASS_PEAK || t >= back) return { lift: 0, op: 1 };
+    if (t < COMPASS_FADE_AT) return { lift: 1, op: 0.25 };
+    if (t < out) return { lift: 1, op: 0.25 * (1 - (t - COMPASS_FADE_AT) / (out - COMPASS_FADE_AT)) };
+    return { lift: 0, op: (t - out) / (back - out) };
+  }
+  
+  let compassBarsCanvas = null, compassBarsCtx = null;
+  function compassBarsLayer() {
+    if (!compassBarsCanvas) { compassBarsCanvas = document.createElement('canvas'); compassBarsCtx = compassBarsCanvas.getContext('2d'); }
+    if (compassBarsCanvas.width !== W || compassBarsCanvas.height !== H) { compassBarsCanvas.width = W; compassBarsCanvas.height = H; }
+    compassBarsCtx.setTransform(1, 0, 0, 1, 0, 0);
+    compassBarsCtx.clearRect(0, 0, W, H);
+    return compassBarsCtx;
+  }
+  function compassVizNow() {
+    if (!(bloodEggActive && bloodEggTrack === 'compass' && ready && !midiActive)) return null;
+    const vz = compassVizState(audio.currentTime);
+    if (!vz.lift && vz.op >= 1) return null;
+    if (S.layout !== 'bars' && S.layout !== 'wave') vz.lift = 0;
+    return vz;
+  }
+  function compassSceneLevel(t) {
+    if (t < COMPASS_PEAK) return 0;
+    if (t < COMPASS_FADE_AT) return 1;
+    const k = 1 - (t - COMPASS_FADE_AT) / COMPASS_FADE_FOR;
+    return k <= 0 ? 0 : k * k * (3 - 2 * k);
+  }
+  
+  function compassPaintBase(w, h) {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const g = c.getContext('2d');
+    const hz = Math.round(h * 0.62);
+    const sky = g.createLinearGradient(0, 0, 0, hz);
+    sky.addColorStop(0, '#07061f');
+    sky.addColorStop(0.35, '#1c1150');
+    sky.addColorStop(0.62, '#3d1b6e');
+    sky.addColorStop(0.8, '#6e2a7c');
+    sky.addColorStop(0.92, '#b4497a');
+    sky.addColorStop(1, '#f08a5f');
+    g.fillStyle = sky;
+    g.fillRect(0, 0, w, hz);
+    const glow = g.createRadialGradient(w * 0.5, hz, 0, w * 0.5, hz, w * 0.55);
+    glow.addColorStop(0, 'rgba(255,170,120,.35)');
+    glow.addColorStop(1, 'rgba(255,170,120,0)');
+    g.fillStyle = glow;
+    g.fillRect(0, 0, w, hz);
+    const sea = g.createLinearGradient(0, hz, 0, h);
+    sea.addColorStop(0, '#4a2463');
+    sea.addColorStop(0.08, '#2a1546');
+    sea.addColorStop(0.45, '#130b2b');
+    sea.addColorStop(1, '#05040f');
+    g.fillStyle = sea;
+    g.fillRect(0, hz, w, h - hz);
+    const band = g.createRadialGradient(w * 0.5, hz, 0, w * 0.5, hz, w * 0.42);
+    band.addColorStop(0, 'rgba(255,150,110,.32)');
+    band.addColorStop(1, 'rgba(255,150,110,0)');
+    g.save();
+    g.translate(0, hz);
+    g.scale(1, 0.35);
+    g.fillStyle = band;
+    g.fillRect(0, 0, w, (h - hz) / 0.35);
+    g.restore();
+    return c;
+  }
+  function compassSeed(w, h) {
+    const hz = h * 0.62;
+    compassStars = Array.from({ length: Math.round((w * h) / 5200) }, () => {
+      const y = Math.pow(Math.random(), 1.6) * hz * 0.92;
+      return { x: Math.random() * w, y, r: 0.5 + Math.pow(Math.random(), 3) * 1.6, ph: Math.random() * Math.PI * 2, sp: 0.6 + Math.random() * 2.2, big: Math.random() < 0.035 };
+    });
+    compassAurora = document.createElement('canvas');
+  }
+  const COMPASS_RIBBONS = [
+    { base: 0.30, amp: 0.06, f: 1.6, sp: 0.07, tall: 0.22, col: [90, 255, 190], a: 0.34 },
+    { base: 0.24, amp: 0.05, f: 2.3, sp: -0.05, tall: 0.17, col: [120, 200, 255], a: 0.24 },
+    { base: 0.36, amp: 0.04, f: 3.1, sp: 0.04, tall: 0.14, col: [200, 120, 255], a: 0.22 },
+  ];
+  let compassStrips = null, compassAuroraT = 0;
+  function compassRibbonStrips() {
+    if (compassStrips) return compassStrips;
+    compassStrips = COMPASS_RIBBONS.map(rb => {
+      const c = document.createElement('canvas');
+      c.width = 1; c.height = 64;
+      const g = c.getContext('2d');
+      const grad = g.createLinearGradient(0, 0, 0, 64);
+      const [r, gg, b] = rb.col;
+      grad.addColorStop(0, `rgba(${r},${gg},${b},0)`);
+      grad.addColorStop(0.75, `rgba(${r},${gg},${b},1)`);
+      grad.addColorStop(1, `rgba(${r},${gg},${b},0)`);
+      g.fillStyle = grad;
+      g.fillRect(0, 0, 1, 64);
+      return c;
+    });
+    return compassStrips;
+  }
+  function compassPaintAurora(w, h, now) {
+    if (now - compassAuroraT < 33 && compassAurora.width) return;
+    compassAuroraT = now;
+    const aw = Math.max(64, Math.round(w / 6)), ah = Math.max(48, Math.round(h / 6));
+    if (compassAurora.width !== aw || compassAurora.height !== ah) { compassAurora.width = aw; compassAurora.height = ah; }
+    const g = compassAurora.getContext('2d');
+    g.clearRect(0, 0, aw, ah);
+    g.globalCompositeOperation = 'lighter';
+    const strips = compassRibbonStrips();
+    const T = now / 1000;
+    COMPASS_RIBBONS.forEach((rb, k) => {
+      for (let x = 0; x < aw; x++) {
+        const u = x / aw;
+        const y = ah * (rb.base + Math.sin(u * rb.f * Math.PI * 2 + T * rb.sp * 6) * rb.amp + Math.sin(u * 7.3 + T * 0.4) * 0.012);
+        const tall = ah * rb.tall * (0.6 + 0.4 * Math.sin(u * 5 + T * 0.3));
+        g.globalAlpha = rb.a * (0.55 + 0.45 * Math.sin(u * 11 + T * 0.9 + rb.f));
+        g.drawImage(strips[k], x, y - tall, 1, tall * 1.33);
+      }
+    });
+    g.globalAlpha = 1;
+    g.globalCompositeOperation = 'source-over';
+  }
+  function updateCompassEgg(nowTs) {
+    const active = bloodEggActive && bloodEggTrack === 'compass' && ready && !midiActive;
+    const t = active ? audio.currentTime : -1;
+    const flash = active ? Math.round(compassFlashLevel(t) * 1000) / 1000 : 0;
+    if (flash !== compassFlashShown) { $('compassFlash').style.opacity = flash; compassFlashShown = flash; }
+    const level = active ? Math.round(compassSceneLevel(t) * 1000) / 1000 : 0;
+    const on = level > 0;
+    if (on !== compassShown) {
+      compassShown = on;
+      document.body.classList.toggle('compass-scene', on);
+      applyCoverBgStyle();
+    }
+    if (!on) return;
+    const cv = $('compassScene');
+    if (level !== compassSceneOpacity) { cv.style.opacity = level; compassSceneOpacity = level; }
+    if (nowTs - compassDrawnAt < 32 && cv.width) return;
+    compassDrawnAt = nowTs;
+    const dpr = Math.min(2, window.devicePixelRatio || 1) * 0.66;
+    const w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
+    if (!w || !h) return;
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    const key = w + 'x' + h;
+    if (compassBaseKey !== key) { compassBaseKey = key; compassBase = compassPaintBase(w, h); compassSeed(w, h); }
+    const g = cv.getContext('2d');
+    const hz = h * 0.62;
+    const T = nowTs / 1000;
+    g.globalCompositeOperation = 'source-over';
+    g.globalAlpha = 1;
+    g.drawImage(compassBase, 0, 0);
+
+    compassPaintAurora(w, h, nowTs);
+    g.imageSmoothingEnabled = true;
+    g.globalCompositeOperation = 'lighter';
+    g.drawImage(compassAurora, 0, 0, w, hz);
+
+    for (const st of compassStars) {
+      const tw = 0.45 + 0.55 * (0.5 + 0.5 * Math.sin(T * st.sp + st.ph));
+      const fade = Math.min(1, (hz - st.y) / (hz * 0.25));
+      g.globalAlpha = tw * fade;
+      g.fillStyle = '#fff';
+      const r = Math.max(1, st.r * dpr * 1.25);
+      g.fillRect(st.x - r / 2, st.y - r / 2, r, r);
+      if (st.big) {
+        g.globalAlpha = tw * fade * 0.55;
+        g.fillRect(st.x - r * 3, st.y - 0.5 * dpr, r * 6, dpr);
+        g.fillRect(st.x - 0.5 * dpr, st.y - r * 3, dpr, r * 6);
+      }
+    }
+
+    if (!compassShooting && nowTs > compassNextShoot) {
+      compassShooting = { x: w * (0.15 + Math.random() * 0.6), y: hz * (0.05 + Math.random() * 0.3), t0: nowTs, ang: 0.35 + Math.random() * 0.3 };
+      compassNextShoot = nowTs + 5000 + Math.random() * 7000;
+    }
+    if (compassShooting) {
+      const k = (nowTs - compassShooting.t0) / 900;
+      if (k >= 1) compassShooting = null;
+      else {
+        const len = w * 0.12, dist = w * 0.32 * k;
+        const x = compassShooting.x + Math.cos(compassShooting.ang) * dist, y = compassShooting.y + Math.sin(compassShooting.ang) * dist;
+        const tail = g.createLinearGradient(x, y, x - Math.cos(compassShooting.ang) * len, y - Math.sin(compassShooting.ang) * len);
+        tail.addColorStop(0, `rgba(255,255,255,${(0.9 * Math.sin(k * Math.PI)).toFixed(3)})`);
+        tail.addColorStop(1, 'rgba(255,255,255,0)');
+        g.globalAlpha = 1;
+        g.strokeStyle = tail;
+        g.lineWidth = 1.6 * dpr;
+        g.beginPath();
+        g.moveTo(x, y);
+        g.lineTo(x - Math.cos(compassShooting.ang) * len, y - Math.sin(compassShooting.ang) * len);
+        g.stroke();
+      }
+    }
+
+    const seaH = h - hz;
+    const slices = 30;
+    for (let i = 0; i < slices; i++) {
+      const v = i / slices;
+      const sy = hz * (1 - v) * 0.98;
+      const shift = Math.sin(T * 1.3 + i * 0.9) * (6 + v * 26) * dpr;
+      g.globalAlpha = 0.5 * (1 - v);
+      g.drawImage(compassAurora, 0, (sy / hz) * compassAurora.height, compassAurora.width, compassAurora.height / slices,
+        shift, hz + v * seaH, w, seaH / slices + 1);
+    }
+
+    const vzNow = compassVizState(t);
+    if (vzNow.lift && vzNow.op > 0.01) {
+      const src = compassBarsCanvas || $('viz');
+      const span = (seaH / (h / src.height)) * 1.15;
+      const rw = Math.max(32, Math.round(w / 6)), rh = Math.max(16, Math.round(seaH / 6));
+      if (!compassRefl) compassRefl = document.createElement('canvas');
+      if (compassRefl.width !== rw || compassRefl.height !== rh) { compassRefl.width = rw; compassRefl.height = rh; }
+      const rg = compassRefl.getContext('2d');
+      rg.clearRect(0, 0, rw, rh);
+      rg.save();
+      rg.translate(0, rh);
+      rg.scale(1, -1);
+      rg.drawImage(src, 0, Math.max(0, src.height - span), src.width, Math.min(span, src.height), 0, 0, rw, rh);
+      rg.restore();
+      const bands = 56;
+      const bandH = seaH / bands;
+      g.globalCompositeOperation = 'lighter';
+      g.imageSmoothingEnabled = true;
+      for (let i = 0; i < bands; i++) {
+        const v = i / bands;
+        const fade = Math.pow(1 - v, 1.6);
+        const ripple = 0.7 + 0.3 * Math.sin(i * 1.7 - T * 3.1);
+        const alpha = 1.6 * vzNow.op * fade * ripple;
+        if (alpha < 0.004) continue;
+        const shift = Math.sin(T * 1.6 + i * 0.45) * (1.5 + v * 14) * dpr;
+        g.globalAlpha = Math.min(1, alpha);
+        g.drawImage(compassRefl, 0, v * rh, rw, rh / bands, shift, hz + i * bandH, w, bandH + 0.6);
+      }
+      g.globalCompositeOperation = 'source-over';
+    }
+
+    g.globalAlpha = 1;
+    for (let i = 0; i < 90; i++) {
+      const v = (i * 0.61803) % 1;
+      const y = hz + Math.pow(v, 1.7) * seaH;
+      const spread = w * (0.12 + Math.pow(v, 1.2) * 0.55);
+      const x = w * 0.5 + Math.sin(i * 12.9898 + T * 0.35) * spread;
+      const lw = (6 + v * 50) * dpr * (0.5 + 0.5 * Math.sin(T * 1.7 + i));
+      const a = (0.5 - Math.abs(x - w * 0.5) / (spread * 2.2)) * (1 - v * 0.6) * (0.5 + 0.5 * Math.sin(T * 2.3 + i * 1.7));
+      if (a <= 0.02) continue;
+      g.globalAlpha = a;
+      g.fillStyle = v < 0.25 ? '#ffc39a' : '#d7b8ff';
+      g.fillRect(x - lw / 2, y, lw, Math.max(1, dpr * (1 + v)));
+    }
+    g.globalAlpha = 1;
+    g.globalCompositeOperation = 'source-over';
+  }
+  // ── skies forever blue ──
+  let skyShown = false;
+  let skyClouds = [];
+  let skyLastTs = 0;
+  let skyNextSpawn = 0;
+  function skyEggOn() { return bloodEggActive && bloodEggTrack === 'sky'; }
+
+  const SKY_LAYERS = [
+    { cell: 4, speed: [10, 18], cols: [14, 22], tone: ['#e8f4ff', '#c4def8'], y: [0.04, 0.42] },
+    { cell: 6, speed: [20, 34], cols: [16, 26], tone: ['#f6fbff', '#cfe4fa'], y: [0.08, 0.55] },
+    { cell: 9, speed: [36, 56], cols: [18, 28], tone: ['#ffffff', '#d8eafc'], y: [0.14, 0.62] },
+  ];
+  const skyRand = (a, b) => a + Math.random() * (b - a);
+  function makeSkyCloud(layerIdx) {
+    const L = SKY_LAYERS[layerIdx];
+    const cols = Math.round(skyRand(L.cols[0], L.cols[1]));
+    const rows = Math.max(6, Math.round(cols * 0.42));
+    const grid = Array.from({ length: rows }, () => new Array(cols).fill(0));
+    const blobs = 3 + Math.floor(Math.random() * 3);
+    for (let b = 0; b < blobs; b++) {
+      const cx = skyRand(cols * 0.2, cols * 0.8), r = skyRand(rows * 0.32, rows * 0.55);
+      const cy = rows - r * 0.9;
+      for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+        const dx = (x + 0.5 - cx) / (r * 1.35), dy = (y + 0.5 - cy) / r;
+        if (dx * dx + dy * dy <= 1) grid[y][x] = 1;
+      }
+    }
+    for (let x = 0; x < cols; x++) grid[rows - 1][x] = grid[rows - 1][x] || (x > 1 && x < cols - 2 && grid[rows - 2][x] ? 1 : 0);
+    const c = document.createElement('canvas');
+    c.width = cols; c.height = rows;
+    const g = c.getContext('2d');
+    for (let x = 0; x < cols; x++) {
+      let bottom = -1;
+      for (let y = rows - 1; y >= 0; y--) if (grid[y][x]) { bottom = y; break; }
+      for (let y = 0; y < rows; y++) {
+        if (!grid[y][x]) continue;
+        g.fillStyle = y >= bottom - 1 ? L.tone[1] : L.tone[0];
+        g.fillRect(x, y, 1, 1);
+      }
+    }
+    return { img: c, layer: layerIdx, cell: L.cell, w: cols * L.cell, h: rows * L.cell, speed: skyRand(L.speed[0], L.speed[1]), yFrac: skyRand(L.y[0], L.y[1]), x: 0 };
+  }
+  function seedSkyClouds(w) {
+    skyClouds = [];
+    const per = [4, 3, 2];
+    per.forEach((n, layer) => {
+      for (let i = 0; i < n; i++) {
+        const cl = makeSkyCloud(layer);
+        cl.x = skyRand(-cl.w, w);
+        skyClouds.push(cl);
+      }
+    });
+  }
+  function updateSkyEgg(nowTs) {
+    const on = skyEggOn() && !midiActive;
+    if (on !== skyShown) {
+      skyShown = on;
+      document.body.classList.toggle('egg-8bit', on);
+      applyCoverBgStyle();
+      if (!on) { skyClouds = []; const cv = $('skyClouds'); cv.getContext('2d').clearRect(0, 0, cv.width, cv.height); }
+    }
+    if (!on) { skyLastTs = nowTs; return; }
+    const cv = $('skyClouds');
+    const w = cv.clientWidth, h = cv.clientHeight;
+    if (!w || !h) return;
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    if (!skyClouds.length) { seedSkyClouds(w); skyNextSpawn = nowTs + 1500; }
+    const dt = Math.min(0.1, Math.max(0, (nowTs - skyLastTs) / 1000));
+    skyLastTs = nowTs;
+    if (nowTs >= skyNextSpawn && skyClouds.length < 14) {
+      const layer = Math.random() < 0.4 ? 0 : Math.random() < 0.6 ? 1 : 2;
+      const cl = makeSkyCloud(layer);
+      cl.x = -cl.w - 4;
+      skyClouds.push(cl);
+      skyNextSpawn = nowTs + skyRand(2200, 5200);
+    }
+    const g = cv.getContext('2d');
+    g.clearRect(0, 0, w, h);
+    g.imageSmoothingEnabled = false;
+    skyClouds.sort((a, b) => a.layer - b.layer);
+    for (const cl of skyClouds) {
+      cl.x += cl.speed * dt;
+      const x = Math.round(cl.x / cl.cell) * cl.cell;
+      const y = Math.round((cl.yFrac * h) / cl.cell) * cl.cell;
+      g.drawImage(cl.img, x, y, cl.w, cl.h);
+    }
+    skyClouds = skyClouds.filter(cl => cl.x < w + 8);
   }
   const gastNeutral = new Image(); gastNeutral.src = 'assets/gast1.png';
   const gastFiring = new Image(); gastFiring.src = 'assets/gast2.png';
@@ -4921,7 +5491,15 @@
       megaShake *= 0.86;
     } else if (megaShaken) { canvas.style.transform = ''; megaShaken = false; }
 
-    if (playing && bass > 0.45 && now - megaLastBlaster > 700 && megaBlasters.length < 3 && t > 4.5) {
+    if (playing) {
+      megaBassHist.push(bass);
+      if (megaBassHist.length > 120) megaBassHist.shift();
+    }
+    const bassAvg = megaBassHist.length ? megaBassHist.reduce((a, b) => a + b, 0) / megaBassHist.length : 0;
+    const bassPeak = megaBassHist.length >= 30 && bass > 0.02 && bass > megaPrevBass && bass > bassAvg * 1.22 + 0.015;
+    const overdue = now - megaLastBlaster > 5000 && bass > bassAvg && bass > 0.02;
+    megaPrevBass = bass;
+    if (playing && (bassPeak || overdue) && now - megaLastBlaster > 1100 && megaBlasters.length < 3 && t > 4.5) {
       megaLastBlaster = now;
       const edge = Math.random();
       let x, y;
@@ -4998,16 +5576,13 @@
   }
 
   let coverSwapTimer = 0;
-  // true only while a cover is actually painted behind the visualizer. without it the
-  // canvas would still go transparent and the window would fall through to black.
   let ambientCoverShown = false;
   function ambientBgActive() {
+    if (wingsBgShown || skyShown || compassShown) return true;
     return S.bgCoverArt && (ambientCoverShown || curHasPicture) && !midiActive;
   }
   function setAmbientCover(url) {
     ambientCoverShown = !!url;
-    // the backdrop layer is only shown when it has something to show, so re-evaluate
-    // it here rather than waiting for the next settings sync, which lags a track behind
     applyCoverBgStyle();
     const base = $('coverBg');
     const fade = $('coverBgFade');
@@ -5092,7 +5667,6 @@
         if (waveformCache.size > 60) waveformCache.delete(waveformCache.keys().next().value);
       }
     } catch (e) {
-      // leave whatever partial peaks were computed; drawSeekWave falls back to a flat line if done===0
     }
   }
   function makeFFT(size) {
@@ -5297,7 +5871,6 @@
     else { r = c; b = x; }
     return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
   }
-  // mirrors makeFill(), so the keyboard wears the same palette as the canvas
   function icueColorAt(t) {
     if (megaMode) {
       return t < 0.5
@@ -5305,6 +5878,8 @@
         : icueMix(icueHexToRgb('#37d8ff'), icueHexToRgb('#1f5eff'), (t - 0.5) * 2);
     }
     if (bloodEggActive && bloodEggTrack === 'btw') return icueMix(icueHexToRgb('#f7c948'), icueHexToRgb('#e8820c'), t);
+    if (wingsPaletteOn()) { const [a, b] = wingsColors(); return icueMix(icueHexToRgb(a), icueHexToRgb(b), t); }
+    if (skyEggOn()) return icueMix(icueHexToRgb('#4d95ec'), icueHexToRgb('#ffffff'), t);
     if (S.rainbow) return icueHsl((((t + (performance.now() / 4000)) % 1) * 360), 0.85, 0.6);
     if (S.mode === 'gradient') return icueMix(icueHexToRgb(S.color1), icueHexToRgb(S.color2), t);
     if (S.mode === 'split') {
@@ -5360,8 +5935,6 @@
       if (note) note.textContent = (ICUE_REASONS[res && res.reason] || 'icue is not reachable') + '.';
     }
   }
-  // works out what a file’s tags should be, from the tags it has plus its filename.
-  // returns the repaired tags, whether anything changed, and a human readable trail.
   function repairTagsFor(name, filePath, rawTags) {
     const guess = guessArtistTitleFromName(name, filePath);
     const t = Object.assign({}, rawTags);
@@ -5384,7 +5957,6 @@
     if (!t.title && guess.title) { t.title = guess.title; t._titleFromName = true; t._titleQuery = guess.titleQuery; patched = true; }
     return { tags: t, patched: patched, guess: guess, notes: notes };
   }
-  // batch tag repair
   let repairRows = [];
   let repairBusy = false;
   const REPAIR_AUDIO_RE = /[.](mp3|m4a|flac|ogg|oga|aac|wav)$/i;
@@ -5398,8 +5970,6 @@
     const on = $('repairScopeSeg').querySelector('button.on');
     return on ? on.dataset.val : 'playlist';
   }
-  // every selectable change lives in row.fields, so the row checkbox, the column
-  // toggles and the apply step all read from one place.
   function repairRowPending(r) {
     return !r.result && REPAIR_FIELDS.some(f => r.fields[f] === true);
   }
@@ -5511,7 +6081,7 @@
     }
     const folders = S.libraryFolders || [];
     if (!folders.length || !window.winControls) return [];
-    const lists = await Promise.all(folders.map(e => window.winControls.scanDirForAudio(e.path, e.recursive !== false)));
+    const lists = await Promise.all(folders.map(e => scanLibraryFolder(e)));
     const seen = new Set();
     const out = [];
     for (const p of lists.flat()) {
@@ -5646,7 +6216,6 @@
           if (idx < 0) continue;
           const nf = new File([rf.data], rf.name, { type: rf.mime });
           nf._path = rf.path;
-          // same here: leave _dur unset so the new tags and cover are picked up
           playlist[idx] = nf;
         }
         renderPlaylist();
@@ -5694,6 +6263,9 @@
     updateDebugOverlay(nowTs);
     drawPerfGraph(nowTs);
     updateLyricsOverlay();
+    updateWingsEgg(nowTs);
+    updateSkyEgg(nowTs);
+    updateCompassEgg(nowTs);
     updateLyricsGapBar();
     syncLyricsWin(nowTs);
     paintSliders();
@@ -5743,6 +6315,7 @@
     }
 
     const { path, maxExtent, floorY } = buildPath();
+    const compassVz = compassVizNow();
 
     if (transparentCanvas) {
       if (overCover && S.trails > 0) {
@@ -5756,8 +6329,16 @@
         ctx.clearRect(0, 0, W, H);
       }
       if (overCover && S.bgPulse > 0) drawBgPulse(bassNow);
-      renderScene(ctx, path, maxExtent, floorY, overCover);
-      if (S.reflection && S.layout !== 'radial') drawReflection(path, floorY, true);
+      if (compassVz) {
+        renderScene(compassBarsLayer(), path, maxExtent, floorY, overCover);
+        ctx.save();
+        ctx.globalAlpha = compassVz.op;
+        ctx.drawImage(compassBarsCanvas, 0, compassVz.lift ? -Math.round(H * (1 - COMPASS_HORIZON)) : 0);
+        ctx.restore();
+      } else {
+        renderScene(ctx, path, maxExtent, floorY, overCover);
+        if (S.reflection && S.layout !== 'radial') drawReflection(path, floorY, true);
+      }
       if (overCover && S.flash > 0) drawFlash(bassNow);
     } else {
       ctx.globalCompositeOperation = 'source-over';
@@ -5772,13 +6353,27 @@
         ctx.fillRect(0, 0, W, H);
       }
       if (S.bgPulse > 0) drawBgPulse(bassNow);
-      renderScene(ctx, path, maxExtent, floorY, true);
-      if (S.reflection && S.layout !== 'radial') drawReflection(path, floorY, false);
+      if (compassVz) {
+        renderScene(compassBarsLayer(), path, maxExtent, floorY, true);
+        ctx.save();
+        ctx.globalAlpha = compassVz.op;
+        ctx.drawImage(compassBarsCanvas, 0, compassVz.lift ? -Math.round(H * (1 - COMPASS_HORIZON)) : 0);
+        ctx.restore();
+      } else {
+        renderScene(ctx, path, maxExtent, floorY, true);
+        if (S.reflection && S.layout !== 'radial') drawReflection(path, floorY, false);
+      }
       if (S.flash > 0) drawFlash(bassNow);
     }
 
+    if (compassVz) {
+      ctx.save();
+      ctx.globalAlpha = compassVz.op;
+      if (compassVz.lift) ctx.translate(0, -Math.round(H * (1 - COMPASS_HORIZON)));
+    }
     drawConnections(maxExtent);
     drawPeaks(maxExtent, floorY);
+    if (compassVz) ctx.restore();
     if (S.beatParticles && ready && playing && detectBeat(bassNow, nowTs)) spawnBeatBurst();
     updateParticles();
     drawParticles();
@@ -5800,10 +6395,6 @@
 
   let playlist = [];
   let curIsVideo = false;
-  // an .mp4 or .webm can hold nothing but audio — a youtube rip usually does.
-  // the backdrop must follow what the file really has, not what its extension
-  // claims, or the canvas turns transparent over a clip that paints nothing and
-  // the window falls through to black.
   let curHasPicture = false;
   let curIndex = -1;
   function isPresetFile(f) { return f.name.toLowerCase().endsWith('.' + window.MediyyuPresets.EXT); }
@@ -5811,9 +6402,6 @@
   function isVideoFile(f) { return (f.type && f.type.startsWith('video')) || /\.(mp4|webm|mov|m4v)$/i.test(f.name); }
   function isMidiFile(f) { return /\.(mid|midi)$/i.test(f.name); }
 
-  // every tag parser goes through here, several times per file. a FileReader
-  // costs an allocation and an event round trip each time; the blob does the
-  // same read as a plain promise.
   function readSlice(file, start, len) {
     return file.slice(start, start + len).arrayBuffer();
   }
@@ -5909,8 +6497,6 @@
         else { while (p < frame.length && frame[p] !== 0) p++; }
         const descBytes = frame.subarray(descStart, p);
         p += wide ? 2 : 1;
-        // some writers pad an empty description with an extra null, and no image
-        // format starts with one, so stepping over them is always safe
         let guard = 0;
         while (p < frame.length && frame[p] === 0 && guard < 16) { p++; guard++; }
         const imgBytes = frame.subarray(p);
@@ -5970,8 +6556,6 @@
       }
     }
   }
-  // the rest of the app only wants one cover url, the properties dialog wants the
-  // whole set, so every reader records a picture through here
   function addPicture(result, pic) {
     if (!pic || !pic.url) return;
     if (!result.pictures) result.pictures = [];
@@ -6161,7 +6745,6 @@
             if (dnm === 'data' && dsz > 16) {
               const img = moov.subarray(dp + 16, dp + dsz);
               const mime = moov[dp + 11] === 14 ? 'image/png' : 'image/jpeg';
-              // mp4 has no picture roles, so the first image is the cover and the rest are extras
               if (img.length) addPicture(result, {
                 url: URL.createObjectURL(new Blob([img], { type: mime })),
                 mime: mime, desc: '', type: result.pictures ? 0 : 3, bytes: img.length,
@@ -6175,9 +6758,6 @@
     }
     return result;
   }
-  // every reader mints a blob url per embedded image, but only the properties
-  // dialog ever looks at more than the cover. everywhere else they have to be
-  // handed back, or a library scan retains every booklet scan it ever parsed.
   function releaseTagPictures(tags, keepUrl) {
     if (!tags) return;
     for (const p of tags.pictures || []) {
@@ -6582,7 +7162,13 @@
     await new Promise(res => {
       const a = new Audio(), url = playbackUrlFor(f);
       a.preload = 'metadata';
-      const done = () => { try { URL.revokeObjectURL(url); } catch (e) {} a.src = ''; res(); };
+      const done = () => {
+        a.onloadedmetadata = a.onerror = null;
+        if (String(url).startsWith('blob:')) { try { URL.revokeObjectURL(url); } catch (e) {} }
+        a.removeAttribute('src');
+        a.load();
+        res();
+      };
       a.onloadedmetadata = () => { f._dur = isFinite(a.duration) ? a.duration : 0; done(); };
       a.onerror = done;
       a.src = url;
@@ -6615,7 +7201,6 @@
     retireAllBloodLines(true);
     renderPlaylist();
   }
-  // putting a track back is cheap, so removing one never has to be a dead end
   function restoreToPlaylist(f, i, wasCurrent) {
     const at = Math.max(0, Math.min(i, playlist.length));
     playlist.splice(at, 0, f);
@@ -6817,11 +7402,8 @@
   }
   function hideLoadProgress() { $('loadProgress').classList.remove('show'); }
   const READ_CHUNK = 15;
-  // describing is cheap, so the batches can be much larger than a read's
   const DESCRIBE_CHUNK = 400;
   const BIG_IMPORT_THRESHOLD = 150;
-  // this used to read every file into memory just to put its name in a list.
-  // it now only describes them; the bytes are fetched when they are played.
   async function readPathsWithProgress(paths, label, onBatch) {
     if (!window.winControls) return [];
     const describe = ps => window.winControls.describeFiles
@@ -7099,10 +7681,6 @@
     await appendFilesWithDupeCheck(restoredToFiles(restored));
   });
 
-  // A playlist entry used to be a File carrying the whole track in memory, which
-  // cost hundreds of megabytes on a large session. An entry that lives on disk is
-  // now an empty shell that knows its path; the bytes are fetched only by the few
-  // things that genuinely need them, and playback reads straight off disk.
   function fileUrlOf(p) {
     const norm = String(p || '').replace(/\\/g, '/');
     const enc = s => s.split('/').map(encodeURIComponent).join('/');
@@ -7122,7 +7700,6 @@
     try { desc = await window.winControls.describeFiles(paths); } catch (e) { desc = []; }
     return (desc || []).map(lazyFile);
   }
-  // the whole track, for the few callers that decode or rewrite it
   async function fileBytesOf(f) {
     if (f && f._lazy && f._path && window.winControls) {
       try {
@@ -7132,7 +7709,6 @@
     }
     return f.arrayBuffer();
   }
-  // tag parsers only ever read the front of a file, so that is all we fetch
   async function tagSourceFor(f) {
     if (f && f._lazy && f._path && window.winControls) {
       try {
@@ -7146,12 +7722,9 @@
     }
     return f;
   }
-  // what the audio element should point at: the file itself when it has a path
   function playbackUrlFor(f) {
     return f && f._path ? fileUrlOf(f._path) : URL.createObjectURL(f);
   }
-  // takes either shape: a full read keeps its bytes, a description becomes a
-  // shell that will fetch them if it is ever asked to
   function restoredToFiles(restored) {
     return restored.map(r => {
       if (!r.data) return lazyFile(r);
@@ -7350,16 +7923,13 @@
     'during recording', 'during performance', 'screen capture', 'bright fish', 'illustration',
     'band logo', 'publisher logo'];
   let propsIdx = -1;
-  // the dialog used to be tied to a playlist row. a library track opens here
-  // without joining the playlist, so -1 means "this file, wherever it lives".
   let propsStandalone = null;
   function propsFile() { return propsIdx >= 0 ? playlist[propsIdx] : propsStandalone; }
-  let propsPics = [];        // { url, mime, desc, type, bytes, blob? }
+  let propsPics = [];        
   let propsPicSel = -1;
   let propsArtDirty = false;
-  let propsOrig = null;      // the values the file had when the dialog opened
+  let propsOrig = null;
 
-  // lyrics linked by hand live under the same key the player uses at playback time
   function trackLyricsKey(f) {
     return f ? f.name + '|' + Math.round(f._dur || 0) : '';
   }
@@ -7410,7 +7980,6 @@
       meta.className = 'props-art-meta';
       meta.textContent = (p.mime || '').replace('image/', '') + ' · ' + Math.round((p.bytes || 0) / 1024) + ' kb';
       cell.appendChild(meta);
-      // the role is the picture's own, not its position: a back cover stays a back cover
       const role = document.createElement('select');
       role.className = 'props-art-role';
       role.title = 'what this image is';
@@ -7646,9 +8215,7 @@
     refreshPropsLyrics();
   });
 
-  // ── filling the fields from the release databases ──────────────────────────
-  // every matching release is broken back down into per-field choices, so a title
-  // can come from one release and the cover from another.
+  // ── db ──────────────────────────
   const META_FIELDS = [
     { key: 'artist', label: 'artist', input: 'propArtist' },
     { key: 'title', label: 'title', input: 'propTitle' },
@@ -7662,8 +8229,6 @@
     { key: 'artist', label: 'album artist', input: 'albumPropArtist' },
     { key: 'year', label: 'year', input: 'albumPropYear' },
   ];
-  // the same picker serves the track dialog and the album one; only the fields it
-  // offers and where it writes them back change
   let metaTarget = 'track';
   function metaFields() { return metaTarget === 'album' ? META_ALBUM_FIELDS : META_FIELDS; }
   let metaHits = [];
@@ -7680,7 +8245,6 @@
       entry.count++;
       entry.sources.add(hit.source);
     }
-    // the value the most releases agree on is the likeliest one, so it sits on top
     return [...seen.values()].sort((a, b) => b.count - a.count);
   }
   function metaCoverOptions() {
@@ -7691,8 +8255,6 @@
     }
     return [...seen.values()].slice(0, 8);
   }
-  // the cover art archive answers slowly and musicbrainz asks for about one
-  // request a second, so the thumbnails are fetched in turn rather than at once
   let metaThumbJobs = [];
   let metaThumbBusy = false;
   let metaThumbLast = 0;
@@ -7713,7 +8275,6 @@
       if (job.run !== metaThumbRun) continue;
       job.cell.classList.remove('loading');
       if (!img || !img.data) {
-        // a thumbnail that never arrived is a cover that cannot be saved either
         job.cell.classList.add('dead');
         job.radio.disabled = true;
         if (job.radio.checked) job.grid.querySelector('input').checked = true;
@@ -7722,8 +8283,6 @@
       job.cover.blob = new Blob([img.data], { type: img.mime || 'image/jpeg' });
       job.cover.thumbUrl = URL.createObjectURL(job.cover.blob);
       job.thumb.style.backgroundImage = 'url("' + job.cover.thumbUrl + '")';
-      // the pixel size is what separates a usable cover from a thumbnail, and only
-      // the decoded image knows it
       const kb = Math.max(1, Math.round(job.cover.blob.size / 1024)) + ' kb';
       job.size.textContent = kb;
       const probe = new Image();
@@ -7744,7 +8303,6 @@
     const dialog = $('metaOverlay').querySelector('.meta-box');
     const d = dialog ? dialog.getBoundingClientRect() : r;
     const size = 220, gap = 14;
-    // beside the whole dialog rather than beside the cell, so it covers nothing
     let left = d.right + gap;
     if (left + size > window.innerWidth - 8) left = d.left - gap - size;
     if (left < 8) left = r.right + gap;
@@ -7808,8 +8366,6 @@
       if (!options.length) continue;
       groups++;
       const group = metaGroupBox(field.label);
-      // a filled-in field still gets the whole list under it, so it can be swapped
-      // out. it just stays the default, and says so when the databases agree.
       const same = current ? options.find(o => o.value.toLowerCase() === current.toLowerCase()) : null;
       const keep = document.createElement('label');
       keep.className = 'meta-opt';
@@ -7877,7 +8433,6 @@
         cell.addEventListener('mouseenter', () => showMetaPreview(cell, cover));
         cell.addEventListener('mouseleave', hideMetaPreview);
         grid.appendChild(cell);
-        // the page can't pull remote images itself, so the bytes come through main
         metaThumbJobs.push({ run: metaThumbRun, cover: cover, cell: cell, thumb: thumb, size: size, radio: radio, grid: grid });
       }
       group.appendChild(grid);
@@ -7914,7 +8469,6 @@
       const cover = metaCovers.find(c => c.url === pickedCover.dataset.url);
       let blob = cover && cover.blob;
       if (!blob) {
-        // the thumbnail may still be in flight when save is pressed
         try {
           const img = await window.winControls.metaImage(pickedCover.dataset.url);
           if (img && img.data) blob = new Blob([img.data], { type: img.mime || 'image/jpeg' });
@@ -7931,7 +8485,6 @@
         renderAlbumArt();
         changed++;
       } else if (blob) {
-        // the first image is the one players use, so the new cover goes in front
         propsPics.unshift({
           url: URL.createObjectURL(blob), owned: true, blob: blob,
           mime: blob.type, desc: $('propAlbum').value || 'front cover', type: 3, bytes: blob.size,
@@ -7967,8 +8520,6 @@
         artist = $('albumPropArtist').value.trim();
         title = $('albumPropName').value.trim();
       } else {
-        // an untagged file still has a filename, and the detector already knows how
-        // to read one. without this the search falls back to loose free text.
         const guess = guessArtistTitleFromName(f.name, f._path);
         artist = $('propArtist').value.trim() || guess.artist;
         title = $('propTitle').value.trim() || guess.titleQuery || guess.title;
@@ -8018,9 +8569,7 @@
     for (const [key, id] of Object.entries(PROP_FIELDS)) $(id).value = tags[key] || '';
 
     releasePropsPics();
-    // freshly minted by the readTags above, so the dialog owns them outright
     propsPics = (tags.pictures || []).map(p => Object.assign({}, p, { owned: true }));
-    // the cover the rest of the app uses goes first, so the grid matches what players show
     const frontAt = propsPics.findIndex(p => p.url === tags.cover);
     if (frontAt > 0) propsPics.unshift(propsPics.splice(frontAt, 1)[0]);
     propsPicSel = propsPics.length ? 0 : -1;
@@ -8086,7 +8635,6 @@
     $('propsOverlay').classList.add('hidden');
     releasePropsPics();
     propsArtDirty = false;
-    // a standalone file is held only by this dialog, so let it go with it
     propsIdx = -1;
     propsStandalone = null;
   }
@@ -8104,8 +8652,6 @@
     const tags = {};
     for (const key of Object.keys(PROP_FIELDS)) tags[key] = $(PROP_FIELDS[key]).value.trim();
 
-    // saving writes straight into the file, so what is about to change gets shown
-    // first. this also catches the case where nothing changed at all.
     const details = [];
     for (const key of Object.keys(PROP_FIELDS)) {
       const before = ((propsOrig && propsOrig[key]) || '').trim();
@@ -8168,10 +8714,8 @@
       if (restored.length) {
         const nf = new File([restored[0].data], restored[0].name, { type: restored[0].mime });
         nf._path = restored[0].path;
-        // no _dur on purpose: it lets ensureProbed re-read the new tags, thumbnail included
         if (savedIdx >= 0) playlist[savedIdx] = nf;
         else {
-          // not a playlist entry, but the same file may still be queued elsewhere
           const alsoQueued = playlist.findIndex(x => x._path && x._path === nf._path);
           if (alsoQueued >= 0) playlist[alsoQueued] = nf;
         }
@@ -8297,8 +8841,6 @@
     audio.defaultPlaybackRate = S.playbackRate;
     audio.playbackRate = S.playbackRate;
     curIsVideo = isVideoFile(file);
-    // assumed false until the clip proves otherwise, so a coverless audio-only
-    // mp4 keeps the plain background instead of blacking out
     curHasPicture = false;
     checkBadApple(file.name);
     const clip = $('clipBg');
@@ -8335,8 +8877,6 @@
     $('transport').classList.remove('hidden');
     audio.play().then(() => setPlay(true)).catch(() => setPlay(false));
   }
-  // quiet: put the files in the list without touching what is playing. opening a
-  // track's properties is not a request to hear it.
   function appendToPlaylist(files, keepOrder, quiet) {
     return new Promise(resolveAppend => {
       if (!files.length) { resolveAppend(); return; }
@@ -8357,8 +8897,6 @@
         if (wasEmpty && curIndex < 0) {
           curIndex = 0;
           loadCurrent();
-          // still loaded, so the transport has something to work with, but held
-          // at the start rather than started
           if (quiet) audio.addEventListener('canplay', () => { audio.pause(); setPlay(false); }, { once: true });
         }
         else if (playlistDone && !started && !quiet) { started = true; curIndex = firstNewIdx; loadCurrent(); }
@@ -8562,8 +9100,6 @@
   function loadLibraryTagCache() {
     let cache;
     try { cache = JSON.parse(localStorage.getItem('bbv_libtags')) || {}; } catch (e) { return {}; }
-    // durations briefly got cached as a flat 0 whenever the probe channel wasn't
-    // reachable yet; one pass marks those unknown again so they get re-probed
     try {
       if (!localStorage.getItem('bbv_libdurfix')) {
         for (const k in cache) if (cache[k] && cache[k].dur === 0) cache[k].dur = -1;
@@ -8581,8 +9117,6 @@
       try { localStorage.setItem('bbv_libtags', JSON.stringify(libraryTagCache)); } catch (e) {}
     }, 800);
   }
-  // bump this when a new field is added, so profiles carrying the old shape get
-  // re-read instead of showing half-empty albums forever
   const LIB_TAG_V = 3;
   function libTagEmpty() {
     return { v: LIB_TAG_V, artist: '', title: '', album: '', albumArtist: '', track: '', disc: '', year: '', cover: '', dur: -1 };
@@ -8591,8 +9125,6 @@
     if (!libraryTagCache) libraryTagCache = loadLibraryTagCache();
     const missing = paths.filter(p => !libraryTagCache[p] || libraryTagCache[p].v !== LIB_TAG_V);
     if (!missing.length) return;
-    // a tag carrying big artwork can be tens of megabytes, so the batches stay
-    // small: this is the read that has to hold whole covers in memory
     const CHUNK = 10;
     for (let i = 0; i < missing.length; i += CHUNK) {
       const slice = missing.slice(i, i + CHUNK);
@@ -8629,9 +9161,6 @@
     }
     saveLibraryTagCacheDebounced();
   }
-  // any tag written outside the library browser leaves its index describing the
-  // old file. dropping just those entries costs one re-read of those files on the
-  // next open, instead of making the user rescan the whole collection.
   function libraryTagsChanged(paths) {
     const list = (Array.isArray(paths) ? paths : [paths]).filter(Boolean);
     if (!list.length) return;
@@ -8640,7 +9169,6 @@
       for (const p of list) if (libraryTagCache[p]) { delete libraryTagCache[p]; hit = true; }
       if (hit) saveLibraryTagCacheDebounced();
     }
-    // the album index is held in memory between openings, so it has to go too
     libAlbums = [];
     libAlbumsStamp = '';
   }
@@ -8657,8 +9185,6 @@
       const slice = missing.slice(i, i + CHUNK);
       let durs = null;
       try { durs = await window.winControls.libraryDurations(slice); } catch (e) {}
-      // the whole channel is missing (an old main process still running, say) —
-      // stop rather than walk the library for nothing, and leave them unknown
       if (!durs) { if (!ok) return; continue; }
       ok = true;
       for (const d of durs) {
@@ -8677,7 +9203,7 @@
     let libPaths = [];
     if (S.libraryFolders && S.libraryFolders.length) {
       try {
-        const lists = await Promise.all(S.libraryFolders.map(entry => window.winControls.scanDirForAudio(entry.path, entry.recursive !== false)));
+        const lists = await Promise.all(S.libraryFolders.map(entry => scanLibraryFolder(entry)));
         libPaths = lists.flat();
       } catch (e) { libPaths = []; }
     }
@@ -8916,9 +9442,6 @@
 
   function setPlay(p) {
     playing = p;
-    // the separated window normally learns this from the render loop, but the OS
-    // throttles that loop while the app sits in the background, which is exactly
-    // when media keys get used. push the change straight away instead of waiting.
     if (lyricsWinOpen && window.winControls) {
       window.winControls.lyricsWinSync({ t: ready ? audio.currentTime : 0, playing: p, rate: audio.playbackRate });
     }
@@ -9110,8 +9633,6 @@
       const times = [...raw.matchAll(/\[(\d+):(\d{1,2})(?:[.:](\d{1,3}))?\]/g)];
       if (!times.length) continue;
       const body = raw.replace(/\[[^\]]*\]/g, '');
-      // enhanced lrc marks each word with <mm:ss.xx>. keep those timings, and strip
-      // the tags either way so they never end up on screen.
       const marks = [...body.matchAll(/<(\d+):(\d{1,2})(?:[.:](\d{1,3}))?>/g)];
       const lineText = body.replace(/<[^>]*>/g, '').trim();
       let words = null;
@@ -9136,9 +9657,79 @@
     return lines.length ? lines : null;
   }
 
-  // almost no lrclib or netease entry carries word timings. when they are missing the
-  // line is split across its own duration, weighted by word length — an estimate, so
-  // it can be turned off. real timings from an enhanced file always win either way.
+  // ----- backing vocals -----
+  const BACK_LINE_RE = /^\s*[(\[\uff08][^()\[\]\uff08\uff09]*[)\]\uff09]\s*$/;
+  const BACK_HOST_WINDOW = 6;
+  const BACK_LEAD = 0.8;
+  function backText(s) { return s.replace(/^\s*[(\[\uff08]\s*|\s*[)\]\uff09]\s*$/g, ''); }
+  function splitBackVocals(lines) {
+    const out = [];
+    lines.forEach((ln, i) => {
+      const text = ln.text || '';
+      if (text && BACK_LINE_RE.test(text)) {
+        const host = out[out.length - 1];
+        const following = lines[i + 1];
+        const leadsNext = following && following.text && !BACK_LINE_RE.test(following.text) && following.t - ln.t <= BACK_LEAD;
+        if (!leadsNext && host && host.text && !host.paren && ln.t - host.t <= BACK_HOST_WINDOW) {
+          host.back.push({ t: ln.t, text: backText(text) });
+          return;
+        }
+        out.push({ t: ln.t, text, words: ln.words, back: [], paren: true });
+        return;
+      }
+      let main = text;
+      const back = [];
+      if (text && !ln.words) {
+        const tail = text.match(/^(.*?\S)\s*([(\uff08][^()\uff08\uff09]+[)\uff09])\s*$/);
+        const head = text.match(/^\s*([(\uff08][^()\uff08\uff09]+[)\uff09])\s*(\S.*)$/);
+        if (tail) { main = tail[1]; back.push({ t: ln.t, text: backText(tail[2]), at: main.length / text.length }); }
+        else if (head) { main = head[2]; back.push({ t: ln.t, text: backText(head[1]) }); }
+      }
+      const entry = { t: ln.t, text: main, words: main === text ? ln.words : null, back };
+      const prev = out[out.length - 1];
+      if (prev && prev.paren && entry.text && entry.t - prev.t <= BACK_LEAD) {
+        out.pop();
+        entry.back.unshift({ t: prev.t, text: backText(prev.text) });
+      }
+      out.push(entry);
+    });
+    out.forEach((e, i) => {
+      for (const b of e.back) {
+        if (b.at === undefined) continue;
+        const span = Math.min(8, Math.max(0.5, (out[i + 1] ? out[i + 1].t : e.t + 3.5) - e.t));
+        b.t = e.t + span * b.at;
+        delete b.at;
+      }
+      delete e.paren;
+    });
+    out.hasBack = out.some(e => e.back.length);
+    return out;
+  }
+  let lyricsDisplaySrc = null, lyricsDisplayLines = null;
+  function lyricsDisplay() {
+    if (lyricsLines !== lyricsDisplaySrc) {
+      lyricsDisplaySrc = lyricsLines;
+      lyricsDisplayLines = lyricsLines ? splitBackVocals(lyricsLines) : null;
+    }
+    return lyricsDisplayLines;
+  }
+  function buildLyricBack(el, back) {
+    el.innerHTML = '';
+    for (const b of back || []) {
+      const sp = document.createElement('span');
+      sp.className = 'bv';
+      sp._t = b.t;
+      sp.textContent = b.text;
+      el.appendChild(sp);
+    }
+  }
+  function paintLyricBack(el, t) {
+    for (const sp of el.children) {
+      const on = sp._t <= t;
+      if (sp._on !== on) { sp._on = on; sp.classList.toggle('in', on); }
+    }
+  }
+
   let lyricWordsGen = 0;
   function lyricWords(list, i) {
     const ln = list && list[i];
@@ -9220,8 +9811,6 @@
   let lyricsPicks = {};
   try { lyricsPicks = JSON.parse(localStorage.getItem('bbv_lyricsPicks') || '{}'); } catch (e) {}
 
-  // resolved lyrics are kept on disk so a track only ever hits the network once.
-  // an entry remembers which pick produced it, so changing source invalidates it.
   let lyricsCache = {};
   try { lyricsCache = JSON.parse(localStorage.getItem('bbv_lyricsCache') || '{}'); } catch (e) {}
   const LYRICS_CACHE_MAX = 150;
@@ -9231,7 +9820,6 @@
     while (keys.length > LYRICS_CACHE_MAX) delete lyricsCache[keys.shift()];
     try { localStorage.setItem('bbv_lyricsCache', JSON.stringify(lyricsCache)); }
     catch (e) {
-      // storage full: drop the oldest half rather than losing the lot
       const ks = Object.keys(lyricsCache);
       for (let i = 0; i < Math.ceil(ks.length / 2); i++) delete lyricsCache[ks[i]];
       try { localStorage.setItem('bbv_lyricsCache', JSON.stringify(lyricsCache)); } catch (e2) {}
@@ -9276,7 +9864,9 @@
     const spinT = setTimeout(() => { if (token === lyricsToken) loadEl.classList.add('show'); }, 250);
     try {
       if (bloodEggActive && bloodEggTrack && window.winControls) {
-        const pr = await window.winControls.lyricsFetchById(BLOOD_EGG_TRACKS[bloodEggTrack].lrcId);
+        const lrcId = await bloodEggLrcId(BLOOD_EGG_TRACKS[bloodEggTrack]);
+        if (token !== lyricsToken) return;
+        const pr = await window.winControls.lyricsFetchById(lrcId);
         if (token !== lyricsToken) return;
         const parsed = pr && pr.synced ? parseLRC(pr.synced) : null;
         if (parsed) { lyricsLines = parsed; return; }
@@ -9295,7 +9885,6 @@
         const dur = await waitDuration();
         if (token !== lyricsToken) return;
         lyricsCurKey = file.name + '|' + Math.round(dur || 0);
-        // a lyrics file linked by hand in the properties dialog wins over everything
         const linked = lyricsFiles[lyricsCurKey];
         if (linked && linked.text) {
           const parsed = /[.]vtt$/i.test(linked.name || '') ? parseVTT(linked.text) : parseLRC(linked.text);
@@ -9307,7 +9896,6 @@
           const parsed = parseLRC(cached.text);
           if (parsed) { lyricsLines = parsed; return; }
         }
-        // a remembered failure is respected for a week, then retried
         if (cached && cached.miss) return;
         if (pickId != null) {
           const neId = typeof pickId === 'string' && pickId.indexOf('ne:') === 0 ? pickId.slice(3) : null;
@@ -9571,21 +10159,25 @@
   function updateLyricsOverlay() {
     const box = $('lyricsBox');
     if (bloodEggActive) { box.classList.add('off'); updateBloodLyrics(); return; }
-    if (S.lyricsMode !== 'compact' || !lyricsLines || !ready) { box.classList.add('off'); return; }
+    const L = lyricsDisplay();
+    if (S.lyricsMode !== 'compact' || !L || !ready) { box.classList.add('off'); return; }
     const t = audio.currentTime + 0.05;
-    let lo = 0, hi = lyricsLines.length - 1, idx = -1;
+    let lo = 0, hi = L.length - 1, idx = -1;
     while (lo <= hi) {
       const mid = (lo + hi) >> 1;
-      if (lyricsLines[mid].t <= t) { idx = mid; lo = mid + 1; } else hi = mid - 1;
+      if (L[mid].t <= t) { idx = mid; lo = mid + 1; } else hi = mid - 1;
     }
     if (idx === lyricsIdx) {
-      if (idx >= 0) paintLyricWords($('lyricCur'), t);
+      if (idx >= 0) { paintLyricWords($('lyricCur'), t); paintLyricBack($('lyricBack'), t); }
       return;
     }
     const prevIdx = lyricsIdx;
     lyricsIdx = idx;
-    const cur = idx >= 0 ? lyricsLines[idx].text : '';
-    const next = idx + 1 < lyricsLines.length ? lyricsLines[idx + 1].text : '';
+    const cur = idx >= 0 ? L[idx].text : '';
+    const next = idx + 1 < L.length ? L[idx + 1].text : '';
+    box.classList.toggle('has-back', !!L.hasBack);
+    buildLyricBack($('lyricBack'), idx >= 0 ? L[idx].back : null);
+    paintLyricBack($('lyricBack'), t);
     if (!cur && !next) { box.classList.add('off'); return; }
     const curEl = $('lyricCur'), nextEl = $('lyricNext');
     const wasVisible = !box.classList.contains('off');
@@ -9599,7 +10191,7 @@
     }
     const rise = Math.max(16, nextEl.offsetTop - curEl.offsetTop);
     curEl.style.setProperty('--rise', rise + 'px');
-    buildLyricWords(curEl, cur ? lyricWords(lyricsLines, idx) : null, cur);
+    buildLyricWords(curEl, cur ? lyricWords(L, idx) : null, cur);
     paintLyricWords(curEl, t);
     nextEl.textContent = next;
     box.classList.remove('off');
@@ -9612,13 +10204,14 @@
 
   function updateLyricsGapBar() {
     const bar = $('lyricGapBar');
-    if (bloodEggActive || S.lyricsMode !== 'compact' || !lyricsLines || !ready) { bar.classList.remove('show'); return; }
+    const L = lyricsDisplay();
+    if (bloodEggActive || S.lyricsMode !== 'compact' || !L || !ready) { bar.classList.remove('show'); return; }
     const idx = lyricsIdx;
-    const curText = idx >= 0 ? lyricsLines[idx].text : '';
+    const curText = idx >= 0 ? L[idx].text : '';
     const nextIdx = idx + 1;
-    if (curText || nextIdx >= lyricsLines.length) { bar.classList.remove('show'); return; }
-    const gapStart = idx >= 0 ? lyricsLines[idx].t : 0;
-    const gapEnd = lyricsLines[nextIdx].t;
+    if (curText || nextIdx >= L.length) { bar.classList.remove('show'); return; }
+    const gapStart = idx >= 0 ? L[idx].t : 0;
+    const gapEnd = L[nextIdx].t;
     const gapDur = gapEnd - gapStart;
     if (gapDur < 5) { bar.classList.remove('show'); return; }
     const progress = Math.max(0, Math.min(1, (audio.currentTime - gapStart) / gapDur));
@@ -9633,7 +10226,7 @@
   }
   function drawExportLyrics() {
     const FONT_STACK = `'Renogare', 'Helvetica Neue', Helvetica, Arial, sans-serif`;
-    const pulseScale = (S.scaleToSound && S.lyricsFx) ? vizPulseScale() : 1;
+    const pulseScale = (scaleToSoundOn() && S.lyricsFx) ? vizPulseScale() : 1;
     const chromaOn = S.chromaAb && S.lyricsFx;
     const scaleY = H / window.innerHeight;
     if (bloodEggActive) {
@@ -9669,15 +10262,16 @@
       ctx.restore();
       return;
     }
-    if (S.lyricsMode !== 'compact' || !lyricsLines || !ready) return;
-    if (lyricsIdx < 0 || lyricsIdx >= lyricsLines.length) return;
+    const L = lyricsDisplay();
+    if (S.lyricsMode !== 'compact' || !L || !ready) return;
+    if (lyricsIdx < 0 || lyricsIdx >= L.length) return;
     const boxOpacity = parseFloat(getComputedStyle($('lyricsBox')).opacity);
     if (!(boxOpacity > 0)) return;
-    const line = lyricsLines[lyricsIdx];
+    const line = L[lyricsIdx];
     const cur = line.text;
     if (!cur) return;
     const FADE = 0.35;
-    const nextT = lyricsIdx + 1 < lyricsLines.length ? lyricsLines[lyricsIdx + 1].t : Infinity;
+    const nextT = lyricsIdx + 1 < L.length ? L[lyricsIdx + 1].t : Infinity;
     const fadeIn = Math.max(0, Math.min(1, (audio.currentTime - line.t) / FADE));
     const fadeOut = Math.max(0, Math.min(1, (nextT - audio.currentTime) / FADE));
     const opacity = Math.min(fadeIn, fadeOut) * boxOpacity;
@@ -9749,7 +10343,7 @@
     if (lyrwinSentLines !== lyricsLines) {
       lyrwinSentLines = lyricsLines;
       window.winControls.lyricsWinSync({
-        lines: lyricsLines || [],
+        lines: lyricsDisplay() || [],
         guessWords: S.lyricsGuessWords,
         title: $('npTitle').textContent,
         artist: $('npArtist').classList.contains('hidden') ? '' : $('npArtist').textContent,
@@ -10050,6 +10644,9 @@
   $('autoplaySimilarSeg').querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => { S.autoplaySimilar = btn.dataset.val === 'on'; syncUI(); save(); });
   });
+  function scanLibraryFolder(entry, limit) {
+    return window.winControls.scanDirForAudio(entry.path, entry.recursive !== false, limit, S.libraryExcludes || []);
+  }
   let libraryHasMusic = false;
   function syncAutoplaySimilarGate() {
     $('autoplaySimilarSeg').classList.toggle('disabled', !libraryHasMusic);
@@ -10061,7 +10658,7 @@
     if (!S.libraryFolders.length || !window.winControls) { libraryHasMusic = false; syncAutoplaySimilarGate(); return; }
     for (const entry of S.libraryFolders) {
       try {
-        const found = await window.winControls.scanDirForAudio(entry.path, entry.recursive !== false);
+        const found = await scanLibraryFolder(entry);
         if (found && found.length) { libraryHasMusic = true; syncAutoplaySimilarGate(); return; }
       } catch (e) {}
     }
@@ -10085,7 +10682,7 @@
       top.className = 'library-folder-top';
       const path = document.createElement('span');
       path.className = 'library-folder-path';
-      path.textContent = entry.path;
+      path.textContent = '‎' + entry.path + '‎';
       path.title = entry.path;
       const rm = document.createElement('button');
       rm.className = 'library-folder-remove';
@@ -10094,6 +10691,7 @@
       rm.addEventListener('click', () => {
         S.libraryFolders.splice(i, 1);
         syncLibraryFolderList();
+        syncLibraryExcludeList();
         refreshLibraryHasMusic();
         save();
       });
@@ -10116,19 +10714,69 @@
     $('libraryOverlay').classList.add('hidden');
     libFoldersDialogClosed();
   });
+  function syncLibraryExcludeList() {
+    const box = $('libraryExcludeList');
+    box.innerHTML = '';
+    const list = S.libraryExcludes || [];
+    if (!list.length) {
+      const empty = document.createElement('div');
+      empty.className = 'pls-empty';
+      empty.textContent = 'nothing excluded.';
+      box.appendChild(empty);
+      return;
+    }
+    list.forEach((dir, i) => {
+      const row = document.createElement('div');
+      row.className = 'library-folder-row';
+      const top = document.createElement('div');
+      top.className = 'library-folder-top';
+      const path = document.createElement('span');
+      path.className = 'library-folder-path';
+      path.textContent = '‎' + dir + '‎';
+      path.title = dir;
+      const rm = document.createElement('button');
+      rm.className = 'library-folder-remove';
+      rm.textContent = '✕';
+      rm.title = 'scan this folder again';
+      rm.addEventListener('click', () => {
+        S.libraryExcludes.splice(i, 1);
+        syncLibraryExcludeList();
+        refreshLibraryHasMusic();
+        save();
+      });
+      top.append(path, rm);
+      row.appendChild(top);
+      if (!libPathUnderFolders(dir + '/x')) {
+        const hint = document.createElement('div');
+        hint.className = 'library-folder-hint';
+        hint.textContent = "isn't inside any library folder, so it changes nothing yet";
+        row.appendChild(hint);
+      }
+      box.appendChild(row);
+    });
+  }
+  $('libraryExcludeBtn').addEventListener('click', async () => {
+    if (!window.winControls) return;
+    const dir = await window.winControls.libraryPickFolder();
+    if (!dir) return;
+    if (!Array.isArray(S.libraryExcludes)) S.libraryExcludes = [];
+    if (S.libraryExcludes.some(x => libNormPath(x) === libNormPath(dir))) return;
+    S.libraryExcludes.push(dir);
+    syncLibraryExcludeList();
+    refreshLibraryHasMusic();
+    save();
+  });
   $('libraryAddFolderBtn').addEventListener('click', async () => {
     if (!window.winControls) return;
     const dir = await window.winControls.libraryPickFolder();
     if (!dir || S.libraryFolders.some(f => f.path === dir)) return;
     S.libraryFolders.push({ path: dir, recursive: true });
     syncLibraryFolderList();
+    syncLibraryExcludeList();
     refreshLibraryHasMusic();
     save();
   });
-  // library browser ------------------------------------------------------------
-  // cover thumbnails are far too big for localStorage, so they live in indexeddb
-  // keyed by a hash of the original image bytes: one entry per distinct cover,
-  // however many tracks happen to share it
+  // librairie ------------------------------------------------------------
   let libDbPromise = null;
   function libDb() {
     if (libDbPromise) return libDbPromise;
@@ -10160,8 +10808,6 @@
       tx.onerror = () => reject(tx.error);
     }));
   }
-  // fnv-1a over a sample of the bytes. two covers colliding here would only ever
-  // swap one thumbnail for another, so a cheap hash buys enough
   function libHashBytes(bytes) {
     let h = 0x811c9dc5;
     const step = Math.max(1, Math.floor(bytes.length / 4096));
@@ -10182,9 +10828,6 @@
     bmp.close();
     return new Promise(res => cv.toBlob(res, 'image/webp', 0.82));
   }
-  // fetching the blob back, hashing it and asking indexeddb costs about as much
-  // as making the thumbnail, and an album repeats all of it once per track for
-  // one image. same folder, same type, same byte count is that same image.
   const libThumbSeen = new Map();
   async function libStoreThumbFor(dir, pic) {
     const quick = dir + '|' + (pic.mime || '') + '|' + (pic.bytes || 0);
@@ -10224,12 +10867,14 @@
     libThumbUrls.clear();
   }
 
-  // liked tracks from outside the library folders
   function loadLooseTracks() { try { return new Set(JSON.parse(localStorage.getItem('bbv_libloose')) || []); } catch (e) { return new Set(); } }
   let libLoose = loadLooseTracks();
   function saveLooseTracks() { try { localStorage.setItem('bbv_libloose', JSON.stringify([...libLoose])); } catch (e) {} }
   function libNormPath(p) { return String(p || '').replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase(); }
   function libPathInFolders(p) {
+    return libPathUnderFolders(p) && !(S.libraryExcludes || []).some(x => libNormPath(p).indexOf(libNormPath(x) + '/') === 0);
+  }
+  function libPathUnderFolders(p) {
     const f = libNormPath(p);
     if (!f) return false;
     return (S.libraryFolders || []).some(entry => {
@@ -10248,7 +10893,6 @@
     libAlbums = [];
     libAlbumsStamp = '';
   }
-  // album favorites, keyed like libBuildAlbums
   function loadFavAlbums() { try { return new Set(JSON.parse(localStorage.getItem('bbv_favalbums')) || []); } catch (e) { return new Set(); } }
   let favAlbums = loadFavAlbums();
   let libFavOnly = false;
@@ -10290,28 +10934,22 @@
   let libAdding = false;
   let libForceRescan = false;
   function libExtOf(p) { const m = /\.([a-z0-9]+)$/i.exec(p || ''); return m ? m[1].toLowerCase() : ''; }
-  // when an album offers a choice and nothing has been chosen yet, the better
-  // container wins by default
   const LIB_FORMAT_RANK = ['flac', 'wav', 'alac', 'm4a', 'aac', 'ogg', 'opus', 'mp3'];
   function libRankFormat(ext) {
     const i = LIB_FORMAT_RANK.indexOf(ext);
     return i < 0 ? LIB_FORMAT_RANK.length : i;
   }
-  // the album's own choice, falling back to the last one the user made anywhere
   function libAlbumFmt(al) {
     if (!al || !al.formats || al.formats.length < 2) return '';
     if (al.fmt && al.formats.indexOf(al.fmt) >= 0) return al.fmt;
     const want = (S.libraryFormat || '').toLowerCase();
     return want && al.formats.indexOf(want) >= 0 ? want : al.formats[0];
   }
-  // one track twice in two containers is one track; this keeps the chosen one
   function libAlbumTracks(al) {
     const pref = libAlbumFmt(al);
     if (!pref) return al.tracks;
     return libPreferFormat(al.tracks, pref);
   }
-  // the same track twice means the same slot on the same disc, whatever the
-  // container. an untitled rip falls back to its filename.
   function libTrackDupeKey(t) {
     const name = libNorm(t.title) || libNorm(libBaseName(t.path).replace(/\.[^.]+$/, ''));
     return (t.disc || 0) + '|' + (t.track || 0) + '|' + name;
@@ -10322,8 +10960,6 @@
       const k = libTrackDupeKey(t);
       const cur = byKey.get(k);
       if (!cur) { byKey.set(k, t); continue; }
-      // only a real preference displaces what was already there, so an album
-      // that has none of the chosen format keeps every track it has
       if (libExtOf(t.path) === pref && libExtOf(cur.path) !== pref) byKey.set(k, t);
     }
     return [...byKey.values()];
@@ -10353,7 +10989,6 @@
     const al = libCurAlbum;
     if (!al || ext === libAlbumFmt(al)) return;
     al.fmt = ext;
-    // remembered so the next album offering the same choice starts there
     S.libraryFormat = ext;
     save();
     libSyncAlbumTotals(al);
@@ -10364,8 +10999,6 @@
   function libDirOf(p) { const i = p.search(/[\\/][^\\/]*$/); return i < 0 ? p : p.slice(0, i); }
   function libBaseName(p) { const i = p.search(/[\\/][^\\/]*$/); return i < 0 ? p : p.slice(i + 1); }
   function libNumOf(s) { const m = /^(\d+)/.exec((s || '').toString().trim()); return m ? +m[1] : 0; }
-  // "album (disc 2)", "album cd2", "album - disk 3": all of them name one record
-  // that happens to be spread over several discs, not several albums
   const LIB_DISC_RE = /^(.*?)[\s._-]*[\[(]?\s*(?:disc|disk|cd)\s*([0-9]{1,2})\b[^)\]]*[)\]]?\s*$/i;
   function libSplitDisc(name) {
     const raw = (name || '').trim();
@@ -10373,8 +11006,6 @@
     if (!m) return { name: raw, disc: 0 };
     return { name: m[1].trim().replace(/[\s._-]+$/, ''), disc: +m[2] || 0 };
   }
-  // for untagged files the folder names the album — unless the folder is itself
-  // just a disc marker, in which case the album is the folder above it
   function libAlbumDir(dir) {
     const base = libBaseName(dir);
     const split = libSplitDisc(base);
@@ -10387,6 +11018,7 @@
   }
   function libFoldersStamp() {
     return (S.libraryFolders || []).map(f => f.path + '|' + (f.recursive !== false)).join('||')
+      + '!' + (S.libraryExcludes || []).join('|')
       + '#' + [...libLoose].sort().join('|');
   }
   function libShuffled(paths) {
@@ -10403,7 +11035,7 @@
     if (!folders.length && !libLoose.size) return [];
     status('scanning folders\u2026');
     const lists = await Promise.all(folders.map(entry =>
-      window.winControls.scanDirForAudio(entry.path, entry.recursive !== false, LIB_SCAN_CAP).catch(() => [])));
+      scanLibraryFolder(entry, LIB_SCAN_CAP).catch(() => [])));
     const paths = [...new Set([].concat(...lists))];
     if (libLoose.size) {
       const loose = [...libLoose].filter(p => !libPathInFolders(p) && isFavorite({ _path: p }));
@@ -10414,9 +11046,6 @@
       for (const p of alive) if (!seen.has(p)) paths.push(p);
     }
     if (!paths.length) return [];
-    // new files turn up on their own, since they are simply not in the cache yet.
-    // a tag edited outside mediyyu would stay cached forever, which is what the
-    // refresh button is for: it throws the cached reads away and starts over.
     if (libForceRescan) {
       libForceRescan = false;
       libThumbSeen.clear();
@@ -10430,12 +11059,9 @@
     for (const p of paths) {
       const rec = libraryTagCache[p] || {};
       const dir = libDirOf(p);
-      // an untagged rip still sits in a folder, and that folder is the best guess
-      // at what its album is called
       const tagged = libSplitDisc(rec.album || '');
       const fromDir = libAlbumDir(dir);
       const album = tagged.name;
-      // the disc tag wins; a marker in the album or folder name is the fallback
       const disc = libNumOf(rec.disc) || (album ? tagged.disc : fromDir.disc);
       const nameKey = album ? libNorm(album) : '';
       const artistKey = album ? libNorm(rec.albumArtist || '') : '';
@@ -10464,16 +11090,11 @@
         titleKey: libNorm((rec.title || '').trim() || libBaseName(p).replace(/\.[^.]+$/, '')),
       });
     }
-    // a single file missing its album-artist tag (a .wav can't even carry one)
-    // would otherwise split the album in two, so an artist-less group folds into
-    // the named one when exactly one shares its title
     for (const [key, al] of [...byKey]) {
       if (!al.nameKey || al.artistKey) continue;
       const twins = [...byKey.values()].filter(o => o !== al && o.nameKey === al.nameKey && o.artistKey);
       if (twins.length !== 1) continue;
       const into = twins[0];
-      // titles already present mean this is a duplicate rip sitting in another
-      // folder, not the rest of the same album, and merging would double it
       const have = new Set(into.tracks.map(t => t.titleKey));
       if (al.tracks.some(t => have.has(t.titleKey))) continue;
       into.tracks.push(...al.tracks);
@@ -10496,7 +11117,6 @@
     await libFillFolderCovers(albums, status);
     return albums;
   }
-  // everything the album advertises follows the format actually selected
   function libSyncAlbumTotals(al) {
     const tracks = libAlbumTracks(al);
     al.year = (tracks.find(t => t.year) || {}).year || '';
@@ -10505,14 +11125,10 @@
     const own = [...new Set(tracks.map(t => t.cover).filter(Boolean))];
     al.covers = (own.length ? own : al.covers).slice(0, 4);
   }
-  // nothing embedded means the cover is usually a cover.jpg lying next to the
-  // tracks; the key goes back into the tag cache so this only runs once per album
   async function libFillFolderCovers(albums, status) {
     if (!window.winControls || !window.winControls.folderImages) return;
     const need = albums.filter(al => !al.covers.length);
     if (!need.length) return;
-    // an album spread over several folders may only have its artwork in one of
-    // them, so each of its folders is a candidate rather than just the first
     const albumDirs = new Map();
     for (const al of need) albumDirs.set(al, [...new Set(al.tracks.map(t => libDirOf(t.path)))]);
     const dirs = [...new Set([].concat(...albumDirs.values()))];
@@ -10540,8 +11156,6 @@
   }
   function libPaintCover(box, covers) {
     box.classList.remove('empty', 'split-2', 'split-3', 'split-4');
-    // only the cover cells: painting now happens after the card is built, and
-    // wiping the box would take the hover play button with it
     for (const cell of [...box.querySelectorAll('i')]) cell.remove();
     const keys = (covers || []).slice(0, 4);
     if (!keys.length) { box.classList.add('empty'); return; }
@@ -10552,9 +11166,6 @@
       libThumbUrl(key).then(url => { if (url) cell.style.backgroundImage = 'url("' + url + '")'; });
     });
   }
-  // a thousand albums would otherwise mint a thousand blob urls and decode a
-  // thousand images the moment the window opens. covers are painted as they come
-  // near the viewport instead.
   let libCoverObs = null;
   function libObserveCover(box, covers) {
     if (!covers || !covers.length) { libPaintCover(box, []); return; }
@@ -10581,6 +11192,7 @@
         || al.tracks.some(t => libNorm(t.artist).includes(q) || libNorm(t.title).includes(q)))
       : libAlbums;
     if (libFavOnly) list = list.filter(libAlbumHasFav);
+    list = libSortAlbums(list);
     libShownAlbums = list.length;
     if (!list.length) {
       const empty = document.createElement('div');
@@ -10594,7 +11206,41 @@
       grid.appendChild(empty);
       return;
     }
+    const grouped = S.librarySort === 'artist' || S.librarySort === 'year';
+    let lastGroup = null;
+    const groupSizes = new Map();
+    const groupNames = new Map();
+    if (grouped) {
+      for (const al of list) {
+        const raw = libGroupOf(al), key = libNorm(raw);
+        groupSizes.set(key, (groupSizes.get(key) || 0) + 1);
+        const spellings = groupNames.get(key) || new Map();
+        spellings.set(raw, (spellings.get(raw) || 0) + 1);
+        groupNames.set(key, spellings);
+      }
+    }
+    const capitals = str => (str.match(/\p{Lu}/gu) || []).length;
+    const groupLabel = key => [...groupNames.get(key)].sort((a, b) => b[1] - a[1] || capitals(b[0]) - capitals(a[0]))[0][0];
     for (const al of list) {
+      if (grouped) {
+        const key = libNorm(libGroupOf(al));
+        if (key !== lastGroup) {
+          lastGroup = key;
+          const g = groupLabel(key);
+          const head = document.createElement('div');
+          head.className = 'lib-group';
+          const name = document.createElement('span');
+          name.className = 'lib-group-name';
+          name.textContent = g;
+          name.title = g;
+          const count = groupSizes.get(key);
+          const n = document.createElement('span');
+          n.className = 'lib-group-count';
+          n.textContent = count + (count === 1 ? ' album' : ' albums');
+          head.append(name, n);
+          grid.appendChild(head);
+        }
+      }
       const card = document.createElement('div');
       card.className = 'lib-card';
       card.tabIndex = 0;
@@ -10636,11 +11282,60 @@
       grid.appendChild(card);
     }
   }
+  // ----- sorting -----
+  const LIB_SORTS = [['album', 'album'], ['artist', 'artist'], ['year', 'year']];
+  const libCmp = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+  function libArtistOf(al) { return (al.albumArtistRaw || al.artistLabel || '').trim() || 'unknown artist'; }
+  function libGroupOf(al) {
+    if (S.librarySort === 'year') return libNumOf(al.year) ? String(libNumOf(al.year)) : 'unknown year';
+    return libArtistOf(al);
+  }
+  function libSortAlbums(list) {
+    const out = [...list];
+    if (S.librarySort === 'artist') {
+      const rank = name => { const n = name.toLowerCase(); return n === 'unknown artist' ? 2 : n === 'various artists' ? 1 : 0; };
+      out.sort((a, b) => {
+        const x = libArtistOf(a), y = libArtistOf(b);
+        return rank(x) - rank(y) || libCmp(x, y)
+          || (libNumOf(a.year) || 9999) - (libNumOf(b.year) || 9999) || libCmp(a.album, b.album);
+      });
+    } else if (S.librarySort === 'year') {
+      out.sort((a, b) => (libNumOf(b.year) || -1) - (libNumOf(a.year) || -1) || libCmp(a.album, b.album));
+    } else {
+      out.sort((a, b) => libCmp(a.album, b.album));
+    }
+    return out;
+  }
+  function closeLibSortMenu() { $('libSortMenu').classList.add('hidden'); }
+  function syncLibSortSel() {
+    const cur = LIB_SORTS.some(([k]) => k === S.librarySort) ? S.librarySort : 'album';
+    $('libSortCur').textContent = 'sort by ' + cur;
+    const menu = $('libSortMenu');
+    menu.innerHTML = '';
+    for (const [key, label] of LIB_SORTS) {
+      const opt = document.createElement('button');
+      opt.type = 'button';
+      opt.className = 'lib-fmt-opt' + (key === cur ? ' on' : '');
+      opt.textContent = 'sort by ' + label;
+      opt.addEventListener('click', () => {
+        closeLibSortMenu();
+        if (S.librarySort === key) return;
+        S.librarySort = key;
+        save();
+        syncLibSortSel();
+        libRenderGrid();
+        $('libGrid').scrollTop = 0;
+      });
+      menu.appendChild(opt);
+    }
+  }
   let libShownAlbums = 0;
   function libAlbumCountLabel() {
     return libAlbums.length ? libAlbums.length + (libAlbums.length === 1 ? ' album' : ' albums') : '';
   }
   function libHeadButtons(show) {
+    $('libSortWrap').classList.toggle('hidden', !show);
+    if (!show) closeLibSortMenu();
     $('libFavFilter').classList.toggle('hidden', !show);
     $('libRescanBtn').classList.toggle('hidden', !show);
     $('libManageBtn').classList.toggle('hidden', !show);
@@ -10666,8 +11361,6 @@
       el.classList.remove('lib-anim-in-fwd', 'lib-anim-out-fwd', 'lib-anim-in-back', 'lib-anim-out-back');
     }
   }
-  // both panes live in the same slot, so the one leaving has to be gone before the
-  // one arriving shows up — otherwise they fight over the box height mid-slide
   function libSwapPanes(dir, apply) {
     const leaving = dir === 'fwd' ? $('libGrid') : $('libAlbum');
     const entering = dir === 'fwd' ? $('libAlbum') : $('libGrid');
@@ -10680,7 +11373,6 @@
       libAnimT = setTimeout(() => entering.classList.remove('lib-anim-in-' + dir), LIB_ANIM_IN + 40);
     }, LIB_ANIM_OUT);
   }
-  // the icon ships black, so a dark accent needs it flipped and a pale one does not
   function libIconInvert(hex) {
     const m = /^#([0-9a-f]{6})$/i.exec(hex || '');
     if (!m) return 'invert(1)';
@@ -10694,8 +11386,6 @@
     const n = parseInt(m[1], 16);
     let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
     const max = Math.max(r, g, b);
-    // a near-black accent would disappear against the dialog, so it gets lifted
-    // rather than dropped: the hue is still the album's own
     if (max > 0 && max < 140) {
       const k = 140 / max;
       r = Math.min(255, Math.round(r * k));
@@ -10728,8 +11418,6 @@
     const cell = $('libAlbumBg').querySelector('i');
     const key = al && al.covers && al.covers[0];
     if (!key) {
-      // drop the previous album's image outright rather than just hiding it:
-      // libShowAlbumPane reveals whatever image is still sitting there
       $('libAlbumBg').classList.remove('on');
       cell.style.backgroundImage = '';
       return;
@@ -10737,7 +11425,6 @@
     libThumbUrl(key).then(url => {
       if (token !== libAlbumBgToken || !url) return;
       cell.style.backgroundImage = 'url("' + url + '")';
-      // only reveal it once the pane it belongs to is actually up
       if (!$('libAlbum').classList.contains('hidden')) $('libAlbumBg').classList.add('on');
     });
   }
@@ -10783,8 +11470,6 @@
     libStatus('');
     const box = $('libTracks');
     box.innerHTML = '';
-    // only an album that really spans discs gets the prefix; every other one
-    // would just be wearing a pointless "1-"
     const multiDisc = al.discs > 1;
     box.classList.toggle('multi-disc', multiDisc);
     libAlbumTracks(al).forEach((t, i) => {
@@ -10836,7 +11521,6 @@
       let jumped = false;
       await readPathsWithProgress(list, 'loading from library', async chunk => {
         await appendToPlaylist(restoredToFiles(chunk), true);
-        // the first chunk is enough to start on: the rest streams in behind it
         if (jumped) return;
         jumped = true;
         if (curIndex !== firstNewIdx) transitionTo(firstNewIdx);
@@ -10875,7 +11559,6 @@
   }
   async function libOpenProps(t) {
     if (!window.winControls) return;
-    // already queued: edit that entry so the playlist row follows the change
     const idx = playlist.findIndex(f => f._path === t.path);
     if (idx >= 0) { closeLibBrowse(); openProps(idx); return; }
     let restored = [];
@@ -10926,8 +11609,6 @@
     return {
       album: al.album === 'unknown album' ? '' : al.album,
       artist: al.albumArtistRaw || (al.artists.size === 1 ? [...al.artists][0] : ''),
-      // blank when the tracks disagree, so leaving it alone cannot flatten a
-      // compilation into one name by accident
       trackArtist: perTrack.size === 1 ? [...perTrack][0] : '',
       year: al.year || '',
     };
@@ -10953,8 +11634,6 @@
     albumPics = [];
     albumPicSel = -1;
   }
-  // a shorter cousin of renderPropsArt: same cells and same css, but this grid
-  // stands for the whole album rather than one file
   function renderAlbumArt() {
     const grid = $('albumArtGrid');
     grid.innerHTML = '';
@@ -11004,8 +11683,6 @@
       ? 'saving replaces the artwork of every track in this album with this set.'
       : 'add an image, or pull one in from discogs / musicbrainz.';
   }
-  // the album's artwork is whatever its first track carries, which is also what
-  // the grid outside is already showing
   async function loadAlbumArt(al) {
     releaseAlbumPics();
     albumArtDirty = false;
@@ -11021,8 +11698,6 @@
       tags = await readTags(file);
     } catch (e) {}
     if (albumPropsAlbum !== al) { releaseTagPictures(tags); return; }
-    // every url readTags minted is taken over here, so none of them is released:
-    // releaseTagPictures would revoke tags.cover, which is the front picture
     albumPics = (tags && tags.pictures || []).map(p => Object.assign({}, p, { owned: true }));
     albumPicSel = albumPics.length ? 0 : -1;
     renderAlbumArt();
@@ -11090,8 +11765,6 @@
     albumPropsBusy = true;
     $('albumPropSave').disabled = true;
     const paths = al.tracks.map(t => t.path);
-    // windows keeps the playing file locked, so it has to let go before ffmpeg
-    // can rewrite it in place — same dance the single-track dialog does
     const curFile = playlist[curIndex];
     const curPath = curFile && curFile._path;
     const touchesCurrent = !!curPath && paths.indexOf(curPath) >= 0;
@@ -11110,7 +11783,6 @@
       try { out = await window.winControls.writeFileTags(payload); } catch (e) { out = { error: e && e.message }; }
       if (out && out.ok) done++; else failed++;
     }
-    // the cached tags have to follow, or the next scan would show the old album
     let coverKey = '';
     const front = pics && (albumPics.find(p => p.type === 3) || albumPics[0]);
     if (front) { try { coverKey = await libStoreThumb(front.url); } catch (e) {} }
@@ -11124,7 +11796,6 @@
       if (pics) rec.cover = coverKey;
     }
     saveLibraryTagCacheDebounced();
-    // anything from this album already in the playlist is holding stale bytes
     const affected = [];
     playlist.forEach((f, i) => { if (f._path && paths.indexOf(f._path) >= 0) affected.push(i); });
     if (affected.length) {
@@ -11157,7 +11828,6 @@
       const moved = nameKey ? 'a:' + nameKey + '|' + libNorm(newArtist) : al.key;
       if (moved !== al.key) { favAlbums.delete(al.key); favAlbums.add(moved); saveFavAlbums(); }
     }
-    // the grouping key itself may have moved, so the index is rebuilt from scratch
     libAlbums = [];
     libAlbumsStamp = '';
     if (!$('libBrowseOverlay').classList.contains('hidden')) {
@@ -11253,8 +11923,6 @@
   $('libBackBtn').addEventListener('click', libBackToGrid);
   $('libRescanBtn').addEventListener('click', async () => {
     if (libBusy) return;
-    // this is the one action here that re-reads every byte it can find, so it
-    // says how much that is before starting rather than just going quiet
     const known = libAlbums.reduce((n, al) => n + al.tracks.length, 0);
     const ok = await confirmDialog(
       known
@@ -11276,9 +11944,9 @@
   $('libManageBtn').addEventListener('click', () => {
     libManageStamp = libFoldersStamp();
     syncLibraryFolderList();
+    syncLibraryExcludeList();
     $('libraryOverlay').classList.remove('hidden');
   });
-  // folders added or dropped while the browser is open have to land right away
   async function libFoldersDialogClosed() {
     if ($('libBrowseOverlay').classList.contains('hidden')) return;
     if (libFoldersStamp() === libManageStamp || libBusy) return;
@@ -11293,7 +11961,13 @@
   });
   window.addEventListener('mousedown', e => {
     if (!e.target.closest('#libFormatWrap')) closeLibFormatMenu();
+    if (!e.target.closest('#libSortWrap')) closeLibSortMenu();
   });
+  $('libSortBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    $('libSortMenu').classList.toggle('hidden');
+  });
+  syncLibSortSel();
   $('libSearch').addEventListener('input', libRenderGrid);
   $('libSearch').addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
@@ -11527,6 +12201,7 @@
       else if (!$('lyricsSearchOverlay').classList.contains('hidden')) closeLyricsSearchOverlay();
       else if (!$('lyricsUrlOverlay').classList.contains('hidden')) closeLyricsUrlOverlay();
       else if (!$('helpOverlay').classList.contains('hidden')) $('helpOverlay').classList.add('hidden');
+      else if (!$('creditsOverlay').classList.contains('hidden')) $('creditsOverlay').classList.add('hidden');
       else if (miniOn) setMiniMode(false);
     }
     else if (e.metaKey && e.key === ',' && document.body.classList.contains('is-mac')) {
@@ -11560,10 +12235,8 @@
     const isMac = window.winControls.platform === 'darwin';
     const nativeButtons = !!window.winControls.nativeWindowButtons;
     document.body.classList.toggle('is-mac', isMac);
-    // repli : pastilles dessinees en css si le systeme ne fournit pas les siennes
     document.body.classList.toggle('css-traffic', isMac && !nativeButtons);
     if (isMac) {
-      // symboles habituels de macOS a la place des noms de touches windows
       const key = (sel, txt) => {
         const el = document.querySelector(sel);
         if (!el) return;
@@ -11683,8 +12356,6 @@
   clearX.type = 'button'; clearX.className = 'input-clear-x'; clearX.textContent = '✕'; clearX.tabIndex = -1;
   document.body.appendChild(clearX);
   let clearTarget = null;
-  // the button floats on top of the page, so it has to hide itself once the field it
-  // belongs to has been scrolled out of whatever box is clipping it
   function clippedOutOfView(el) {
     const r = el.getBoundingClientRect();
     for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
@@ -11697,7 +12368,6 @@
     }
     return false;
   }
-  // the ✕ floats above everything, so a dialog stacked over its input has to hide it
   let overlayList = null;
   function coveredByOverlay(el) {
     if (!overlayList) overlayList = [...document.querySelectorAll('.help-overlay')];
@@ -12022,8 +12692,6 @@
     });
   });
 
-  // set by MEDIYYU_DISCORD_CLIENT_ID at build time; empty in a source checkout
-  // until you point it at your own discord application
   function discordAppId() {
     const fromBuild = window.winControls && window.winControls.buildConfig && window.winControls.buildConfig.discordClientId;
     return (fromBuild || S.discordClientId || '').trim();
@@ -12205,12 +12873,85 @@
     if (ok) $('eeTableOverlay').classList.remove('hidden');
   });
   $('eeTableCloseBtn').addEventListener('click', () => $('eeTableOverlay').classList.add('hidden'));
+  // ----- credits -----
+  const CREDITS = [
+    ['people', [
+      ['ori', 'the mediyyu icon', ''],
+      ['phandasm \u2014 waveform', 'the spectrum analysis the visualizer is ported from (obs plugin)', 'GPL-3.0', 'https://github.com/phandasm/waveform'],
+    ]],
+    ['fonts', [
+      ['Renogare', 'interface font \u2014 \u00a9 2016 Deepak Singh Dogra', 'author\u2019s terms'],
+      ['Nunito', 'numbers and monospaced text \u2014 the Nunito Project Authors', 'SIL OFL 1.1', 'https://github.com/googlefonts/nunito'],
+      ['Excelsior Sans', 'easter egg lyrics', 'unknown'],
+      ['8-bit Pusab', 'skies forever blue lyrics \u2014 \u00a9 2016 lSPl', 'FontStruct Non-Commercial'],
+    ]],
+    ['bundled libraries', [
+      ['SpessaSynth', 'midi playback and soundfonts \u2014 spessasus', 'Apache-2.0', 'https://github.com/spessasus/spessasynth_lib'],
+    ]],
+    ['packages', [
+      ['Electron', 'the app shell', 'MIT', 'https://www.electronjs.org'],
+      ['electron-updater / electron-builder', 'updates and installers', 'MIT', 'https://github.com/electron-userland/electron-builder'],
+      ['FFmpeg (ffmpeg-static)', 'format conversion, tag writing, video export', 'GPL-3.0', 'https://github.com/eugeneware/ffmpeg-static'],
+      ['@xhayper/discord-rpc', 'discord rich presence', 'ISC', 'https://github.com/xhayper/discord-rpc'],
+      ['cue-sdk', 'corsair icue lighting \u2014 Corsair', 'MIT', 'https://github.com/CorsairOfficial/cue-sdk-node'],
+    ]],
+    ['services', [
+      ['LRCLIB', 'synced lyrics, including the easter egg ones', 'free api', 'https://lrclib.net'],
+      ['NetEase Cloud Music', 'lyrics fallback', 'public api', ''],
+      ['MusicBrainz & Cover Art Archive', 'tags and cover art', 'CC0 data', 'https://musicbrainz.org'],
+      ['Discogs', 'tags and cover art', 'api terms', 'https://www.discogs.com/developers'],
+      ['iTunes Search', 'cover art for discord', 'api terms', ''],
+      ['Last.fm', 'scrobbling and similar tracks', 'api terms', 'https://www.last.fm/api'],
+      ['Discord', 'rich presence', 'api terms', ''],
+      ['GitHub', 'updates and patch notes', 'api terms', ''],
+    ]],
+    ['artwork', [
+      ['Undertale \u2014 Toby Fox', 'gaster blaster sprites in the megalovania easter egg', '\u00a9 Toby Fox'],
+      ['Limbus Company \u2014 Project Moon', 'background of the fly, my wings easter egg', '\u00a9 Project Moon'],
+    ]],
+  ];
+  function renderCredits() {
+    const box = $('creditsList');
+    box.innerHTML = '';
+    for (const [title, rows] of CREDITS) {
+      const head = document.createElement('p');
+      head.className = 'sec-head';
+      head.textContent = title;
+      const table = document.createElement('table');
+      table.className = 'ee-table';
+      const body = document.createElement('tbody');
+      for (const [name, what, license, url] of rows) {
+        const tr = document.createElement('tr');
+        const n = document.createElement('td');
+        if (url) {
+          const link = document.createElement('span');
+          link.className = 'ee-link';
+          link.textContent = name;
+          link.title = url;
+          link.addEventListener('click', () => { if (window.winControls) window.winControls.openExternal(url); });
+          n.appendChild(link);
+        } else n.textContent = name;
+        const w = document.createElement('td');
+        w.textContent = what;
+        const l = document.createElement('td');
+        l.textContent = license;
+        tr.append(n, w, l);
+        body.appendChild(tr);
+      }
+      table.appendChild(body);
+      box.append(head, table);
+    }
+  }
+  $('creditsBtn').addEventListener('click', () => {
+    if (!$('creditsList').children.length) renderCredits();
+    $('creditsList').scrollTop = 0;
+    $('creditsOverlay').classList.remove('hidden');
+  });
+  $('creditsCloseBtn').addEventListener('click', () => $('creditsOverlay').classList.add('hidden'));
+  $('creditsOverlay').addEventListener('click', e => { if (e.target === $('creditsOverlay')) $('creditsOverlay').classList.add('hidden'); });
   $('eeTableOverlay').addEventListener('click', e => { if (e.target === $('eeTableOverlay')) $('eeTableOverlay').classList.add('hidden'); });
 
   function escapeHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-  // a release body is escaped on purpose: nothing written in it can inject html
-  // into the app. an image still has to show, so only its source is pulled out
-  // and a plain <img> is built here from values we checked ourselves.
   function mdImage(src, alt, width) {
     const url = String(src || '').replace(/&amp;/g, '&');
     if (!/^https:\/\/[^\s"'<>]+$/i.test(url)) return '';
@@ -12221,17 +12962,13 @@
     let out = escapeHtml(s);
     out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
     out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    // ![alt](url), before the link rule below can claim the bracketed part
     out = out.replace(/!\[([^\]]*)\]\((https?:[^)\s]+)\)/g, (m, alt, src) => mdImage(src, alt));
-    // <img ...>, which github accepts and which arrives here escaped
     out = out.replace(/&lt;img\b[\s\S]*?&gt;/gi, tag => {
       const src = /src\s*=\s*"([^"]+)"/i.exec(tag) || /src\s*=\s*'([^']+)'/i.exec(tag) || /src\s*=\s*([^\s&]+)/i.exec(tag);
       const alt = /alt\s*=\s*"([^"]*)"/i.exec(tag) || /alt\s*=\s*'([^']*)'/i.exec(tag);
       const w = /width\s*=\s*"?'?(\d{1,4})/i.exec(tag);
       return src ? mdImage(src[1], alt && alt[1], w && w[1]) : '';
     });
-    // layout wrappers a readme-style body carries mean nothing in this panel,
-    // and printing them as text is worse than dropping them
     out = out.replace(/&lt;\/?(?:p|div|br|center|span|em|b|i|small|picture|source)\b[\s\S]*?&gt;/gi, '');
     out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" data-ext-link>$1</a>');
     return out;
@@ -12248,8 +12985,6 @@
       const bullet = line.match(/^[-*]\s+(.*)$/);
       if (bullet) { if (!inList) { html += '<ul>'; inList = true; } html += `<li>${inlineMd(bullet[1])}</li>`; continue; }
       closeList();
-      // a line that was nothing but a layout tag renders to nothing, and an
-      // empty paragraph would just leave a gap
       const body = inlineMd(line);
       if (body.trim()) html += `<p>${body}</p>`;
     }
@@ -12485,7 +13220,7 @@
     document.body.classList.toggle('bg-clip', (S.bgCoverArt || badAppleActive) && curHasPicture && !midiActive);
     document.body.classList.toggle('bad-apple-egg', badAppleActive && curIsVideo);
     const realTransparent = S.bg === 'transparent' || S.winTransparent;
-    document.body.classList.toggle('glass-native-blur', S.glassBlur && S.bgCoverArt && !midiActive && !realTransparent);
+    document.body.classList.toggle('glass-native-blur', S.glassBlur && (S.bgCoverArt || wingsBgShown || compassShown) && !skyShown && !midiActive && !realTransparent);
     const blurPx = (S.bgCoverBlur / 100) * 80;
     const brightness = 1 - (S.bgCoverDim / 100) * 0.85;
     const filter = `blur(${blurPx}px) brightness(${brightness.toFixed(2)})`;
@@ -12548,6 +13283,7 @@
     $('autoplaySimilarSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.autoplaySimilar));
     syncAutoplaySimilarGate();
     syncLibraryFolderList();
+    syncLibraryExcludeList();
     syncSoundfontUI();
     applyAudioChain();
     $('shuffleBtn').classList.toggle('tog-on', S.shuffle);

@@ -91,6 +91,15 @@
   .line.cur { color: #fff; font-weight: 700; }
   .line.cur .w { opacity: .42; transition: opacity .14s linear; }
   .line.cur .w.sung { opacity: 1; }
+  /* backing vocals, under their line */
+  .line .bv-row { display: block; margin-top: 2px; font-size: calc(var(--fs) * .66); font-style: italic; font-weight: 400; }
+  .line .bv {
+    display: inline-block; margin: 0 .35em; opacity: 0;
+    transform: translateY(6px) scale(.92); filter: blur(3px);
+    transition: opacity .45s ease, transform .55s cubic-bezier(.2,.9,.3,1.25), filter .45s ease;
+  }
+  .line .bv.in { opacity: .7; transform: none; filter: none; }
+  .line.cur .bv.in { opacity: .9; color: rgba(255,236,205,.95); }
   .line.gap { font-size: calc(var(--fs) * .6); letter-spacing: 4px; color: rgba(255,255,255,.22); cursor: default; }
   /* the dots give way to a countdown while an instrumental stretch plays */
   .line.gap .gapbar {
@@ -128,7 +137,6 @@
   let prefs = { fs: 20, top: false, bg: 92 };
   try {
     const saved = JSON.parse(localStorage.getItem('bbv_lyrwin') || '{}');
-    // the old build stored a solid true/false, which was really 100% or 92%
     if (saved.bg === undefined && saved.solid !== undefined) saved.bg = saved.solid ? 100 : 92;
     prefs = Object.assign(prefs, saved);
   } catch (e) {}
@@ -155,9 +163,6 @@
   let sync = { t: 0, playing: false, rate: 1, at: performance.now() };
   let curIdx = -2;
 
-  // lines arrive parsed. real per-word timings ride along when the source had them.
-  // otherwise the line is split across its own duration, weighted by word length —
-  // an estimate the main window can switch off.
   let guessWords = true;
   function lyricWords(list, i) {
     const ln = list && list[i];
@@ -219,6 +224,18 @@
         } else {
           el.textContent = lines[i].text;
         }
+        if (lines[i].back && lines[i].back.length) {
+          const row = document.createElement('span');
+          row.className = 'bv-row';
+          for (const b of lines[i].back) {
+            const sp = document.createElement('span');
+            sp.className = 'bv';
+            sp._bt = b.t;
+            sp.textContent = b.text;
+            row.appendChild(sp);
+          }
+          el.appendChild(row);
+        }
       }
       if (!gap) {
         const t = lines[i].t;
@@ -248,7 +265,6 @@
         for (let i = 0; i < kids.length; i++) {
           kids[i].classList.toggle('cur', i === idx);
           kids[i].classList.remove('counting');
-          // lines already sung drift out of focus, the further back the softer
           const back = idx - i;
           kids[i].style.filter = back > 0 ? 'blur(' + Math.min(6.4, 1.2 + back).toFixed(2) + 'px)' : '';
         }
@@ -261,10 +277,17 @@
       }
       updateGapBar();
       paintWords();
+      paintBacks(t);
     }
     requestAnimationFrame(tick);
   }
-  // a long instrumental stretch gets a progress bar rather than three static dots
+  function paintBacks(t) {
+    for (const sp of $('lines').querySelectorAll('.bv')) {
+      const on = sp._bt <= t;
+      if (sp._on !== on) { sp._on = on; sp.classList.toggle('in', on); }
+    }
+  }
+
   function updateGapBar() {
     if (curIdx < 0 || curIdx >= lines.length) return;
     const line = lines[curIdx];
@@ -287,7 +310,6 @@
       if (p.guessWords !== undefined) guessWords = !!p.guessWords;
       if (p.lines !== undefined) {
         lines = Array.isArray(p.lines) ? p.lines : [];
-        // the same line objects can come back after the setting changed
         for (const ln of lines) delete ln._w;
         const t = (p.title || '').trim();
         const a = (p.artist || '').trim();

@@ -130,15 +130,11 @@ const normalBoundsMap = new WeakMap();
 const edgeToEdge = new WeakSet();
 
 // ── pastilles macOS ─────────────────────────────────────────────────────────
-// on affiche les vraies pastilles du systeme au lieu de les redessiner : elles
-// suivent le style de la version de macOS installee, et gardent leurs
-// comportements natifs (survol, alt-clic, menu contextuel).
+
 const TRAFFIC_LIGHT_POSITION = { x: 13, y: 11 };
 function syncTrafficLights(win) {
   if (process.platform !== 'darwin' || !win || win.isDestroyed()) return;
   try {
-    // masquees quand la fenetre passe en plein ecran, borderless ou mini,
-    // comme l'etait l'ancien jeu de boutons dessine en css.
     const show = !edgeToEdge.has(win);
     win.setWindowButtonVisibility(show);
     if (show) win.setWindowButtonPosition(TRAFFIC_LIGHT_POSITION);
@@ -246,8 +242,6 @@ function createWindow(opts = {}) {
   mainWindow = win;
   syncTrafficLights(win);
 
-  // macOS : le bouton vert et ctrl+cmd+F passent en plein ecran natif sans
-  // passer par notre reglage, il faut resynchroniser l'interface derriere.
   win.on('enter-full-screen', () => {
     edgeToEdge.add(win);
     syncTrafficLights(win);
@@ -1217,7 +1211,6 @@ function icueRelease() {
   if (!icueSession || !icueSdk) return;
   icueSession = false;
   icueTargets = [];
-  // disconnecting hands the lighting back to icue's own profile
   try { icueSdk.CorsairDisconnect(); } catch (e) {}
 }
 
@@ -1236,7 +1229,6 @@ ipcMain.on('icue:frame', (e, buf) => {
       const led = dev.leds[i];
       const k = led.band * 4;
       const level = buf[k] / 255;
-      // a key lights up once the bar for its column has risen past its row
       let fill = (level - led.ny) * 3;
       if (fill < 0) fill = 0; else if (fill > 1) fill = 1;
       fill = 0.04 + fill * 0.96;
@@ -1259,10 +1251,10 @@ ipcMain.handle('library:pickFolder', async (e) => {
   const { canceled, filePaths } = await dialog.showOpenDialog(win, { properties: ['openDirectory'] });
   return canceled || !filePaths.length ? null : filePaths[0];
 });
-ipcMain.handle('files:scanDir', async (e, dirPath, recursive, limit) => {
+ipcMain.handle('files:scanDir', async (e, dirPath, recursive, limit, exclude) => {
   const out = [];
-  // the drag-and-drop callers want a small guard rail; the library browser has to
-  // see a whole collection, so the cap is theirs to raise
+  const normDir = (p) => path.resolve(String(p)).replace(/[\\/]+$/, '').toLowerCase();
+  const skip = new Set((Array.isArray(exclude) ? exclude : []).filter(p => typeof p === 'string' && p).map(normDir));
   const cap = Math.min(Math.max(1, limit || 2000), 60000);
   const maxDepth = recursive === false ? 0 : 8;
   const walk = (dir, depth) => {
@@ -1272,31 +1264,24 @@ ipcMain.handle('files:scanDir', async (e, dirPath, recursive, limit) => {
     for (const ent of entries) {
       if (out.length >= cap) break;
       const p = path.join(dir, ent.name);
-      if (ent.isDirectory()) walk(p, depth + 1);
+      if (ent.isDirectory()) { if (!skip.has(normDir(p))) walk(p, depth + 1); }
       else if (AUDIO_EXT_RE.test(ent.name)) out.push(p);
     }
   };
   try {
-    if (dirPath && typeof dirPath === 'string' && fs.statSync(dirPath).isDirectory()) walk(dirPath, 0);
+    if (dirPath && typeof dirPath === 'string' && !skip.has(normDir(dirPath)) && fs.statSync(dirPath).isDirectory()) walk(dirPath, 0);
   } catch {}
   return out;
 });
-// exactly what a ripper usually writes
 const COVER_FILE_RE = /^(cover|folder|front|album|artwork|art|thumb|frontcover|front[ _-]?cover|albumart.*)\.[a-z0-9]+$/i;
-// anything that merely mentions being cover art, e.g. "01 - front cover.jpg"
 const COVER_HINT_RE = /(cover|front|folder|artwork|albumart|jacket)/i;
 const ANY_IMAGE_RE = /\.(jpe?g|png|webp|gif|bmp|jfif|avif|tiff?)$/i;
-// where scans tend to be filed away
 const ART_SUBDIR_RE = /^(scans?|artworks?|covers?|booklets?|art|images?|jacket)$/i;
 const IMAGE_MIME = {
   jpg: 'image/jpeg', jpeg: 'image/jpeg', jfif: 'image/jpeg', png: 'image/png',
   webp: 'image/webp', gif: 'image/gif', bmp: 'image/bmp', avif: 'image/avif',
   tif: 'image/tiff', tiff: 'image/tiff',
 };
-// an album whose files carry no embedded art usually still has a cover.jpg sitting
-// next to them, and without this the library grid would be a wall of blank squares
-// picks the likeliest cover image out of one directory: the canonical name first,
-// then anything that says it is cover art, then any image at all
 function pickCoverIn(dir, looseOk) {
   let entries;
   try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch (err) { return null; }
@@ -1313,7 +1298,6 @@ ipcMain.handle('library:folderImages', async (e, dirs) => {
     try {
       if (!dir || typeof dir !== 'string') continue;
       let found = pickCoverIn(dir, true);
-      // a scans folder next to the tracks
       if (!found) {
         let subs = [];
         try {
@@ -1325,8 +1309,6 @@ ipcMain.handle('library:folderImages', async (e, dirs) => {
           if (found) break;
         }
       }
-      // one level up, for a disc folder inside an album folder. only a named
-      // cover counts there: a stray image could belong to something else.
       if (!found) found = pickCoverIn(path.dirname(dir), false);
       if (!found) continue;
       const stat = await fs.promises.stat(found);
@@ -1342,9 +1324,6 @@ ipcMain.handle('library:folderImages', async (e, dirs) => {
   }
   return out;
 });
-// duration straight out of the file headers. the renderer's own probe loads the
-// whole file into an <audio> element, which is fine for a playlist and hopeless
-// for a library of thousands, so these read a few hundred bytes instead
 const MP3_BITRATES = {
   1: [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 0],
   2: [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0],
@@ -1373,8 +1352,6 @@ function mp3Duration(head, audioStart, fileSize) {
     const mpeg1 = verBits === 3;
     const perFrame = mpeg1 ? 1152 : 576;
     const mono = ((head[i + 3] >> 6) & 3) === 3;
-    // a vbr file carries its own frame count; without one, size over bitrate is
-    // the best we can do
     const xingAt = i + 4 + (mpeg1 ? (mono ? 17 : 32) : (mono ? 9 : 17));
     const tag = head.length >= xingAt + 4 ? head.toString('latin1', xingAt, xingAt + 4) : '';
     if (tag === 'Xing' || tag === 'Info') {
@@ -1421,8 +1398,6 @@ function wavDuration(head) {
   }
   return 0;
 }
-// mp4 keeps its moov atom at either end of the file, so the walk follows atom
-// sizes and only reads the 8-byte headers it lands on
 async function mp4Duration(fh, fileSize) {
   async function walk(start, end, depth) {
     let pos = start;
@@ -1456,8 +1431,6 @@ async function mp4Duration(fh, fileSize) {
   }
   return walk(0, fileSize, 0);
 }
-// an ogg stream only knows its length from the granule position on its very last
-// page, so this one reads the tail
 async function oggDuration(fh, head, fileSize) {
   let rate = 0;
   const vorbis = head.indexOf('vorbis', 0, 'latin1');
@@ -1517,7 +1490,6 @@ ipcMain.handle('library:durations', async (e, paths) => {
   await Promise.all([worker(), worker(), worker(), worker()]);
   return out.filter(Boolean);
 });
-// name, type and size without reading a byte: a playlist row needs nothing more
 ipcMain.handle('files:describe', async (e, paths) => {
   const list = Array.isArray(paths) ? paths : [];
   const out = new Array(list.length);
@@ -1581,12 +1553,8 @@ ipcMain.handle('files:readPrefixes', async (e, paths, maxBytes) => {
         const headRead = await fh.read(head, 0, 16, 0);
         if (headRead.bytesRead >= 10 && head.toString('latin1', 0, 3) === 'ID3') {
           const tagLen = 10 + (((head[6] & 0x7f) << 21) | ((head[7] & 0x7f) << 14) | ((head[8] & 0x7f) << 7) | (head[9] & 0x7f));
-          // exactly the tag, no more: a single 3000px cover makes a 9 MB tag, and
-          // stopping short hands back a truncated png, while reading past it only
-          // ships audio nobody is going to parse
           len = Math.min(stat.size, tagLen + 4096, 24 * 1024 * 1024);
         } else if (headRead.bytesRead >= 4 && head.toString('latin1', 0, 4) === 'fLaC') {
-          // walk the metadata block chain and stop where the audio starts
           let pos = 4, last = false, guard = 0;
           while (!last && guard++ < 64) {
             const bh = Buffer.alloc(4);
@@ -1618,7 +1586,6 @@ ipcMain.handle('soundfont:read', async (e, p) => {
   } catch { return null; }
 });
 ipcMain.on('config:get', (e) => {
-  // what the renderer needs to know about how this copy was built
   e.returnValue = { discordClientId: (process.env.MEDIYYU_DISCORD_CLIENT_ID || '').trim() };
 });
 ipcMain.on('discord:connect', (e, clientId) => { discordConnect(clientId); });
@@ -1641,8 +1608,6 @@ ipcMain.on('discord:clearActivity', () => {
   discordClient.user?.clearActivity().catch(() => {});
 });
 const _dg = envPair('MEDIYYU_DISCOGS');
-// strip punctuation, symbols and any "feat. X" credit that only confuse the cover databases.
-// letters (every script), digits, spaces, hyphens and apostrophes are kept.
 function cleanSearchTerm(s) {
   const raw = String(s || '').trim();
   const B = String.fromCharCode(92);
@@ -1724,7 +1689,7 @@ async function lookupCoverDiscogs(artist, album, title) {
     return null;
   }
 }
-// musicbrainz allows about one request per second, and it is now the first source we hit
+// musicbrainz = requête par seconde
 let mbGate = Promise.resolve();
 let mbLastCall = 0;
 function mbThrottle() {
@@ -1829,12 +1794,8 @@ function saveCoverCacheDebounced() {
 function coverCacheKey(artist, album, title) {
   return [artist, album, title].map(s => (s || '').toLowerCase().trim()).join('|');
 }
-// ── filling tags from the release databases ─────────────────────────────────
+
 function mbCoverUrl(id) { return id ? `https://coverartarchive.org/release/${id}/front-500` : null; }
-// an album is a release, not a recording: asking the recording endpoint for a
-// record's name finds a track called that, which almost never exists
-// an album is a release, not a recording: asking the recording endpoint for a
-// record's name finds a track called that, which almost never exists
 async function metaSearchMusicBrainz(query, artist, title, forAlbum) {
   const esc = (v) => String(v).replace(/(["\\])/g, "\\$1");
   const field = forAlbum ? 'release' : 'recording';
@@ -1844,8 +1805,6 @@ async function metaSearchMusicBrainz(query, artist, title, forAlbum) {
     await mbThrottle();
     const url = 'https://musicbrainz.org/ws/2/' + field + '/?query=' + encodeURIComponent(lucene)
       + '&fmt=json&limit=' + limit;
-    // musicbrainz answers 503 as soon as it considers the burst too fast, and it
-    // does that often enough that one refusal must not mean an empty picker
     const backoff = [1200, 2500, 4000];
     let r = null;
     for (let attempt = 0; ; attempt++) {
@@ -1868,9 +1827,6 @@ async function metaSearchMusicBrainz(query, artist, title, forAlbum) {
       ? `${field}:"${esc(title)}" AND artist:"${esc(artist)}"`
       : query;
     let rows = await ask(strict);
-    // one artist tag spelled differently from the credit — "Shoji Meguro" against
-    // "ATLUS Sound Team" — is enough for the strict clause to find nothing at all,
-    // so the name alone gets a second go
     if (!rows.length && artist && title) rows = await ask(`${field}:"${esc(title)}"`);
 
     if (forAlbum) {
@@ -1946,7 +1902,6 @@ ipcMain.handle('meta:search', async (e, payload) => {
     metaSearchMusicBrainz(q, p.artist, p.title, p.kind === 'album'),
     metaSearchDiscogs(q),
   ]);
-  // musicbrainz knows track titles, discogs knows genres and years. show both.
   return { results: mb.concat(dg) };
 });
 ipcMain.handle('meta:image', async (e, url) => {

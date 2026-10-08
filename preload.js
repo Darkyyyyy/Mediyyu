@@ -41,7 +41,7 @@ contextBridge.exposeInMainWorld('winControls', {
   presetWinData: () => ipcRenderer.invoke('presetwin:data'),
   presetWinFit: (height) => ipcRenderer.send('presetwin:fit', height),
   presetWinOpenApp: () => ipcRenderer.send('presetwin:openApp'),
-  scanDirForAudio: (p, recursive, limit) => ipcRenderer.invoke('files:scanDir', p, recursive, limit),
+  scanDirForAudio: (p, recursive, limit, exclude) => ipcRenderer.invoke('files:scanDir', p, recursive, limit, exclude),
   folderImages: (dirs) => ipcRenderer.invoke('library:folderImages', dirs),
   libraryDurations: (paths) => ipcRenderer.invoke('library:durations', paths),
   libraryPickFolder: () => ipcRenderer.invoke('library:pickFolder'),

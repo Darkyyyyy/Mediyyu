@@ -1,11 +1,3 @@
-#!/usr/bin/env node
-// Compile l'icone Icon Composer (build/*.icon) vers les deux formes dont le
-// bundle a besoin :
-//   - Assets.car : l'icone en calques, que macOS 26+ rend en verre
-//   - icon.icns  : l'aplat de repli, pour les macOS anterieurs et le volume dmg
-//
-// actool fait les deux, mais il exige Xcode complet. Les fichiers produits sont
-// versionnes, pour que le build ne depende pas de Xcode sur la machine.
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -24,8 +16,6 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mediyyu-icon-'));
 const staged = path.join(tmp, `${ICON_NAME}.icon`);
 const out = path.join(tmp, 'out');
 fs.mkdirSync(out);
-// actool nomme l'asset d'apres le fichier : il doit s'appeler comme la valeur
-// qu'on ecrira dans CFBundleIconName.
 fs.cpSync(path.join(BUILD, source), staged, { recursive: true });
 
 execFileSync('xcrun', [

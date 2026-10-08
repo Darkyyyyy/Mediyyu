@@ -1,4 +1,3 @@
-// preset format, shared by the app and the import popup
 (() => {
   'use strict';
 
@@ -18,7 +17,6 @@
   };
   const EQ_NAMES = { flat: 'flat', bass: 'bass boost', treble: 'treble boost', vshape: 'v-shape', vocal: 'vocal', warm: 'warm' };
 
-  // per settings tab: [key, default, label, unit]
   const GROUPS = [
     { id: 'shape', label: 'shape', keys: [
       ['layout', 'bars', 'layout'],
@@ -162,7 +160,6 @@
     return base + '.' + EXT;
   }
 
-  // ----- readable summary for the import dialog -----
   const SHAPE_ONLY = {
     mirror: ['bars', 'radial'],
     kaleidoscope: ['radial'],
@@ -172,7 +169,6 @@
     psyPetals: ['psychedelic'], psySpeed: ['psychedelic'], psyTrail: ['psychedelic'],
   };
   const LAYOUT_NAMES = { bars: 'bars', radial: 'radial', wave: 'wave', waterfall: 'falls', psychedelic: 'psychedelic' };
-  // amount sliders shown folded into their switch
   const AMOUNT_OF = { particles: 'particlesAmt', beatParticles: 'beatParticlesAmt', scaleToSound: 'scaleToSoundAmt', chromaAb: 'chromaAbAmt', crossfade: 'crossfadeDur' };
   const AMOUNTS = new Set(Object.values(AMOUNT_OF));
   const NEEDS = { bgCoverBlur: 'bgCoverArt', bgCoverDim: 'bgCoverArt' };
@@ -234,7 +230,6 @@
     return rows;
   }
 
-  // ----- summary rendering -----
   const SUMMARY_CSS = `
   .mps { display: flex; flex-direction: column; gap: 4px; }
   .mps-row { display: flex; gap: 10px; align-items: baseline; padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,.04); }
@@ -287,7 +282,6 @@
           base.setAttribute('x', '0'); base.setAttribute('y', '9.5'); base.setAttribute('width', '49'); base.setAttribute('height', '1');
           base.setAttribute('fill', 'rgba(255,255,255,.18)');
           svg.appendChild(base);
-          // scaled to the curve's own peak
           const peak = Math.max(6, ...it.eq.map(Math.abs));
           it.eq.forEach((v, i) => {
             const h = Math.abs(v) / peak * 9;
