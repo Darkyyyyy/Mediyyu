@@ -36,6 +36,7 @@
       ['color1', '#575757', 'color'],
       ['color2', '#7b5bff', 'to'],
       ['rainbow', false, 'rainbow cycle'],
+      ['vizOpacity', 100, 'opacity', '%'],
     ] },
     { id: 'visualizer', label: 'visualizer', keys: [
       ['legacy', false, 'legacy mode'],

@@ -307,7 +307,7 @@
     from { opacity: 1; transform: none; }
     to { opacity: 0; transform: translateY(-16px); }
   }
-  /* backing vocals, on a row reserved only in songs that have them */
+  /* backing vocals, on a row shown only while the current line has some */
   .lyric-back {
     display: none; min-height: 21px; margin-top: 3px;
     font-size: 15px; font-style: italic; letter-spacing: .02em; color: rgba(255,236,205,.9);
@@ -315,8 +315,8 @@
   }
   .lyrics-box.has-back .lyric-back { display: block; }
   .lyric-back .bv {
-    display: inline-block; margin: 0 .4em; opacity: 0;
-    transform: translateY(7px) scale(.9); filter: blur(4px);
+    display: inline-block; margin: 0 .4em; opacity: .45;
+    transform: translateY(3px) scale(.96); filter: blur(2px);
     transition: opacity .45s ease, transform .55s cubic-bezier(.2,.9,.3,1.25), filter .45s ease;
   }
   .lyric-back .bv.in { opacity: .85; transform: none; filter: none; animation: lyricBackSway 3.4s ease-in-out .55s infinite; }
@@ -380,6 +380,32 @@
     /* a hard pixel outline, so white letters still read over a white cloud */
     text-shadow: -3px 0 0 #1a4396, 3px 0 0 #1a4396, 0 -3px 0 #1a4396, 0 3px 0 #1a4396,
       -3px -3px 0 #1a4396, 3px -3px 0 #1a4396, -3px 3px 0 #1a4396, 3px 3px 0 #1a4396, 6px 7px 0 #0b2a6b;
+  }
+  .blood-line.blood-cb { font-family: 'Times New Roman', Times, serif; letter-spacing: .01em; }
+  .blood-line.cb-solo {
+    left: auto; right: 7%; top: 50%; max-width: 46%;
+    white-space: normal; text-align: right; line-height: 1.2;
+    animation: none; opacity: 0;
+    transform: translate(18px, -50%);
+    transition: opacity .45s ease, transform .6s cubic-bezier(.2,.8,.3,1);
+  }
+  .blood-line.cb-solo.show { opacity: 1; transform: translate(0, -50%); }
+  .blood-line.cb-solo.hide { opacity: 0; transform: translate(-10px, -50%); transition: opacity .35s ease, transform .35s ease; }
+  .blood-line.cb-solo .blood-char { display: inline; opacity: 1; transition: none; -webkit-text-stroke-width: 2px; paint-order: stroke fill; }
+  .blood-line.cb-white .blood-char {
+    color: #fff4dc;
+    -webkit-text-stroke-color: rgba(200,40,40,.85);
+    text-shadow: 0 0 3px rgba(220,40,40,.85), 0 0 10px rgba(210,30,30,.55), 0 0 22px rgba(180,20,20,.35);
+  }
+  .blood-line.cb-gold .blood-char {
+    color: #ecbf7f;
+    -webkit-text-stroke-color: #9a6d2c;
+    text-shadow: 0 0 3px rgba(150,100,40,.9), 0 0 10px rgba(170,120,50,.55), 0 0 22px rgba(140,95,35,.35);
+  }
+  .blood-line.cb-yellow .blood-char {
+    color: #ffe94a;
+    -webkit-text-stroke-color: rgba(210,30,30,.9);
+    text-shadow: 0 0 3px rgba(220,40,40,.85), 0 0 10px rgba(210,30,30,.55), 0 0 22px rgba(180,20,20,.35);
   }
   .blood-indent { display: block; margin-top: .25em; padding-left: 1.6em; }
   .blood-wrap { display: block; margin-top: .15em; text-align: center; }
@@ -782,6 +808,8 @@
   }
   .meta-cover.dead { opacity: .3; cursor: default; }
   .meta-cover.dead:hover { background: none; }
+  .meta-cover.missed .meta-cover-thumb { outline: 1px dashed rgba(255,190,90,.55); outline-offset: -1px; }
+  .meta-cover.missed .meta-cover-size { color: rgba(255,190,90,.8); }
   .meta-cover-thumb {
     width: 72px; height: 72px; border-radius: 6px; background: rgba(255,255,255,.05);
     background-size: cover; background-position: center;
@@ -2073,6 +2101,7 @@
     <div class="lyric-gap-bar" id="lyricGapBar"><div class="lyric-gap-fill" id="lyricGapFill"></div></div>
     <div class="lyric-next" id="lyricNext"></div>
   </div>
+  <canvas class="wings-snow" id="cityFx"></canvas>
   <div class="blood-lyrics" id="bloodLyrics"></div>
   <div class="wings-flash" id="wingsFlash"></div>
   <div class="wings-flash" id="compassFlash"></div>
@@ -2395,6 +2424,7 @@
       <div class="meta-foot">
         <div class="meta-note" id="metaNote"></div>
         <div class="confirm-actions">
+          <button type="button" id="metaRetryBtn" class="hidden" title="ask musicbrainz again for what the rate limit blocked">retry</button>
           <button type="button" id="metaCancelBtn">cancel</button>
           <button type="button" id="metaApplyBtn" class="primary">save</button>
         </div>
@@ -2448,6 +2478,7 @@
             <tr><td>Mili</td><td>Between Two Worlds</td><td>cascading blood-red lyrics, pale gold during the slow intro (before 2:00)</td></tr>
             <tr><td>Mili</td><td>Through Patches of Violet</td><td>cascading blood-red lyrics</td></tr>
             <tr><td>Toby Fox &amp; Itoki Hana</td><td>Skies Forever Blue</td><td>8-bit lyrics, a blue pixel sky with drifting clouds, and an 8-bit interface</td></tr>
+            <tr><td>Mili</td><td>City Blue</td><td>lyrics in times new roman in three chapters: white with a red edge under electric sparks, gold at 1:00 with golden pages flying up that catch fire at 1:38, yellow with a red edge at 1:45 with embers blown by the wind</td></tr>
             <tr><td>Mili</td><td>Compass</td><td>gold lyrics turning blood-red at "I wanted blood" and gold again after a white flash, then a violet night over the sea with stars and an aurora, fading back out at "high tide"</td></tr>
             <tr><td>Mili</td><td>Fly, My Wings</td><td>cascading blood-red lyrics, a white flash at 2:10 and glowing snow drifting upward</td></tr>
             <tr><td>&mdash;</td><td>Bad Apple!! (video)</td><td>visualizer bars become a perfect black/white negative over the sharp, unblurred video</td></tr>
@@ -2705,6 +2736,7 @@
           <button data-val="on">on</button>
         </div>
       </div>
+      <div class="row" style="margin-top:13px;" title="fades the visualizer only, the background stays as it is"><label>opacity</label><input type="range" id="vizOpacity" min="0" max="100" value="100" /><span class="val" id="vizOpacityVal">100%</span></div>
     </div>
 
     <div class="sec" data-tab="visualizer">
@@ -4118,15 +4150,21 @@
     if (S.mode === 'split') return '#ffd23b';
     return S.color1;
   }
+  // visualizer opacity setting, 0..1
+  function vizAlpha() {
+    const v = Number(S.vizOpacity);
+    return Number.isFinite(v) ? Math.max(0, Math.min(1, v / 100)) : 1;
+  }
   function drawParticles() {
     if (!particles.length) return;
     const col = accentColor();
+    const va = vizAlpha();
     ctx.lineCap = 'round';
     for (const p of particles) {
       const a = Math.max(0, 1 - p.age / p.life);
       if (p.confetti) {
         ctx.globalCompositeOperation = 'source-over';
-        ctx.globalAlpha = a;
+        ctx.globalAlpha = a * va;
         ctx.fillStyle = p.color || col;
         ctx.save();
         ctx.translate(p.x, p.y);
@@ -4139,13 +4177,13 @@
       const c = p.color || col;
       ctx.strokeStyle = c;
       ctx.fillStyle = c;
-      ctx.globalAlpha = a * 0.7;
+      ctx.globalAlpha = a * 0.7 * va;
       ctx.lineWidth = p.size;
       ctx.beginPath();
       ctx.moveTo(p.px, p.py);
       ctx.lineTo(p.x, p.y);
       ctx.stroke();
-      ctx.globalAlpha = a;
+      ctx.globalAlpha = a * va;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size * 0.7, 0, Math.PI * 2);
       ctx.fill();
@@ -4278,24 +4316,34 @@
     c.globalCompositeOperation = 'source-over';
   }
 
-  function drawReflection(path, floorY, transparentCanvas) {
-    ctx.save();
-    ctx.translate(0, 2 * floorY);
-    ctx.scale(1, -1);
-    ctx.globalAlpha = 0.3;
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = makeFill(ctx);
-    ctx.fill(path);
-    ctx.restore();
-    ctx.globalAlpha = 1;
+  function drawReflection(path, floorY, transparentCanvas, c = ctx) {
+    c.save();
+    c.translate(0, 2 * floorY);
+    c.scale(1, -1);
+    c.globalAlpha = 0.3;
+    c.globalCompositeOperation = 'source-over';
+    c.fillStyle = makeFill(c);
+    c.fill(path);
+    c.restore();
+    c.globalAlpha = 1;
 
-    const fade = ctx.createLinearGradient(0, floorY, 0, H);
+    const fade = c.createLinearGradient(0, floorY, 0, H);
     fade.addColorStop(0, 'rgba(0,0,0,0)');
     fade.addColorStop(1, transparentCanvas ? 'rgba(0,0,0,1)' : S.bg);
-    ctx.globalCompositeOperation = transparentCanvas ? 'destination-out' : 'source-over';
-    ctx.fillStyle = fade;
-    ctx.fillRect(0, floorY, W, H - floorY);
-    ctx.globalCompositeOperation = 'source-over';
+    c.globalCompositeOperation = transparentCanvas ? 'destination-out' : 'source-over';
+    c.fillStyle = fade;
+    c.fillRect(0, floorY, W, H - floorY);
+    c.globalCompositeOperation = 'source-over';
+  }
+  // draws the scene on its own layer, then lays it down at the opacity setting
+  function drawSceneFaded(path, maxExtent, floorY, additive, va) {
+    const lc = compassBarsLayer();
+    renderScene(lc, path, maxExtent, floorY, additive);
+    if (S.reflection && S.layout !== 'radial') drawReflection(path, floorY, true, lc);
+    ctx.save();
+    ctx.globalAlpha = va;
+    ctx.drawImage(compassBarsCanvas, 0, 0);
+    ctx.restore();
   }
 
   function drawFlash(bassNow) {
@@ -4333,8 +4381,12 @@
         : `hsl(${200 - v * 200}, 90%, ${10 + v * 55}%)`;
       g3c.fillRect(i * slot, 0, slot + 1, rowH);
     }
+    const va = vizAlpha();
     if (transparent) ctx.clearRect(0, 0, W, H);
+    else if (va < 1) { ctx.fillStyle = S.bg; ctx.fillRect(0, 0, W, H); }
+    ctx.globalAlpha = va;
     ctx.drawImage(g3, 0, 0);
+    ctx.globalAlpha = 1;
   }
 
   function stepPsychedelic() {
@@ -4403,8 +4455,12 @@
     }
     g4c.globalCompositeOperation = 'source-over';
 
+    const va = vizAlpha();
     if (transparent) ctx.clearRect(0, 0, W, H);
+    else if (va < 1) { ctx.fillStyle = S.bg; ctx.fillRect(0, 0, W, H); }
+    ctx.globalAlpha = va;
     ctx.drawImage(g4, 0, 0);
+    ctx.globalAlpha = 1;
   }
 
   function midiChannelColor(ch) {
@@ -4731,11 +4787,209 @@
   }
   let bloodEggActive = false;
   let bloodEggTrack = null;
+  const CITY_BLUE_VTT = `WEBVTT
+
+00:00:03.833 --> 00:00:05.041
+To the right
+
+00:00:06.208 --> 00:00:07.375
+To the left
+
+00:00:08.541 --> 00:00:09.958
+Count to three
+
+00:00:10.833 --> 00:00:12.000
+Eyes on me
+
+00:00:13.208 --> 00:00:14.541
+Raise it high
+
+00:00:15.541 --> 00:00:16.708
+Wave goodbye
+
+00:00:17.791 --> 00:00:18.958
+To the city
+
+00:00:20.333 --> 00:00:21.125
+Are you ready?
+
+00:00:21.125 --> 00:00:22.875
+“What a genius”
+
+00:00:22.875 --> 00:00:25.791
+“Someday you'll be on top”
+
+00:00:25.791 --> 00:00:27.625
+“Of a corporate ladder”
+
+00:00:27.625 --> 00:00:29.750
+Excitedly, mommy said
+
+00:00:29.750 --> 00:00:32.541
+She might have exaggerated
+
+00:00:32.541 --> 00:00:35.166
+Cause I'm falling behind
+
+00:00:35.166 --> 00:00:37.041
+Oversensitive heart
+
+00:00:37.041 --> 00:00:39.375
+Under a white shirt
+
+00:00:39.375 --> 00:00:41.625
+There must be some hidden talent
+
+00:00:41.625 --> 00:00:44.458
+In this strange imaginative mind
+
+00:00:44.458 --> 00:00:46.666
+Enlighten me, enlighten me
+
+00:00:46.666 --> 00:00:48.625
+I reached out to your spine
+
+00:00:48.625 --> 00:00:51.416
+There must be a fiction meant for me
+
+00:00:51.416 --> 00:00:55.000
+Pages in hand, a neverending dream
+
+00:00:55.000 --> 00:00:58.000
+I stepped on to the train
+
+00:00:58.500 --> 00:01:00.458
+Surprised by mommy's tears
+
+00:01:00.458 --> 00:01:01.750
+With you
+
+00:01:01.750 --> 00:01:04.000
+I am now ready to prove
+
+00:01:04.000 --> 00:01:06.291
+Life is worth it for me too
+
+00:01:06.291 --> 00:01:09.916
+Though the city may be cruel
+
+00:01:09.916 --> 00:01:11.416
+The truth is
+
+00:01:11.416 --> 00:01:13.166
+I wanna be with you
+
+00:01:13.166 --> 00:01:15.958
+Yet I am lost in deep deep blue
+
+00:01:15.958 --> 00:01:19.041
+On the wrong side of the moon
+
+00:01:19.041 --> 00:01:20.000
+City blue
+
+00:01:20.000 --> 00:01:22.000
+“Why so serious?”
+
+00:01:22.000 --> 00:01:26.708
+I refused to laugh at my reflection in the mirror
+
+00:01:26.708 --> 00:01:29.208
+So they smashed us into pieces
+
+00:01:29.208 --> 00:01:31.291
+Shivering in the wind
+
+00:01:31.291 --> 00:01:34.125
+I set my books on fire
+
+00:01:34.125 --> 00:01:38.791
+Cause literacy ain't the currency of the city
+
+00:01:45.458 --> 00:01:50.250
+Again and again in my head
+
+00:01:50.250 --> 00:01:53.791
+Wondering, wondering what happens in the end
+
+00:01:53.791 --> 00:01:55.166
+In that burned chapter
+
+00:01:55.166 --> 00:01:57.541
+Just let me finish the story
+
+00:01:57.541 --> 00:01:59.458
+And shed some lonely tears
+
+00:01:59.458 --> 00:02:00.541
+It's you
+
+00:02:00.541 --> 00:02:02.916
+Always regulating my mood
+
+00:02:02.916 --> 00:02:05.166
+I am addicted to you
+
+00:02:05.166 --> 00:02:08.708
+I am addicted to you
+
+00:02:08.708 --> 00:02:10.333
+The truth is
+
+00:02:10.333 --> 00:02:12.291
+I wanna be fearless
+
+00:02:12.291 --> 00:02:14.625
+Not afraid to say I love you
+
+00:02:14.625 --> 00:02:16.708
+Not ashamed of dreams I pursued
+
+00:02:16.708 --> 00:02:18.750
+(Not ashamed, I'm not ashamed of you)
+
+00:02:18.750 --> 00:02:19.375
+With you
+
+00:02:19.375 --> 00:02:21.625
+I am now ready to prove
+
+00:02:21.625 --> 00:02:23.916
+Life is worth it for me too
+
+00:02:23.916 --> 00:02:26.000
+Though the city may be cruel
+
+00:02:26.000 --> 00:02:27.791
+(Oh it's cruel, I know it's cruel)
+
+00:02:27.791 --> 00:02:29.208
+The truth is
+
+00:02:29.208 --> 00:02:30.875
+I wanna be with you
+
+00:02:30.875 --> 00:02:33.166
+Let us dive in deep deep blue
+
+00:02:33.166 --> 00:02:35.583
+Stay on the wrong side of the moon
+
+00:02:35.583 --> 00:02:36.750
+(Tututilila)
+
+00:02:36.750 --> 00:02:38.166
+City blue`;
+  const CITY_BLUE_GOLD_AT = 60.4;     // "With you"
+  const CITY_BLUE_YELLOW_AT = 105.4;  // "Again and again in my head"
+  const CITY_BLUE_BURN_AT = 98;       // pages catch fire, embers take over
   const BLOOD_EGG_TRACKS = {
     btw: { artists: ['mili'], match: ['between two worlds'], lrcId: 25215258, slowIntro: true },
     violet: { artists: ['mili'], match: ['through patches of violet'], lrcId: 22434851, slowIntro: false },
     wings: { artists: ['mili'], match: ['fly, my wings', 'fly my wings'], lrcId: 2689907, slowIntro: false },
     compass: { artists: ['mili'], match: ['compass'], lrcId: 18459159, slowIntro: false },
+    // no lrclib entry yet, so the subtitles ship with the app
+    cityblue: { artists: ['mili'], match: ['city blue'], vtt: CITY_BLUE_VTT, slowIntro: false },
     sky: { artists: ['toby fox', 'itoki hana'], match: ['skies forever blue'], lrcId: 36935336, dur: 277, alts: [{ dur: 293, lrcId: 9395934 }], slowIntro: false },
   };
   function trackDurationSoon() {
@@ -4787,12 +5041,14 @@
   function spawnBloodLine(text) {
     const now = performance.now();
     const sky = bloodEggTrack === 'sky';
+    const city = bloodEggTrack === 'cityblue';
     for (const entry of bloodActiveLines) {
       const elapsed = now - entry.spawnT;
-      scheduleBloodRetire(entry, sky ? 0 : Math.max(0, 3000 - elapsed));
+      scheduleBloodRetire(entry, sky || city ? 0 : Math.max(0, 3000 - elapsed));
     }
     if (!text) return;
     if (sky) { spawnSkyLine(text, now); return; }
+    if (city) { spawnCityLine(text, now); return; }
     const el = document.createElement('div');
     el.className = 'blood-line';
     el.style.left = (32 + Math.random() * 36).toFixed(1) + '%';
@@ -4909,6 +5165,245 @@
     const entry = { el, spawnT: now, timer: null };
     scheduleBloodRetire(entry, 6000);
     bloodActiveLines.push(entry);
+  }
+  // city blue: plain lyric lines, one at a time, set against the right edge
+  function spawnCityLine(text, now) {
+    const t = audio.currentTime;
+    const el = document.createElement('div');
+    el.className = 'blood-line blood-cb cb-solo ' + (t >= CITY_BLUE_YELLOW_AT ? 'cb-yellow' : t >= CITY_BLUE_GOLD_AT ? 'cb-gold' : 'cb-white');
+    const span = document.createElement('span');
+    span.className = 'blood-char';
+    span.textContent = text;
+    el.appendChild(span);
+    $('bloodLyrics').appendChild(el);
+    void el.offsetWidth;
+    requestAnimationFrame(() => el.classList.add('show'));
+    const entry = { el, spawnT: now, timer: null };
+    scheduleBloodRetire(entry, 8000);
+    bloodActiveLines.push(entry);
+  }
+  // ── city blue chapters: lobotomy sparks, ruina pages, limbus embers ──
+  let cityFx = [];
+  let cityFxLastTs = 0, cityFxDirty = false, cityFxPrevT = -1;
+  let cityNextSpark = 0;
+  let cityEmberSprite = null;
+  let cityStartAt = null, cityLastAt = Infinity;
+  function cityChapter(t) {
+    if (cityStartAt === null) {
+      const cues = parseVTT(CITY_BLUE_VTT).filter(c => c.text);
+      cityStartAt = cues.length ? cues[0].t : 0;
+      cityLastAt = cues.length ? cues[cues.length - 1].t : Infinity;
+    }
+    if (t >= CITY_BLUE_YELLOW_AT) return 3;
+    if (t >= CITY_BLUE_GOLD_AT) return 2;
+    return t >= cityStartAt ? 1 : 0;
+  }
+  function cityEmber() {
+    if (cityEmberSprite) return cityEmberSprite;
+    const c = document.createElement('canvas');
+    c.width = c.height = 32;
+    const g = c.getContext('2d');
+    const grad = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+    grad.addColorStop(0, 'rgba(255,236,190,1)');
+    grad.addColorStop(0.22, 'rgba(255,170,70,.95)');
+    grad.addColorStop(0.5, 'rgba(240,80,20,.35)');
+    grad.addColorStop(1, 'rgba(200,40,10,0)');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 32, 32);
+    return (cityEmberSprite = c);
+  }
+  // a short circuit somewhere along the top edge, like a failing light
+  function citySparkBurst(w, h, dpr, x) {
+    const y = Math.random() * h * 0.05;
+    cityFx.push({ kind: 'flash', x, y, age: 0, life: 0.18 + Math.random() * 0.14, size: (70 + Math.random() * 80) * dpr });
+    // the ceiling light stutters along with the spark
+    cityFx.push({ kind: 'flicker', x, y: 0, age: 0, life: 0.25 + Math.random() * 0.3, size: (260 + Math.random() * 260) * dpr, seed: Math.random() * 50 });
+    const n = 14 + Math.floor(Math.random() * 22);
+    for (let i = 0; i < n; i++) {
+      const a = Math.PI / 2 + (Math.random() - 0.5) * 2.6;
+      const sp = (160 + Math.random() * 480) * dpr;
+      cityFx.push({
+        kind: 'spark', x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        age: 0, life: 0.45 + Math.random() * 0.9, width: (1.3 + Math.random() * 1.6) * dpr,
+        blue: Math.random() < 0.35,
+      });
+    }
+  }
+  function cityPage(w, h, dpr, anywhere) {
+    const size = (40 + Math.random() * 45) * dpr;
+    cityFx.push({
+      kind: 'page',
+      x: Math.random() * w, y: anywhere ? h * (0.35 + Math.random() * 0.7) : h + size * 2,
+      vx: (-10 + Math.random() * 30) * dpr, vy: -(35 + Math.random() * 55) * dpr,
+      sway: (10 + Math.random() * 25) * dpr, phase: Math.random() * Math.PI * 2,
+      rx: Math.random() * 6.28, ry: Math.random() * 6.28, rz: Math.random() * 6.28,
+      wx: (0.6 + Math.random() * 1.8) * (Math.random() < 0.5 ? -1 : 1),
+      wy: (0.5 + Math.random() * 1.6) * (Math.random() < 0.5 ? -1 : 1),
+      wz: (0.2 + Math.random() * 0.7) * (Math.random() < 0.5 ? -1 : 1),
+      w: size, h: size * 1.35, age: 0, life: 99,
+    });
+  }
+  function cityEmberSpawn(w, h, dpr, x, y) {
+    cityFx.push({
+      kind: 'ember',
+      x: x !== undefined ? x : -w * 0.15 + Math.random() * w * 1.05, y: y !== undefined ? y : h + 10 * dpr,
+      vx: (30 + Math.random() * 80) * dpr, vy: -(70 + Math.random() * 150) * dpr,
+      size: (1.6 + Math.random() * 3.6) * dpr, phase: Math.random() * 6.28,
+      drag: 0.5 + Math.random() * 0.9, age: 0, life: 2.8 + Math.random() * 3.5,
+    });
+  }
+  function updateCityEgg(nowTs) {
+    const active = bloodEggActive && bloodEggTrack === 'cityblue' && ready && !midiActive;
+    const t = active ? audio.currentTime : -1;
+    const cv = $('cityFx');
+    const dt = playing ? Math.min(0.05, Math.max(0, (nowTs - cityFxLastTs) / 1000)) : 0;
+    cityFxLastTs = nowTs;
+    const chapter = active ? cityChapter(t) : 0;
+    if (!active || Math.abs(t - cityFxPrevT) > 2) cityFx = [];
+    const prevChapter = cityFxPrevT >= 0 ? cityChapter(cityFxPrevT) : 0;
+    cityFxPrevT = t;
+    if (!cityFx.length && !chapter) {
+      if (cityFxDirty) { cv.getContext('2d').clearRect(0, 0, cv.width, cv.height); cityFxDirty = false; }
+      return;
+    }
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+
+    if (playing && chapter === 1 && (t >= cityNextSpark - 0.001 || cityNextSpark - t > 3)) {
+      const x = w * (0.06 + Math.random() * 0.88);
+      citySparkBurst(w, h, dpr, x);
+      // sometimes the same spot crackles twice in a row
+      if (Math.random() < 0.3) setTimeout(() => { if (cityChapter(audio.currentTime) === 1) citySparkBurst(w, h, dpr, x + (Math.random() - 0.5) * 30 * dpr); }, 70 + Math.random() * 90);
+      cityNextSpark = t + 0.3 + Math.random() * 1.3;
+    }
+    if (chapter !== 1) cityNextSpark = 0;
+    if (chapter === 2 && prevChapter !== 2 && playing) for (let i = 0; i < 10; i++) cityPage(w, h, dpr, true);
+    if (playing && chapter === 2 && t < CITY_BLUE_BURN_AT) { let n = 2.6 * dt; while (n > 0) { if (n >= 1 || Math.random() < n) cityPage(w, h, dpr, false); n -= 1; } }
+    // embers settle down once the last line is sung
+    const calm = t > cityLastAt ? Math.max(0.12, 1 - (t - cityLastAt) / 6) : 1;
+    if (playing && t >= CITY_BLUE_BURN_AT) {
+      // a trickle at first, the full blaze from the yellow chapter on
+      const ramp = 0.15 + 0.85 * Math.min(1, (t - CITY_BLUE_BURN_AT) / (CITY_BLUE_YELLOW_AT - CITY_BLUE_BURN_AT));
+      let n = (20 + 45 * Math.min(1, bassEnergy())) * calm * ramp * dt;
+      while (n > 0) { if (n >= 1 || Math.random() < n) cityEmberSpawn(w, h, dpr); n -= 1; }
+    }
+
+    const g = cv.getContext('2d');
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, w, h);
+    const wind = (70 + 45 * Math.sin(t * 0.7) + 25 * Math.sin(t * 1.9 + 1)) * (0.4 + 0.6 * calm) * dpr;
+    const ember = cityEmber();
+    const cityBurnEmbers = [];
+    for (const f of cityFx) {
+      f.age += dt;
+      if (f.kind === 'flash') {
+        const k = 1 - f.age / f.life;
+        if (k <= 0) continue;
+        g.globalCompositeOperation = 'lighter';
+        const grad = g.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.size);
+        grad.addColorStop(0, `rgba(235,245,255,${(0.75 * k).toFixed(3)})`);
+        grad.addColorStop(0.3, `rgba(170,210,255,${(0.25 * k).toFixed(3)})`);
+        grad.addColorStop(1, 'rgba(150,190,255,0)');
+        g.fillStyle = grad;
+        g.fillRect(f.x - f.size, f.y - f.size, f.size * 2, f.size * 2);
+      } else if (f.kind === 'flicker') {
+        if (f.age >= f.life) continue;
+        const on = Math.sin(f.age * 90 + f.seed) > -0.2 ? 1 : 0.15;
+        const k = on * (1 - f.age / f.life);
+        g.globalCompositeOperation = 'lighter';
+        const grad = g.createRadialGradient(f.x, 0, 0, f.x, 0, f.size);
+        grad.addColorStop(0, `rgba(210,230,255,${(0.22 * k).toFixed(3)})`);
+        grad.addColorStop(1, 'rgba(210,230,255,0)');
+        g.fillStyle = grad;
+        g.fillRect(f.x - f.size, 0, f.size * 2, f.size);
+      } else if (f.kind === 'spark') {
+        f.vy += 950 * dpr * dt;
+        f.vx *= 1 - 0.8 * dt;
+        f.x += f.vx * dt; f.y += f.vy * dt;
+        const k = Math.max(0, 1 - f.age / f.life);
+        g.globalCompositeOperation = 'lighter';
+        const rgb = f.blue ? '170,215,255' : '255,200,120';
+        const tx = f.x - f.vx * 0.04, ty = f.y - f.vy * 0.04;
+        // bright head fading into the trail
+        const halo = g.createLinearGradient(f.x, f.y, tx, ty);
+        halo.addColorStop(0, `rgba(${rgb},${(0.35 * k).toFixed(3)})`);
+        halo.addColorStop(1, `rgba(${rgb},0)`);
+        const core = g.createLinearGradient(f.x, f.y, tx, ty);
+        core.addColorStop(0, `rgba(255,252,240,${k.toFixed(3)})`);
+        core.addColorStop(0.5, `rgba(${rgb},${(0.6 * k).toFixed(3)})`);
+        core.addColorStop(1, `rgba(${rgb},0)`);
+        g.lineCap = 'round';
+        g.beginPath();
+        g.moveTo(f.x, f.y);
+        g.lineTo(tx, ty);
+        g.strokeStyle = halo;
+        g.lineWidth = f.width * (1 + 2.2 * k);
+        g.stroke();
+        g.strokeStyle = core;
+        g.lineWidth = f.width * (0.5 + 0.5 * k);
+        g.stroke();
+      } else if (f.kind === 'page') {
+        f.rx += f.wx * dt; f.ry += f.wy * dt; f.rz += f.wz * dt;
+        f.vy *= 1 + 0.12 * dt;
+        f.x += (f.vx + Math.cos(f.age * 0.9 + f.phase) * f.sway) * dt;
+        f.y += f.vy * dt;
+        if (f.y < -f.h * 2) { f.age = f.life; continue; }
+        // each page lights up at its own moment after 1:38
+        if (t < CITY_BLUE_BURN_AT) f.burnAt = 0;
+        else if (!f.burnAt) f.burnAt = t + Math.random() * 3.5;
+        const burn = f.burnAt && t >= f.burnAt ? Math.min(1, (t - f.burnAt) / 1.6) : 0;
+        if (burn >= 1) { f.age = f.life; continue; }
+        if (burn > 0 && playing) {
+          let n = 30 * dt;
+          while (n > 0) { if (n >= 1 || Math.random() < n) cityBurnEmbers.push([f.x + (Math.random() - 0.5) * f.w, f.y + (Math.random() - 0.5) * f.h]); n -= 1; }
+        }
+        const fade = Math.min(1, f.age / 0.8) * Math.min(1, Math.max(0, f.y / (h * 0.18))) * (1 - burn * burn);
+        // fake 3d: each axis squashes or shears the sheet
+        const sx = Math.cos(f.ry), sy = Math.cos(f.rx), sh = Math.sin(f.rx) * Math.sin(f.ry) * 0.6;
+        const cz = Math.cos(f.rz), sz = Math.sin(f.rz);
+        const shrink = 1 - 0.45 * burn;
+        g.setTransform((cz * sx) * shrink, (sz * sx) * shrink, (cz * sh - sz * sy) * shrink, (sz * sh + cz * sy) * shrink, f.x, f.y);
+        const light = 0.45 + 0.55 * Math.abs(sx * sy);
+        g.globalCompositeOperation = 'source-over';
+        // gold chars toward dark brown as it burns
+        const fr = Math.round(236 - 170 * burn), fg = Math.round(191 - 160 * burn), fb = Math.round(127 - 115 * burn);
+        g.fillStyle = `rgba(${fr},${fg},${fb},${((0.3 + 0.25 * burn) * light * fade).toFixed(3)})`;
+        g.fillRect(-f.w / 2, -f.h / 2, f.w, f.h);
+        if (burn > 0) {
+          const flame = Math.min(1, burn * 4) * (1 - burn) * (0.8 + 0.2 * Math.sin(t * 40 + f.phase));
+          g.globalCompositeOperation = 'lighter';
+          g.strokeStyle = `rgba(255,120,30,${(0.35 * flame).toFixed(3)})`;
+          g.lineWidth = 7 * dpr;
+          g.strokeRect(-f.w / 2, -f.h / 2, f.w, f.h);
+          g.strokeStyle = `rgba(255,200,110,${(0.95 * flame).toFixed(3)})`;
+          g.lineWidth = 2 * dpr;
+          g.strokeRect(-f.w / 2, -f.h / 2, f.w, f.h);
+          g.globalCompositeOperation = 'source-over';
+        } else {
+          g.strokeStyle = `rgba(255,226,160,${(0.55 * light * fade).toFixed(3)})`;
+          g.lineWidth = dpr;
+          g.strokeRect(-f.w / 2, -f.h / 2, f.w, f.h);
+        }
+        g.setTransform(1, 0, 0, 1, 0, 0);
+      } else if (f.kind === 'ember') {
+        f.vx += (wind - f.vx) * f.drag * dt;
+        f.vy *= 1 - 0.15 * dt;
+        f.x += (f.vx + Math.sin(f.age * 3 + f.phase) * 18 * dpr) * dt;
+        f.y += f.vy * dt;
+        const fade = Math.min(1, f.age / 0.3) * Math.min(1, (f.life - f.age) / (f.life * 0.4));
+        const flicker = 0.65 + 0.35 * Math.sin(f.age * 17 + f.phase);
+        g.globalCompositeOperation = 'lighter';
+        g.globalAlpha = Math.max(0, fade * flicker);
+        const s = f.size * 4;
+        g.drawImage(ember, f.x - s / 2, f.y - s / 2, s, s);
+        g.globalAlpha = 1;
+      }
+    }
+    g.globalCompositeOperation = 'source-over';
+    for (const [x, y] of cityBurnEmbers) cityEmberSpawn(w, h, dpr, x, y);
+    cityFx = cityFx.filter(f => f.age < f.life && f.y < h + 200 * dpr && f.x < w + 60 * dpr);
+    cityFxDirty = true;
   }
   function updateBloodLyrics() {
     if (!lyricsLines || !ready) return;
@@ -6264,6 +6759,7 @@
     drawPerfGraph(nowTs);
     updateLyricsOverlay();
     updateWingsEgg(nowTs);
+    updateCityEgg(nowTs);
     updateSkyEgg(nowTs);
     updateCompassEgg(nowTs);
     updateLyricsGapBar();
@@ -6316,6 +6812,7 @@
 
     const { path, maxExtent, floorY } = buildPath();
     const compassVz = compassVizNow();
+    const vizA = vizAlpha();
 
     if (transparentCanvas) {
       if (overCover && S.trails > 0) {
@@ -6332,9 +6829,11 @@
       if (compassVz) {
         renderScene(compassBarsLayer(), path, maxExtent, floorY, overCover);
         ctx.save();
-        ctx.globalAlpha = compassVz.op;
+        ctx.globalAlpha = compassVz.op * vizA;
         ctx.drawImage(compassBarsCanvas, 0, compassVz.lift ? -Math.round(H * (1 - COMPASS_HORIZON)) : 0);
         ctx.restore();
+      } else if (vizA < 1) {
+        drawSceneFaded(path, maxExtent, floorY, overCover, vizA);
       } else {
         renderScene(ctx, path, maxExtent, floorY, overCover);
         if (S.reflection && S.layout !== 'radial') drawReflection(path, floorY, true);
@@ -6356,9 +6855,11 @@
       if (compassVz) {
         renderScene(compassBarsLayer(), path, maxExtent, floorY, true);
         ctx.save();
-        ctx.globalAlpha = compassVz.op;
+        ctx.globalAlpha = compassVz.op * vizA;
         ctx.drawImage(compassBarsCanvas, 0, compassVz.lift ? -Math.round(H * (1 - COMPASS_HORIZON)) : 0);
         ctx.restore();
+      } else if (vizA < 1) {
+        drawSceneFaded(path, maxExtent, floorY, true, vizA);
       } else {
         renderScene(ctx, path, maxExtent, floorY, true);
         if (S.reflection && S.layout !== 'radial') drawReflection(path, floorY, false);
@@ -6366,14 +6867,15 @@
       if (S.flash > 0) drawFlash(bassNow);
     }
 
-    if (compassVz) {
+    const overlayFaded = compassVz || vizA < 1;
+    if (overlayFaded) {
       ctx.save();
-      ctx.globalAlpha = compassVz.op;
-      if (compassVz.lift) ctx.translate(0, -Math.round(H * (1 - COMPASS_HORIZON)));
+      ctx.globalAlpha = (compassVz ? compassVz.op : 1) * vizA;
+      if (compassVz && compassVz.lift) ctx.translate(0, -Math.round(H * (1 - COMPASS_HORIZON)));
     }
     drawConnections(maxExtent);
     drawPeaks(maxExtent, floorY);
-    if (compassVz) ctx.restore();
+    if (overlayFaded) ctx.restore();
     if (S.beatParticles && ready && playing && detectBeat(bassNow, nowTs)) spawnBeatBurst();
     updateParticles();
     drawParticles();
@@ -8259,28 +8761,57 @@
   let metaThumbBusy = false;
   let metaThumbLast = 0;
   let metaThumbRun = 0;
+  // covers the api refused, kept so they can be asked for again
+  let metaMissed = [];
+  // musicbrainz search itself got rate limited
+  let metaMbLimited = false;
+  // downloaded covers by url, so a retry doesn't fetch them twice
+  const metaBlobCache = new Map();
+  let metaLastSearch = null;
+  function updateMetaRetry() {
+    const btn = $('metaRetryBtn');
+    const n = metaMissed.length;
+    btn.classList.toggle('hidden', !n && !metaMbLimited);
+    btn.textContent = metaMbLimited ? 'retry musicbrainz' : 'retry ' + n + (n > 1 ? ' covers' : ' cover');
+  }
   async function runCoverThumbs() {
     if (metaThumbBusy) return;
     metaThumbBusy = true;
     while (metaThumbJobs.length) {
       const job = metaThumbJobs.shift();
       if (job.run !== metaThumbRun) continue;
-      if (job.cover.source === 'musicbrainz') {
-        const wait = 1000 - (Date.now() - metaThumbLast);
-        if (wait > 0) await new Promise(r => setTimeout(r, wait));
+      let blob = metaBlobCache.get(job.cover.url) || null;
+      if (!blob) {
+        if (job.cover.source === 'musicbrainz') {
+          const wait = 1000 - (Date.now() - metaThumbLast);
+          if (wait > 0) await new Promise(r => setTimeout(r, wait));
+        }
+        metaThumbLast = Date.now();
+        let img = null;
+        try { img = await window.winControls.metaImage(job.cover.url); } catch (e) {}
+        if (job.run !== metaThumbRun) continue;
+        if (img && img.data) {
+          blob = new Blob([img.data], { type: img.mime || 'image/jpeg' });
+          metaBlobCache.set(job.cover.url, blob);
+        } else if (img && img.retry) {
+          job.cell.classList.remove('loading');
+          job.cell.classList.add('dead', 'missed');
+          job.size.textContent = 'rate limited';
+          job.radio.disabled = true;
+          if (job.radio.checked) job.grid.querySelector('input').checked = true;
+          metaMissed.push(job);
+          updateMetaRetry();
+          continue;
+        }
       }
-      metaThumbLast = Date.now();
-      let img = null;
-      try { img = await window.winControls.metaImage(job.cover.url); } catch (e) {}
-      if (job.run !== metaThumbRun) continue;
       job.cell.classList.remove('loading');
-      if (!img || !img.data) {
+      if (!blob) {
         job.cell.classList.add('dead');
         job.radio.disabled = true;
         if (job.radio.checked) job.grid.querySelector('input').checked = true;
         continue;
       }
-      job.cover.blob = new Blob([img.data], { type: img.mime || 'image/jpeg' });
+      job.cover.blob = blob;
       job.cover.thumbUrl = URL.createObjectURL(job.cover.blob);
       job.thumb.style.backgroundImage = 'url("' + job.cover.thumbUrl + '")';
       const kb = Math.max(1, Math.round(job.cover.blob.size / 1024)) + ' kb';
@@ -8315,6 +8846,7 @@
     hideMetaPreview();
     metaThumbRun++;
     metaThumbJobs = [];
+    metaMissed = [];
     for (const c of metaCovers) {
       if (!c.thumbUrl) continue;
       try { URL.revokeObjectURL(c.thumbUrl); } catch (e) {}
@@ -8350,8 +8882,10 @@
     }
     line.appendChild(document.createTextNode(text));
     box.appendChild(line);
-    $('metaNote').textContent = '';
+    $('metaNote').textContent = busy ? '' : metaMbLimited ? 'musicbrainz hit its rate limit, try again in a few seconds.' : '';
     $('metaApplyBtn').disabled = true;
+    $('metaRetryBtn').classList.toggle('hidden', busy || !metaMbLimited);
+    if (!busy) updateMetaRetry();
   }
   function renderMetaPicker() {
     releaseMetaCovers();
@@ -8440,10 +8974,46 @@
       runCoverThumbs();
     }
 
-    $('metaNote').textContent = groups
+    $('metaNote').textContent = (groups
       ? metaHits.length + ' releases matched. anything left on the first choice stays as it is.'
-      : metaHits.length + ' releases matched, but none of them carried a usable field.';
+      : metaHits.length + ' releases matched, but none of them carried a usable field.')
+      + (metaMbLimited ? ' musicbrainz hit its rate limit, some results may be missing.' : '');
     $('metaApplyBtn').disabled = !groups;
+    updateMetaRetry();
+  }
+  async function retryMetaMissed() {
+    const btn = $('metaRetryBtn');
+    if (metaMbLimited && metaLastSearch) {
+      // search again on musicbrainz only, keeping discogs hits and picks already loaded
+      const search = metaLastSearch;
+      btn.disabled = true;
+      btn.textContent = 'retrying…';
+      let r = null;
+      try { r = await window.winControls.metaSearch(Object.assign({}, search, { only: 'musicbrainz' })); } catch (e) {}
+      btn.disabled = false;
+      if (metaLastSearch !== search || $('metaOverlay').classList.contains('hidden')) return;
+      if (!r) { updateMetaRetry(); return; }
+      metaMbLimited = !!r.mbLimited;
+      const fresh = r.results || [];
+      if (fresh.length) metaHits = fresh.concat(metaHits.filter(h => h.source !== 'musicbrainz'));
+      if (metaHits.length) renderMetaPicker();
+      else metaMsg('nothing found for that search');
+      if (metaMbLimited) toast('musicbrainz is still rate limiting, try again in a moment', { error: true });
+      return;
+    }
+    if (!metaMissed.length) return;
+    const jobs = metaMissed;
+    metaMissed = [];
+    for (const job of jobs) {
+      job.cell.classList.remove('dead', 'missed');
+      job.cell.classList.add('loading');
+      job.size.textContent = '';
+      job.radio.disabled = false;
+      job.run = metaThumbRun;
+      metaThumbJobs.push(job);
+    }
+    updateMetaRetry();
+    runCoverThumbs();
   }
   async function applyMetaPicks() {
     const forAlbum = metaTarget === 'album';
@@ -8512,8 +9082,12 @@
     const query = $('propMetaQuery').value.trim();
     if (!query) return;
     metaHits = [];
+    metaMbLimited = false;
+    metaBlobCache.clear();
+    metaLastSearch = null;
     metaMsg('searching discogs and musicbrainz…', true);
     let r = null;
+    let search = null;
     try {
       let artist, title;
       if (forAlbum) {
@@ -8524,12 +9098,13 @@
         artist = $('propArtist').value.trim() || guess.artist;
         title = $('propTitle').value.trim() || guess.titleQuery || guess.title;
       }
-      r = await window.winControls.metaSearch({
-        query: query, artist: artist, title: title, kind: forAlbum ? 'album' : 'track',
-      });
+      search = { query: query, artist: artist, title: title, kind: forAlbum ? 'album' : 'track' };
+      metaLastSearch = search;
+      r = await window.winControls.metaSearch(search);
     } catch (e) {}
-    if ((!forAlbum && propsFile() !== f) || $('metaOverlay').classList.contains('hidden')) return;
+    if ((!forAlbum && propsFile() !== f) || $('metaOverlay').classList.contains('hidden') || metaLastSearch !== search) return;
     metaHits = (r && r.results) || [];
+    metaMbLimited = !!(r && r.mbLimited);
     if (!metaHits.length) { metaMsg('nothing found for that search'); return; }
     renderMetaPicker();
   }
@@ -8537,6 +9112,10 @@
     metaTarget = 'track';
     hideMetaPreview();
     releaseMetaCovers();
+    metaBlobCache.clear();
+    metaLastSearch = null;
+    metaMbLimited = false;
+    $('metaRetryBtn').classList.add('hidden');
     $('metaOverlay').classList.add('hidden');
   }
   $('propMetaBtn').addEventListener('click', () => {
@@ -8547,6 +9126,7 @@
   });
   $('metaSearchBtn').addEventListener('click', runMetaSearch);
   $('metaCancelBtn').addEventListener('click', closeMetaPicker);
+  $('metaRetryBtn').addEventListener('click', retryMetaMissed);
   $('metaApplyBtn').addEventListener('click', applyMetaPicks);
   $('metaOverlay').addEventListener('click', e => { if (e.target === $('metaOverlay')) closeMetaPicker(); });
   $('metaGroups').addEventListener('scroll', hideMetaPreview);
@@ -9702,7 +10282,6 @@
       }
       delete e.paren;
     });
-    out.hasBack = out.some(e => e.back.length);
     return out;
   }
   let lyricsDisplaySrc = null, lyricsDisplayLines = null;
@@ -9863,6 +10442,10 @@
     const loadEl = $('lyricsLoading');
     const spinT = setTimeout(() => { if (token === lyricsToken) loadEl.classList.add('show'); }, 250);
     try {
+      if (bloodEggActive && bloodEggTrack && BLOOD_EGG_TRACKS[bloodEggTrack].vtt) {
+        lyricsLines = parseVTT(BLOOD_EGG_TRACKS[bloodEggTrack].vtt);
+        return;
+      }
       if (bloodEggActive && bloodEggTrack && window.winControls) {
         const lrcId = await bloodEggLrcId(BLOOD_EGG_TRACKS[bloodEggTrack]);
         if (token !== lyricsToken) return;
@@ -10175,7 +10758,7 @@
     lyricsIdx = idx;
     const cur = idx >= 0 ? L[idx].text : '';
     const next = idx + 1 < L.length ? L[idx + 1].text : '';
-    box.classList.toggle('has-back', !!L.hasBack);
+    box.classList.toggle('has-back', !!(idx >= 0 && L[idx].back && L[idx].back.length));
     buildLyricBack($('lyricBack'), idx >= 0 ? L[idx].back : null);
     paintLyricBack($('lyricBack'), t);
     if (!cur && !next) { box.classList.add('off'); return; }
@@ -12591,6 +13174,7 @@
   $('rainbowSeg').querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => { S.rainbow = btn.dataset.val === 'on'; syncUI(); save(); });
   });
+  $('vizOpacity').addEventListener('input', e => { S.vizOpacity = +e.target.value; $('vizOpacityVal').textContent = S.vizOpacity + '%'; save(); });
   $('particlesSeg').querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => { S.particles = btn.dataset.val === 'on'; syncUI(); save(); });
   });
@@ -13305,6 +13889,7 @@
     $('psySpeed').value = S.psySpeed; $('psySpeedVal').textContent = S.psySpeed;
     $('psyTrail').value = S.psyTrail; $('psyTrailVal').textContent = S.psyTrail;
     $('rainbowSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.rainbow));
+    $('vizOpacity').value = vizAlpha() * 100; $('vizOpacityVal').textContent = Math.round(vizAlpha() * 100) + '%';
     $('particlesSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.particles));
     $('beatParticlesSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.beatParticles));
     $('scaleToSoundSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.val === 'on') === S.scaleToSound));

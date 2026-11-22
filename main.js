@@ -704,13 +704,15 @@ function buildTagArgs(tags, ext) {
 }
 const COVER_EMBED_RE = /[.](mp3|m4a|flac|ogg|oga|aac|wav|mp4|m4v|mov)$/i;
 const COVER_VIDEO_RE = /[.](mp4|m4v|mov)$/i;
-async function downloadCover(url) {
+async function downloadCover(url, info) {
   if (!/^https?:[/][/]/i.test(String(url || ""))) return null;
+  if (info) info.status = 0;
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 12000);
     const res = await fetch(url, { signal: controller.signal, headers: { "User-Agent": lrclibUA() } });
     clearTimeout(timer);
+    if (info) info.status = res.status;
     if (!res.ok) return null;
     const buf = Buffer.from(await res.arrayBuffer());
     if (buf.length < 512) return null;
@@ -1801,6 +1803,8 @@ async function metaSearchMusicBrainz(query, artist, title, forAlbum) {
   const field = forAlbum ? 'release' : 'recording';
   const limit = forAlbum ? 8 : 5;
 
+  // true when musicbrainz refused or timed out, so the results may be incomplete
+  let limited = false;
   async function ask(lucene) {
     await mbThrottle();
     const url = 'https://musicbrainz.org/ws/2/' + field + '/?query=' + encodeURIComponent(lucene)
@@ -1816,7 +1820,10 @@ async function metaSearchMusicBrainz(query, artist, title, forAlbum) {
       await new Promise(res => setTimeout(res, backoff[attempt]));
       mbLastCall = Date.now();
     }
-    if (!r.ok) return [];
+    if (!r.ok) {
+      if (r.status === 429 || r.status >= 500) limited = true;
+      return [];
+    }
     const j = await r.json();
     return (forAlbum ? j.releases : j.recordings) || [];
   }
@@ -1843,7 +1850,7 @@ async function metaSearchMusicBrainz(query, artist, title, forAlbum) {
           coverUrl: mbCoverUrl(rel.id),
         });
       }
-      return out;
+      return { hits: out, limited };
     }
     for (const rec of rows) {
       const who = (rec['artist-credit'] || []).map(a => a.name).filter(Boolean).join(', ');
@@ -1860,8 +1867,8 @@ async function metaSearchMusicBrainz(query, artist, title, forAlbum) {
         coverUrl: mbCoverUrl(rel && rel.id),
       });
     }
-  } catch (err) {}
-  return out;
+  } catch (err) { limited = true; }
+  return { hits: out, limited };
 }
 async function metaSearchDiscogs(query) {
   const out = [];
@@ -1898,15 +1905,18 @@ ipcMain.handle('meta:search', async (e, payload) => {
   const p = typeof payload === 'string' ? { query: payload } : (payload || {});
   const q = String(p.query || '').trim();
   if (!q) return { results: [] };
+  // retrying only asks musicbrainz again
   const [mb, dg] = await Promise.all([
     metaSearchMusicBrainz(q, p.artist, p.title, p.kind === 'album'),
-    metaSearchDiscogs(q),
+    p.only === 'musicbrainz' ? [] : metaSearchDiscogs(q),
   ]);
-  return { results: mb.concat(dg) };
+  return { results: mb.hits.concat(dg), mbLimited: mb.limited };
 });
 ipcMain.handle('meta:image', async (e, url) => {
-  const tmp = await downloadCover(url);
-  if (!tmp) return null;
+  const info = {};
+  const tmp = await downloadCover(url, info);
+  // no answer, rate limit or server error: worth another try later
+  if (!tmp) return (info.status === 0 || info.status === 429 || info.status >= 500) ? { retry: true } : null;
   try {
     const buf = fs.readFileSync(tmp);
     return { mime: /[.]png$/i.test(tmp) ? 'image/png' : 'image/jpeg', data: buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) };
